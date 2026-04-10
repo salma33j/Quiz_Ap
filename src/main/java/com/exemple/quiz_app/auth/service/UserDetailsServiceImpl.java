@@ -1,4 +1,4 @@
-package com.exemple.quiz_app.service;
+package com.exemple.quiz_app.auth.service;
 
 public class UserDetailsServiceImpl {
 }
