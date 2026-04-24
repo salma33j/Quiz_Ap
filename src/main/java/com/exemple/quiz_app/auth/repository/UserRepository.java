@@ -1,9 +1,8 @@
 package com.exemple.quiz_app.auth.repository;
 
 // auth/repository/UserRepository.java (version minimaliste)
-package com.example.quiz_app.auth.repository;
 
-import com.example.quiz_app.auth.model.User;
+import com.exemple.quiz_app.auth.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
