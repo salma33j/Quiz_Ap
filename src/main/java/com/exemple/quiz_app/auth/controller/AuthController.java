@@ -21,6 +21,7 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+<<<<<<< HEAD
     @Autowired
     private AuthService authService;
 
@@ -226,3 +227,6 @@ public class AuthController {
         return ResponseEntity.ok(quizAdminService.getQuizStatistics());
     }
 }
+=======
+}
+>>>>>>> 0a126cdee69fe4d7d0be101497e73be7009d4831
