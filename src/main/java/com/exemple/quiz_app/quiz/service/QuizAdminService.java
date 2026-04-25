@@ -1,8 +1,5 @@
 package com.exemple.quiz_app.quiz.service;
 
-// quiz/service/QuizAdminService.java
-
-
 import com.exemple.quiz_app.auth.model.Role;
 import com.exemple.quiz_app.auth.model.User;
 import com.exemple.quiz_app.auth.service.AuthService;
@@ -35,90 +32,54 @@ public class QuizAdminService {
     @Autowired
     private AuthService authService;
 
-    /**
-     * ADMIN : Liste tous les quiz expirés (statut EXPIRED)
-     */
     public List<Quiz> getAllExpiredQuizzes() {
         User admin = authService.getCurrentUser();
-        if (admin.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Accès refusé");
-        }
+        if (admin.getRole() != Role.ADMIN) throw new RuntimeException("Acces refuse");
         return quizRepository.findByStatus(Quiz.QuizStatus.EXPIRED);
     }
 
-    /**
-     * ADMIN : Liste tous les quiz supprimés (soft delete - status DELETED)
-     */
     public List<Quiz> getAllDeletedQuizzes() {
         User admin = authService.getCurrentUser();
-        if (admin.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Accès refusé");
-        }
+        if (admin.getRole() != Role.ADMIN) throw new RuntimeException("Acces refuse");
         return quizRepository.findByStatus(Quiz.QuizStatus.DELETED);
     }
 
-    /**
-     * ADMIN : Suppression définitive (HARD DELETE)
-     * ⚠️ Supprime le quiz, les résultats, les réponses
-     */
     @Transactional
     public void permanentlyDeleteQuiz(Long quizId) {
         User admin = authService.getCurrentUser();
-        if (admin.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Accès refusé - Réservé aux administrateurs");
-        }
+        if (admin.getRole() != Role.ADMIN) throw new RuntimeException("Acces refuse");
 
-        Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
-
-        // Supprimer toutes les réponses liées à ce quiz
+        quizRepository.findById(quizId).orElseThrow(() -> new RuntimeException("Quiz non trouve"));
         reponseRepository.deleteByQuizId(quizId);
-
-        // Supprimer tous les résultats liés à ce quiz
         resultatRepository.deleteByQuizId(quizId);
-
-        // Supprimer le quiz
-        quizRepository.delete(quiz);
+        quizRepository.deleteById(quizId);
     }
 
-    /**
-     * ADMIN : Soft delete (marquer comme supprimé sans effacer)
-     */
     @Transactional
     public Quiz softDeleteQuiz(Long quizId) {
         User admin = authService.getCurrentUser();
-        if (admin.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Accès refusé");
-        }
+        if (admin.getRole() != Role.ADMIN) throw new RuntimeException("Acces refuse");
 
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
-
+                .orElseThrow(() -> new RuntimeException("Quiz non trouve"));
         quiz.setStatus(Quiz.QuizStatus.DELETED);
         quiz.setDeletedAt(LocalDateTime.now());
-        quiz.setDeletedBy(admin.getId());
-
+        quiz.setDeletedBy(admin.getId().longValue());
         return quizRepository.save(quiz);
     }
 
-    /**
-     * ADMIN : Restaurer un quiz soft-deleté
-     */
     @Transactional
     public Quiz restoreQuiz(Long quizId) {
         User admin = authService.getCurrentUser();
-        if (admin.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Accès refusé");
-        }
+        if (admin.getRole() != Role.ADMIN) throw new RuntimeException("Acces refuse");
 
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
+                .orElseThrow(() -> new RuntimeException("Quiz non trouve"));
 
         if (quiz.getStatus() != Quiz.QuizStatus.DELETED) {
-            throw new RuntimeException("Ce quiz n'est pas supprimé");
+            throw new RuntimeException("Ce quiz n'est pas supprime");
         }
 
-        // Vérifier si le quiz n'est pas expiré
         if (quiz.getAvailableUntil() != null && quiz.getAvailableUntil().isBefore(LocalDateTime.now())) {
             quiz.setStatus(Quiz.QuizStatus.EXPIRED);
         } else {
@@ -126,63 +87,41 @@ public class QuizAdminService {
         }
         quiz.setDeletedAt(null);
         quiz.setDeletedBy(null);
-
         return quizRepository.save(quiz);
     }
 
-    /**
-     * ADMIN : Bloquer un quiz immédiatement (le rendre expiré)
-     */
     @Transactional
     public Quiz blockQuiz(Long quizId) {
         User admin = authService.getCurrentUser();
-        if (admin.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Accès refusé");
-        }
+        if (admin.getRole() != Role.ADMIN) throw new RuntimeException("Acces refuse");
 
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
-
+                .orElseThrow(() -> new RuntimeException("Quiz non trouve"));
         quiz.setStatus(Quiz.QuizStatus.EXPIRED);
-        quiz.setAvailableUntil(LocalDateTime.now()); // Expire maintenant
-
+        quiz.setAvailableUntil(LocalDateTime.now());
         return quizRepository.save(quiz);
     }
 
-    /**
-     * ADMIN : Prolonger la date d'expiration d'un quiz
-     */
     @Transactional
     public Quiz extendQuizExpiration(Long quizId, String newExpirationDateStr) {
         User admin = authService.getCurrentUser();
-        if (admin.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Accès refusé");
-        }
+        if (admin.getRole() != Role.ADMIN) throw new RuntimeException("Acces refuse");
 
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
+                .orElseThrow(() -> new RuntimeException("Quiz non trouve"));
 
-        LocalDateTime newExpirationDate = LocalDateTime.parse(newExpirationDateStr,
-                DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        LocalDateTime newDate = LocalDateTime.parse(newExpirationDateStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        quiz.setAvailableUntil(newDate);
 
-        quiz.setAvailableUntil(newExpirationDate);
-
-        // Si le quiz était expiré, le republier
         if (quiz.getStatus() == Quiz.QuizStatus.EXPIRED) {
             quiz.setStatus(Quiz.QuizStatus.PUBLISHED);
         }
-
         return quizRepository.save(quiz);
     }
 
-    /**
-     * ADMIN : Statistiques des quiz
-     */
     public Map<String, Long> getQuizStatistics() {
         User admin = authService.getCurrentUser();
-        if (admin.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Accès refusé");
-        }
+        if (admin.getRole() != Role.ADMIN) throw new RuntimeException("Acces refuse");
 
         Map<String, Long> stats = new HashMap<>();
         stats.put("totalQuizzes", quizRepository.count());
@@ -190,7 +129,6 @@ public class QuizAdminService {
         stats.put("expiredQuizzes", quizRepository.countByStatus(Quiz.QuizStatus.EXPIRED));
         stats.put("deletedQuizzes", quizRepository.countByStatus(Quiz.QuizStatus.DELETED));
         stats.put("draftQuizzes", quizRepository.countByStatus(Quiz.QuizStatus.DRAFT));
-
         return stats;
     }
 }
