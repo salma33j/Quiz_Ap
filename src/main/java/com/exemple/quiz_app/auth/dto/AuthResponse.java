@@ -119,4 +119,5 @@ public class AuthResponse {
                 ", expiresIn=" + expiresIn +
                 '}';
     }
+
 }

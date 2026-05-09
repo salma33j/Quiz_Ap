@@ -22,6 +22,7 @@ public enum Role {
             return ETUDIANT; // Valeur par défaut
         }
     }
+
 }
 
 
