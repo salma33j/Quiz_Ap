@@ -16,12 +16,21 @@ import java.util.Optional;
 @Repository
 public interface QuizStudentRepository extends JpaRepository<QuizStudent, Long> {
 
+    // ========== RECHERCHE ==========
     List<QuizStudent> findByQuiz(Quiz quiz);
+
     List<QuizStudent> findByStudent(User student);
+
     Optional<QuizStudent> findByQuizAndStudent(Quiz quiz, User student);
+
     boolean existsByQuizAndStudent(Quiz quiz, User student);
+
     long countByQuiz(Quiz quiz);
 
+    @Query("SELECT qs.student FROM QuizStudent qs WHERE qs.quiz.id = :quizId")
+    List<User> findStudentsByQuizId(@Param("quizId") Long quizId);
+
+    // ========== SUPPRESSION ==========
     @Modifying
     @Transactional
     void deleteByQuiz(Quiz quiz);
@@ -30,4 +39,13 @@ public interface QuizStudentRepository extends JpaRepository<QuizStudent, Long> 
     @Transactional
     @Query("DELETE FROM QuizStudent qs WHERE qs.quiz.id = :quizId")
     void deleteByQuizId(@Param("quizId") Long quizId);
+
+    @Modifying
+    @Transactional
+    void deleteByStudent(User student);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM QuizStudent qs WHERE qs.quiz.id = :quizId AND qs.student.id = :studentId")
+    void deleteByQuizIdAndStudentId(@Param("quizId") Long quizId, @Param("studentId") Long studentId);
 }

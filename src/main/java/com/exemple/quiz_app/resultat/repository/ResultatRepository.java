@@ -1,6 +1,6 @@
 package com.exemple.quiz_app.resultat.repository;
+
 import com.exemple.quiz_app.auth.model.User;
-import com.exemple.quiz_app.quiz.entity.Quiz;
 import com.exemple.quiz_app.resultat.entity.Resultat;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -8,44 +8,115 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
 @Repository
 public interface ResultatRepository extends JpaRepository<Resultat, Long> {
+
+    // ========== RECHERCHES DE BASE ==========
+
     // Trouver le résultat d'un étudiant pour un quiz spécifique
-    Optional<Resultat> findByStudentAndQuiz(User student, Quiz quiz);
+    Optional<Resultat> findByStudentAndQuizId(User student, Long quizId);
+
+    // Trouver le résultat avec statut spécifique
+    Optional<Resultat> findByStudentAndQuizIdAndStatus(User student, Long quizId, Resultat.SubmissionStatus status);
+
     // Trouver tous les résultats d'un étudiant (historique)
-    List<Resultat> findByStudentOrderByCompletedDateDesc(User student);
+    List<Resultat> findByStudentOrderBySubmittedAtDesc(User student);
+
     // Trouver tous les résultats pour un quiz (pour enseignant)
-    List<Resultat> findByQuizOrderByScorePercentageDesc(Quiz quiz);
+    @Query("SELECT r FROM Resultat r WHERE r.quizId = :quizId ORDER BY r.scorePercentage DESC")
+    List<Resultat> findByQuizIdOrderByScorePercentageDesc(@Param("quizId") Long quizId);
+
+    // Trouver tous les résultats par quizId
+    List<Resultat> findByQuizId(Long quizId);
+
+    // ========== FILTRES PAR SCORE ==========
+
     // Trouver les résultats d'un quiz avec note supérieure à un seuil
-    List<Resultat> findByQuizAndScorePercentageGreaterThanEqual(Quiz quiz, Double minScore);
+    @Query("SELECT r FROM Resultat r WHERE r.quizId = :quizId AND r.scorePercentage >= :minScore AND r.status = 'SUBMITTED'")
+    List<Resultat> findByQuizIdAndScorePercentageGreaterThanEqual(@Param("quizId") Long quizId, @Param("minScore") Double minScore);
+
     // Trouver les résultats d'un quiz avec note inférieure à un seuil
-    List<Resultat> findByQuizAndScorePercentageLessThanEqual(Quiz quiz, Double maxScore);
+    @Query("SELECT r FROM Resultat r WHERE r.quizId = :quizId AND r.scorePercentage <= :maxScore AND r.status = 'SUBMITTED'")
+    List<Resultat> findByQuizIdAndScorePercentageLessThanEqual(@Param("quizId") Long quizId, @Param("maxScore") Double maxScore);
+
+    // ========== STATISTIQUES ==========
+
     // Compter le nombre d'étudiants ayant complété un quiz
-    long countByQuizAndIsCompletedTrue(Quiz quiz);
+    long countByQuizIdAndStatus(Long quizId, Resultat.SubmissionStatus status);
+
     // Calculer la moyenne des scores pour un quiz
-    @Query("SELECT AVG(r.scorePercentage) FROM Resultat r WHERE r.quiz = :quiz AND r.isCompleted = true")
-    Double getAverageScoreByQuiz(@Param("quiz") Quiz quiz);
+    @Query("SELECT AVG(r.scorePercentage) FROM Resultat r WHERE r.quizId = :quizId AND r.status = 'SUBMITTED'")
+    Double getAverageScoreByQuizId(@Param("quizId") Long quizId);
+
+    // Obtenir le meilleur score pour un quiz
+    @Query("SELECT MAX(r.scorePercentage) FROM Resultat r WHERE r.quizId = :quizId AND r.status = 'SUBMITTED'")
+    Double getBestScoreByQuizId(@Param("quizId") Long quizId);
+
+    // Obtenir le pire score pour un quiz
+    @Query("SELECT MIN(r.scorePercentage) FROM Resultat r WHERE r.quizId = :quizId AND r.status = 'SUBMITTED'")
+    Double getWorstScoreByQuizId(@Param("quizId") Long quizId);
+
+    // ========== CLASSEMENT ==========
+
     // Obtenir le classement des étudiants pour un quiz
-    @Query("SELECT r.student.id, r.student.nom, r.student.prenom, r.scorePercentage, r.earnedPoints, r.totalPoints " +
-            "FROM Resultat r WHERE r.quiz = :quiz AND r.isCompleted = true ORDER BY r.scorePercentage DESC")
-    List<Object[]> getRankingByQuiz(@Param("quiz") Quiz quiz);
-    // Trouver le meilleur score pour un quiz
-    @Query("SELECT MAX(r.scorePercentage) FROM Resultat r WHERE r.quiz = :quiz AND r.isCompleted = true")
-    Double getBestScoreByQuiz(@Param("quiz") Quiz quiz);
-    // Trouver les résultats qui n'ont pas encore de feedback IA
-    List<Resultat> findByFeedbackIaIsNullAndIsCompletedTrue();
+    @Query("SELECT r.student.id, r.student.nom, r.student.email, r.scorePercentage, r.earnedPoints, r.totalPoints " +
+            "FROM Resultat r WHERE r.quizId = :quizId AND r.status = 'SUBMITTED' ORDER BY r.scorePercentage DESC")
+    List<Object[]> getRankingByQuizId(@Param("quizId") Long quizId);
+
+    // ========== VÉRIFICATIONS ==========
+
+    // Vérifier si un étudiant a déjà complété un quiz
+    @Query("SELECT COUNT(r) > 0 FROM Resultat r WHERE r.student.id = :studentId AND r.quizId = :quizId AND r.status = 'SUBMITTED'")
+    boolean hasStudentCompletedQuiz(@Param("studentId") Long studentId, @Param("quizId") Long quizId);
+
+    // Vérifier si un étudiant a déjà commencé un quiz (non complété)
+    @Query("SELECT COUNT(r) > 0 FROM Resultat r WHERE r.student.id = :studentId AND r.quizId = :quizId AND r.status = 'IN_PROGRESS'")
+    boolean hasStudentStartedQuiz(@Param("studentId") Long studentId, @Param("quizId") Long quizId);
+
+    // ========== RÉSULTATS EN COURS ==========
+
+    // Trouver les résultats non complétés (en cours)
+    List<Resultat> findByStudentAndStatus(User student, Resultat.SubmissionStatus status);
+
+    // Trouver tous les résultats en cours pour un étudiant
+    @Query("SELECT r FROM Resultat r WHERE r.student = :student AND r.status = 'IN_PROGRESS'")
+    List<Resultat> findInProgressResultsByStudent(@Param("student") User student);
+
+    // ========== FEEDBACK IA ==========
+
+    // Trouver les résultats qui n'ont pas encore de feedback
+    @Query("SELECT r FROM Resultat r WHERE r.feedback IS NULL AND r.status = 'SUBMITTED'")
+    List<Resultat> findByFeedbackIsNullAndStatusSubmitted();
+
+    // ========== SUPPRESSIONS ==========
+
     // Supprimer tous les résultats d'un étudiant pour un quiz
     @Modifying
     @Transactional
-    void deleteByStudentAndQuiz(User student, Quiz quiz);
+    @Query("DELETE FROM Resultat r WHERE r.student.id = :studentId AND r.quizId = :quizId")
+    void deleteByStudentIdAndQuizId(@Param("studentId") Long studentId, @Param("quizId") Long quizId);
+
     // Supprimer tous les résultats d'un quiz
     @Modifying
     @Transactional
-    void deleteByQuiz(Quiz quiz);
-    // Vérifier si un étudiant a déjà complété un quiz
-    boolean existsByStudentAndQuizAndIsCompletedTrue(User student, Quiz quiz);
-    // Trouver les résultats non complétés (en cours)
-    List<Resultat> findByStudentAndIsCompletedFalse(User student);
+    @Query("DELETE FROM Resultat r WHERE r.quizId = :quizId")
+    void deleteByQuizId(@Param("quizId") Long quizId);
+
+    // Supprimer tous les résultats d'un étudiant
+    @Modifying
+    @Transactional
+    void deleteByStudent(User student);
+
+    // ========== MISE À JOUR ==========
+
+    // Mettre à jour le statut d'un résultat
+    @Modifying
+    @Transactional
+    @Query("UPDATE Resultat r SET r.status = :status, r.submittedAt = :submittedAt WHERE r.id = :id")
+    void updateStatus(@Param("id") Long id, @Param("status") Resultat.SubmissionStatus status, @Param("submittedAt") LocalDateTime submittedAt);
 }

@@ -43,4 +43,6 @@ public interface ReponseRepository extends JpaRepository<Reponse, Long> {
     // Compter le nombre d'étudiants ayant répondu à un quiz (distinct)
     @Query("SELECT COUNT(DISTINCT r.student) FROM Reponse r WHERE r.quiz = :quiz")
     long countDistinctStudentsByQuiz(@Param("quiz") Quiz quiz);
+
+    List<Reponse> findByStudentAndQuestionQuizId(User student, Long id);
 }
