@@ -31,7 +31,7 @@ public class AuthService {
     public User getCurrentUser() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || auth.getName() == null || auth.getName().equals("anonymousUser")) {
-            throw new RuntimeException("Utilisateur non authentifié");
+            throw new RuntimeException("Utilisateur non authentifie");
         }
         String email = auth.getName();
         return userRepository.findByEmail(email)
@@ -42,15 +42,24 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            return AuthResponse.error("Email déjà utilisé");
+            return AuthResponse.error("Email deja utilise");
         }
 
         Role role = Role.ETUDIANT;
+        if (request.getRole() != null) {
+            try {
+                role = Role.valueOf(request.getRole().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                role = Role.ETUDIANT;
+            }
+        }
 
+        // 🔥 CORRECTION: Utiliser firstName et lastName
         User user = new User(
-                request.getNom(),
+                request.getFirstName(),
+                request.getLastName(),
                 request.getEmail(),
-                passwordEncoder.encode(request.getMotDePasse()),
+                passwordEncoder.encode(request.getPassword()),
                 role
         );
 
@@ -59,11 +68,11 @@ public class AuthService {
 
         AuthResponse response = new AuthResponse();
         response.setToken(token);
-        response.setUserId(user.getId());  // 🔥 setUserId au lieu de setId
-        response.setUsername(user.getNom());
+        response.setUserId(user.getId());
+        response.setUsername(user.getFirstName() + " " + user.getLastName());
         response.setEmail(user.getEmail());
         response.setRole(user.getRole().name());
-        response.setMessage("Inscription réussie");
+        response.setMessage("Inscription reussie");
         response.setSuccess(true);
         response.setType("Bearer");
 
@@ -83,11 +92,11 @@ public class AuthService {
 
         AuthResponse response = new AuthResponse();
         response.setToken(token);
-        response.setUserId(user.getId());  // 🔥 setUserId au lieu de setId
-        response.setUsername(user.getNom());
+        response.setUserId(user.getId());
+        response.setUsername(user.getFirstName() + " " + user.getLastName());
         response.setEmail(user.getEmail());
         response.setRole(user.getRole().name());
-        response.setMessage("Connexion réussie");
+        response.setMessage("Connexion reussie");
         response.setSuccess(true);
         response.setType("Bearer");
 
@@ -100,11 +109,11 @@ public class AuthService {
         try {
             User user = getCurrentUser();
             AuthResponse response = new AuthResponse();
-            response.setUserId(user.getId());  // 🔥 setUserId au lieu de setId
-            response.setUsername(user.getNom());
+            response.setUserId(user.getId());
+            response.setUsername(user.getFirstName() + " " + user.getLastName());
             response.setEmail(user.getEmail());
             response.setRole(user.getRole().name());
-            response.setMessage("Utilisateur trouvé");
+            response.setMessage("Utilisateur trouve");
             response.setSuccess(true);
             return response;
         } catch (RuntimeException e) {
@@ -117,7 +126,7 @@ public class AuthService {
     public List<UserDto> getAllUsers() {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Accès refusé - Réservé aux administrateurs");
+            throw new RuntimeException("Acces refuse - Reserve aux administrateurs");
         }
         return userRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
     }
@@ -125,14 +134,14 @@ public class AuthService {
     public AuthResponse getUserById(BigInteger id) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN && !requester.getId().equals(id)) {
-            return AuthResponse.error("Accès refusé");
+            return AuthResponse.error("Acces refuse");
         }
 
         return userRepository.findById(id)
                 .map(user -> {
                     AuthResponse response = new AuthResponse();
-                    response.setUserId(user.getId());  // 🔥 setUserId au lieu de setId
-                    response.setUsername(user.getNom());
+                    response.setUserId(user.getId());
+                    response.setUsername(user.getFirstName() + " " + user.getLastName());
                     response.setEmail(user.getEmail());
                     response.setRole(user.getRole().name());
                     response.setMessage("OK");
@@ -145,7 +154,7 @@ public class AuthService {
     public AuthResponse promoteToTeacher(BigInteger userId) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN) {
-            return AuthResponse.error("Accès refusé - Réservé aux administrateurs");
+            return AuthResponse.error("Acces refuse - Reserve aux administrateurs");
         }
 
         User user = userRepository.findById(userId).orElse(null);
@@ -153,15 +162,15 @@ public class AuthService {
             return AuthResponse.error("Utilisateur introuvable");
         }
         if (user.getRole() == Role.ENSEIGNANT) {
-            return AuthResponse.error("L'utilisateur est déjà enseignant");
+            return AuthResponse.error("L'utilisateur est deja enseignant");
         }
 
         user.setRole(Role.ENSEIGNANT);
         userRepository.save(user);
 
         AuthResponse response = new AuthResponse();
-        response.setUserId(user.getId());  // 🔥 setUserId au lieu de setId
-        response.setUsername(user.getNom());
+        response.setUserId(user.getId());
+        response.setUsername(user.getFirstName() + " " + user.getLastName());
         response.setEmail(user.getEmail());
         response.setRole(user.getRole().name());
         response.setMessage("Utilisateur promu enseignant");
@@ -172,19 +181,19 @@ public class AuthService {
     public AuthResponse deleteUser(BigInteger id) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN) {
-            return AuthResponse.error("Accès refusé");
+            return AuthResponse.error("Acces refuse");
         }
         if (!userRepository.existsById(id)) {
             return AuthResponse.error("Utilisateur introuvable");
         }
         userRepository.deleteById(id);
-        return AuthResponse.success("Utilisateur supprimé");
+        return AuthResponse.success("Utilisateur supprime");
     }
 
     public AuthResponse updateProfile(BigInteger id, RegisterRequest request) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN && !requester.getId().equals(id)) {
-            return AuthResponse.error("Accès refusé");
+            return AuthResponse.error("Acces refuse");
         }
 
         User user = userRepository.findById(id).orElse(null);
@@ -193,19 +202,21 @@ public class AuthService {
         }
 
         if (!user.getEmail().equals(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
-            return AuthResponse.error("Email déjà utilisé");
+            return AuthResponse.error("Email deja utilise");
         }
 
-        user.setNom(request.getNom());
+        // 🔥 CORRECTION: Utiliser setFirstName et setLastName
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
         userRepository.save(user);
 
         AuthResponse response = new AuthResponse();
-        response.setUserId(user.getId());  // 🔥 setUserId au lieu de setId
-        response.setUsername(user.getNom());
+        response.setUserId(user.getId());
+        response.setUsername(user.getFirstName() + " " + user.getLastName());
         response.setEmail(user.getEmail());
         response.setRole(user.getRole().name());
-        response.setMessage("Profil mis à jour");
+        response.setMessage("Profil mis a jour");
         response.setSuccess(true);
         return response;
     }
@@ -213,7 +224,7 @@ public class AuthService {
     public AuthResponse changePassword(BigInteger id, ChangePasswordRequest request) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN && !requester.getId().equals(id)) {
-            return AuthResponse.error("Accès refusé");
+            return AuthResponse.error("Acces refuse");
         }
 
         User user = userRepository.findById(id).orElse(null);
@@ -228,7 +239,7 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
 
-        return AuthResponse.success("Mot de passe modifié");
+        return AuthResponse.success("Mot de passe modifie");
     }
 
     // ================= MAPPING =================
@@ -236,7 +247,8 @@ public class AuthService {
     private UserDto mapToDto(User user) {
         UserDto dto = new UserDto();
         dto.setId(user.getId());
-        dto.setNom(user.getNom());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
         dto.setEmail(user.getEmail());
         dto.setRole(user.getRole().name());
         dto.setCreatedAt(user.getCreatedAt());

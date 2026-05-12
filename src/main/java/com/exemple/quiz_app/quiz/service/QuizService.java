@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -201,8 +202,10 @@ public class QuizService {
         for (StudentListDto.StudentInfo info : studentList.getStudents()) {
             User student = userRepository.findByEmail(info.getEmail()).orElse(null);
             if (student == null) {
+                // 🔥 CORRECTION : Utiliser firstName et lastName
                 student = new User();
-                student.setNom(info.getNom() + " " + info.getPrenom());
+                student.setFirstName(info.getNom());
+                student.setLastName(info.getPrenom());
                 student.setEmail(info.getEmail());
                 student.setRole(Role.ETUDIANT);
                 student = userRepository.save(student);
@@ -231,9 +234,9 @@ public class QuizService {
         return quizStudentRepository.findByQuiz(quiz).stream().map(qs -> {
             StudentListDto.StudentInfo info = new StudentListDto.StudentInfo();
             User s = qs.getStudent();
-            String[] parts = s.getNom().split(" ", 2);
-            info.setNom(parts[0]);
-            info.setPrenom(parts.length > 1 ? parts[1] : "");
+            // 🔥 CORRECTION : Utiliser getFirstName() et getLastName()
+            info.setNom(s.getFirstName() != null ? s.getFirstName() : "");
+            info.setPrenom(s.getLastName() != null ? s.getLastName() : "");
             info.setEmail(s.getEmail());
             info.setClasse("Non definie");
             info.setFiliere("Non definie");
@@ -251,7 +254,7 @@ public class QuizService {
             throw new RuntimeException("Vous n'etes pas le proprietaire");
         }
 
-        User student = userRepository.findById(java.math.BigInteger.valueOf(studentId))
+        User student = userRepository.findById(BigInteger.valueOf(studentId))
                 .orElseThrow(() -> new RuntimeException("Etudiant non trouve"));
 
         QuizStudent qs = quizStudentRepository.findByQuizAndStudent(quiz, student)
@@ -297,7 +300,8 @@ public class QuizService {
         response.setTimeLimit(quiz.getTimeLimit());
         response.setStatus(quiz.getStatus().name());
         response.setCreationType(quiz.getCreationType().name());
-        response.setEnseignantNom(quiz.getEnseignant().getNom());
+        // 🔥 CORRECTION : Utiliser getFirstName() et getLastName()
+        response.setEnseignantNom(quiz.getEnseignant().getFirstName() + " " + quiz.getEnseignant().getLastName());
         response.setTotalStudentsAllowed(quizRepository.countAllowedStudents(quiz.getId()));
         response.setCreatedAt(quiz.getCreatedAt());
         return response;

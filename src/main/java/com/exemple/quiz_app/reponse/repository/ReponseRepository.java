@@ -45,4 +45,11 @@ public interface ReponseRepository extends JpaRepository<Reponse, Long> {
     long countDistinctStudentsByQuiz(@Param("quiz") Quiz quiz);
 
     List<Reponse> findByStudentAndQuestionQuizId(User student, Long id);
+
+
+    // 🔥 AJOUTER CETTE MÉTHODE
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Reponse r WHERE r.question.quiz.id = :quizId")
+    void deleteByQuizId(@Param("quizId") Long quizId);
 }

@@ -1,49 +1,40 @@
 package com.exemple.quiz_app.resultat.mapper;
+
 import com.exemple.quiz_app.auth.model.User;
 import com.exemple.quiz_app.quiz.entity.Quiz;
-import com.exemple.quiz_app.resultat.dto.ResultatRequestDto;
 import com.exemple.quiz_app.resultat.dto.ResultatDto;
+import com.exemple.quiz_app.resultat.dto.ResultatRequestDto;
 import com.exemple.quiz_app.resultat.entity.Resultat;
 import org.springframework.stereotype.Component;
+
 @Component
 public class ResultatMapper {
-    // Méthodes helper pour éviter les répétitions
+
+    // ========== MÉTHODES PRIVÉES ==========
+
     private Long getQuizId(Resultat resultat) {
         return resultat.getQuiz() != null ? resultat.getQuiz().getId() : null;
     }
+
     private String getQuizTitle(Resultat resultat) {
-        return resultat.getQuiz() !=null ? resultat.getQuiz().getTitre() : null;
+        return resultat.getQuiz() != null ? resultat.getQuiz().getTitre() : null;
     }
+
     private String getQuizTheme(Resultat resultat) {
         return resultat.getQuiz() != null ? resultat.getQuiz().getTheme() : null;
     }
+
     private Long getStudentId(Resultat resultat) {
-        return resultat.getStudent() != null ? resultat.getStudent().getId() : null;
+        return resultat.getStudent() != null ? resultat.getStudent().getId().longValue() : null;
     }
+
     private String getStudentName(Resultat resultat) {
         if (resultat.getStudent() == null) return null;
-        return resultat.getStudent().getLastName() + " " + resultat.getStudent().getFirstName();
+        return resultat.getStudent().getFirstName() + " " + resultat.getStudent().getLastName();
     }
-    /**
-     * Convertir ResultatRequestDto → Entity Resultat
-     */
-    public Resultat toEntity(ResultatRequestDto requestDto, Quiz quiz, User student) {
-        if (requestDto == null) {
-            return null;
-        }
-        Resultat resultat = new Resultat();
-        resultat.setQuiz(quiz);
-        resultat.setStudent(student);
-        resultat.setScore(requestDto.getScore());
-        resultat.setTotalPoints(requestDto.getTotalPoints());
-        resultat.setEarnedPoints(requestDto.getEarnedPoints());
-        resultat.setScorePercentage(requestDto.getScorePercentage());
-        resultat.setIsCompleted(requestDto.getIsCompleted() != null ? requestDto.getIsCompleted() : false);
-        if (requestDto.getCompletedDate() != null) {
-            resultat.setCompletedDate(requestDto.getCompletedDate());
-        }
-        return resultat;
-    }
+
+    // ========== ENTITY VERS DTO ==========
+
     /**
      * Convertir Entity Resultat → ResultatDto
      */
@@ -51,6 +42,7 @@ public class ResultatMapper {
         if (resultat == null) {
             return null;
         }
+
         return ResultatDto.builder()
                 .id(resultat.getId())
                 .quizId(getQuizId(resultat))
@@ -73,6 +65,35 @@ public class ResultatMapper {
                 .completedDate(resultat.getCompletedDate())
                 .build();
     }
+
+    // ========== DTO VERS ENTITY ==========
+
+    /**
+     * Convertir ResultatRequestDto → Entity Resultat
+     */
+    public Resultat toEntity(ResultatRequestDto requestDto, Quiz quiz, User student) {
+        if (requestDto == null) {
+            return null;
+        }
+
+        Resultat resultat = new Resultat();
+        resultat.setQuiz(quiz);
+        resultat.setStudent(student);
+        resultat.setScore(requestDto.getScore());
+        resultat.setTotalPoints(requestDto.getTotalPoints());
+        resultat.setEarnedPoints(requestDto.getEarnedPoints());
+        resultat.setScorePercentage(requestDto.getScorePercentage());
+        resultat.setIsCompleted(requestDto.getIsCompleted() != null ? requestDto.getIsCompleted() : false);
+
+        if (requestDto.getCompletedDate() != null) {
+            resultat.setCompletedDate(requestDto.getCompletedDate());
+        }
+
+        return resultat;
+    }
+
+    // ========== MISE À JOUR ENTITY ==========
+
     /**
      * Mettre à jour une entité existante avec les données du DTO
      */
@@ -80,6 +101,7 @@ public class ResultatMapper {
         if (requestDto == null || resultat == null) {
             return;
         }
+
         if (requestDto.getScore() != null) {
             resultat.setScore(requestDto.getScore());
         }

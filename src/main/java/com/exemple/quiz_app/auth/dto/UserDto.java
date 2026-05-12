@@ -6,7 +6,8 @@ import java.time.LocalDateTime;
 public class UserDto {
 
     private BigInteger id;
-    private String nom;
+    private String firstName;
+    private String lastName;
     private String email;
     private String role;
     private LocalDateTime createdAt;
@@ -14,9 +15,11 @@ public class UserDto {
 
     public UserDto() {}
 
-    public UserDto(BigInteger id, String nom, String email, String role, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public UserDto(BigInteger id, String firstName, String lastName, String email, String role,
+                   LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
-        this.nom = nom;
+        this.firstName = firstName;
+        this.lastName = lastName;
         this.email = email;
         this.role = role;
         this.createdAt = createdAt;
@@ -26,8 +29,11 @@ public class UserDto {
     public BigInteger getId() { return id; }
     public void setId(BigInteger id) { this.id = id; }
 
-    public String getNom() { return nom; }
-    public void setNom(String nom) { this.nom = nom; }
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }

@@ -119,4 +119,6 @@ public interface ResultatRepository extends JpaRepository<Resultat, Long> {
     @Transactional
     @Query("UPDATE Resultat r SET r.status = :status, r.submittedAt = :submittedAt WHERE r.id = :id")
     void updateStatus(@Param("id") Long id, @Param("status") Resultat.SubmissionStatus status, @Param("submittedAt") LocalDateTime submittedAt);
+
+
 }

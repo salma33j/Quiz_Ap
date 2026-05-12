@@ -49,8 +49,26 @@ public class User {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    // Constructeurs
+    // ========== CONSTRUCTEURS ==========
+
     public User() {}
+
+    public User(String firstName, String lastName, String email, String password, Role role) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+    }
+
+    public User(String fullName, String email, String password, Role role) {
+        String[] parts = fullName.split(" ", 2);
+        this.firstName = parts[0];
+        this.lastName = parts.length > 1 ? parts[1] : "";
+        this.email = email;
+        this.password = password;
+        this.role = role;
+    }
 
     public User(BigInteger id, String firstName, String lastName, String email, String password, Role role) {
         this.id = id;
@@ -61,15 +79,8 @@ public class User {
         this.role = role;
     }
 
-    public User(String firstName, String lastName, String email, String password, Role role) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.password = password;
-        this.role = role;
-    }
+    // ========== GETTERS ==========
 
-    // Getters
     public BigInteger getId() { return id; }
     public String getFirstName() { return firstName; }
     public String getLastName() { return lastName; }
@@ -79,17 +90,8 @@ public class User {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 
-    // 🔥 Méthode getNom() corrigée - retourne le nom complet
-    public String getNom() {
-        return firstName + " " + lastName;
-    }
+    // ========== SETTERS ==========
 
-    // 🔥 Méthode getFullName() - alternative
-    public String getFullName() {
-        return firstName + " " + lastName;
-    }
-
-    // Setters
     public void setId(BigInteger id) { this.id = id; }
     public void setFirstName(String firstName) { this.firstName = firstName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
@@ -98,6 +100,16 @@ public class User {
     public void setRole(Role role) { this.role = role; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    // ========== MÉTHODES UTILITAIRES ==========
+
+    public String getNom() {
+        return firstName + " " + lastName;
+    }
+
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
 
     @Override
     public String toString() {
