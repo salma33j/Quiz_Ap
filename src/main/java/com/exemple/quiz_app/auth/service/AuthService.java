@@ -10,7 +10,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,46 +25,28 @@ public class AuthService {
     @Autowired
     private JwtUtil jwtUtil;
 
-    // ================= CURRENT USER =================
-
     public User getCurrentUser() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || auth.getName() == null || auth.getName().equals("anonymousUser")) {
             throw new RuntimeException("Utilisateur non authentifie");
         }
-        String email = auth.getName();
-        return userRepository.findByEmail(email)
+        return userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
     }
-
-    // ================= REGISTER =================
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             return AuthResponse.error("Email deja utilise");
         }
-
         Role role = Role.ETUDIANT;
         if (request.getRole() != null) {
-            try {
-                role = Role.valueOf(request.getRole().toUpperCase());
-            } catch (IllegalArgumentException e) {
-                role = Role.ETUDIANT;
-            }
+            try { role = Role.valueOf(request.getRole().toUpperCase()); }
+            catch (IllegalArgumentException e) { role = Role.ETUDIANT; }
         }
-
-        // 🔥 CORRECTION: Utiliser firstName et lastName
-        User user = new User(
-                request.getFirstName(),
-                request.getLastName(),
-                request.getEmail(),
-                passwordEncoder.encode(request.getPassword()),
-                role
-        );
-
+        User user = new User(request.getFirstName(), request.getLastName(),
+                request.getEmail(), passwordEncoder.encode(request.getPassword()), role);
         user = userRepository.save(user);
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-
         AuthResponse response = new AuthResponse();
         response.setToken(token);
         response.setUserId(user.getId());
@@ -75,21 +56,15 @@ public class AuthService {
         response.setMessage("Inscription reussie");
         response.setSuccess(true);
         response.setType("Bearer");
-
         return response;
     }
 
-    // ================= LOGIN =================
-
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail()).orElse(null);
-
         if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             return AuthResponse.error("Email ou mot de passe incorrect");
         }
-
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-
         AuthResponse response = new AuthResponse();
         response.setToken(token);
         response.setUserId(user.getId());
@@ -99,11 +74,8 @@ public class AuthService {
         response.setMessage("Connexion reussie");
         response.setSuccess(true);
         response.setType("Bearer");
-
         return response;
     }
-
-    // ================= GET CURRENT USER INFO =================
 
     public AuthResponse getCurrentUserInfo() {
         try {
@@ -121,8 +93,6 @@ public class AuthService {
         }
     }
 
-    // ================= ADMIN : GESTION DES UTILISATEURS =================
-
     public List<UserDto> getAllUsers() {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN) {
@@ -131,12 +101,11 @@ public class AuthService {
         return userRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
-    public AuthResponse getUserById(BigInteger id) {
+    public AuthResponse getUserById(Long id) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN && !requester.getId().equals(id)) {
             return AuthResponse.error("Acces refuse");
         }
-
         return userRepository.findById(id)
                 .map(user -> {
                     AuthResponse response = new AuthResponse();
@@ -151,23 +120,16 @@ public class AuthService {
                 .orElse(AuthResponse.error("Utilisateur introuvable"));
     }
 
-    public AuthResponse promoteToTeacher(BigInteger userId) {
+    public AuthResponse promoteToTeacher(Long userId) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN) {
             return AuthResponse.error("Acces refuse - Reserve aux administrateurs");
         }
-
         User user = userRepository.findById(userId).orElse(null);
-        if (user == null) {
-            return AuthResponse.error("Utilisateur introuvable");
-        }
-        if (user.getRole() == Role.ENSEIGNANT) {
-            return AuthResponse.error("L'utilisateur est deja enseignant");
-        }
-
+        if (user == null) return AuthResponse.error("Utilisateur introuvable");
+        if (user.getRole() == Role.ENSEIGNANT) return AuthResponse.error("L'utilisateur est deja enseignant");
         user.setRole(Role.ENSEIGNANT);
         userRepository.save(user);
-
         AuthResponse response = new AuthResponse();
         response.setUserId(user.getId());
         response.setUsername(user.getFirstName() + " " + user.getLastName());
@@ -178,39 +140,28 @@ public class AuthService {
         return response;
     }
 
-    public AuthResponse deleteUser(BigInteger id) {
+    public AuthResponse deleteUser(Long id) {
         User requester = getCurrentUser();
-        if (requester.getRole() != Role.ADMIN) {
-            return AuthResponse.error("Acces refuse");
-        }
-        if (!userRepository.existsById(id)) {
-            return AuthResponse.error("Utilisateur introuvable");
-        }
+        if (requester.getRole() != Role.ADMIN) return AuthResponse.error("Acces refuse");
+        if (!userRepository.existsById(id)) return AuthResponse.error("Utilisateur introuvable");
         userRepository.deleteById(id);
         return AuthResponse.success("Utilisateur supprime");
     }
 
-    public AuthResponse updateProfile(BigInteger id, RegisterRequest request) {
+    public AuthResponse updateProfile(Long id, RegisterRequest request) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN && !requester.getId().equals(id)) {
             return AuthResponse.error("Acces refuse");
         }
-
         User user = userRepository.findById(id).orElse(null);
-        if (user == null) {
-            return AuthResponse.error("Utilisateur introuvable");
-        }
-
+        if (user == null) return AuthResponse.error("Utilisateur introuvable");
         if (!user.getEmail().equals(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
             return AuthResponse.error("Email deja utilise");
         }
-
-        // 🔥 CORRECTION: Utiliser setFirstName et setLastName
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
         userRepository.save(user);
-
         AuthResponse response = new AuthResponse();
         response.setUserId(user.getId());
         response.setUsername(user.getFirstName() + " " + user.getLastName());
@@ -221,28 +172,20 @@ public class AuthService {
         return response;
     }
 
-    public AuthResponse changePassword(BigInteger id, ChangePasswordRequest request) {
+    public AuthResponse changePassword(Long id, ChangePasswordRequest request) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN && !requester.getId().equals(id)) {
             return AuthResponse.error("Acces refuse");
         }
-
         User user = userRepository.findById(id).orElse(null);
-        if (user == null) {
-            return AuthResponse.error("Utilisateur introuvable");
-        }
-
+        if (user == null) return AuthResponse.error("Utilisateur introuvable");
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
             return AuthResponse.error("Ancien mot de passe incorrect");
         }
-
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
-
         return AuthResponse.success("Mot de passe modifie");
     }
-
-    // ================= MAPPING =================
 
     private UserDto mapToDto(User user) {
         UserDto dto = new UserDto();

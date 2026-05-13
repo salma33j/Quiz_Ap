@@ -1,12 +1,12 @@
 package com.exemple.quiz_app.auth.dto;
 
-import java.math.BigInteger;
+
 
 public class AuthResponse {
     private String token;
     private String refreshToken;
     private String type;
-    private BigInteger userId;  //  Changé de Long à BigInteger
+    private Long userId;  //  Changé de Long à BigInteger
     private String username;
     private String email;
     private String role;
@@ -22,7 +22,7 @@ public class AuthResponse {
     }
 
     // Constructeur pour connexion réussie (minimum requis)
-    public AuthResponse(String token, String username, String role, BigInteger id) {
+    public AuthResponse(String token, String username, String role, Long id) {
         this();
         this.token = token;
         this.username = username;
@@ -31,7 +31,7 @@ public class AuthResponse {
     }
 
     // Constructeur pour connexion réussie avec email
-    public AuthResponse(String token, String username, String email, String role, BigInteger id) {
+    public AuthResponse(String token, String username, String email, String role, Long id) {
         this(token, username, role, id);
         this.email = email;
     }
@@ -44,7 +44,7 @@ public class AuthResponse {
     }
 
     // Constructeur complet
-    public AuthResponse(String token, String refreshToken, String type, BigInteger id,
+    public AuthResponse(String token, String refreshToken, String type, Long id,
                         String username, String email, String role, String fullName,
                         Long expiresIn) {
         this.token = token;
@@ -63,7 +63,7 @@ public class AuthResponse {
     public String getToken() { return token; }
     public String getRefreshToken() { return refreshToken; }
     public String getType() { return type; }
-    public BigInteger getUserId() { return userId; }
+    public Long getUserId() { return userId; }
     public String getUsername() { return username; }
     public String getEmail() { return email; }
     public String getRole() { return role; }
@@ -76,7 +76,7 @@ public class AuthResponse {
     public void setToken(String token) { this.token = token; }
     public void setRefreshToken(String refreshToken) { this.refreshToken = refreshToken; }
     public void setType(String type) { this.type = type; }
-    public void setUserId(BigInteger userId) { this.userId = userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
     public void setUsername(String username) { this.username = username; }
     public void setEmail(String email) { this.email = email; }
     public void setRole(String role) { this.role = role; }
@@ -91,7 +91,7 @@ public class AuthResponse {
     }
 
     // Méthode utilitaire pour créer une réponse de succès simple
-    public static AuthResponse success(String token, String username, String role, BigInteger id) {
+    public static AuthResponse success(String token, String username, String role, Long id) {
         return new AuthResponse(token, username, role, id);
     }
 

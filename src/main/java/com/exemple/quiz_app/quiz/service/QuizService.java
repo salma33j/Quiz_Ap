@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigInteger;
+
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -254,7 +254,7 @@ public class QuizService {
             throw new RuntimeException("Vous n'etes pas le proprietaire");
         }
 
-        User student = userRepository.findById(BigInteger.valueOf(studentId))
+        User student = userRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Etudiant non trouve"));
 
         QuizStudent qs = quizStudentRepository.findByQuizAndStudent(quiz, student)

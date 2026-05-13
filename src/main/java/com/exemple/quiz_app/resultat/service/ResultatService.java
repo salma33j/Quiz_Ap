@@ -209,8 +209,8 @@ public class ResultatService {
      */
     public List<ResultatDto> getResultatsByStudent() {
         User currentUser = authService.getCurrentUser();
-        // 🔥 CORRECTION : utiliser findByStudentOrderBySubmittedAtDesc
-        List<Resultat> resultats = resultatRepository.findByStudentOrderBySubmittedAtDesc(currentUser);
+        // 🔥 CORRECTION : utiliser findByStudentOrderByCompletedDateDesc
+        List<Resultat> resultats = resultatRepository.findByStudentOrderByCompletedDateDesc(currentUser);
         return resultats.stream()
                 .map(resultatMapper::toDto)
                 .collect(Collectors.toList());

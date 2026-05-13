@@ -7,8 +7,6 @@ import jakarta.validation.constraints.Size;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.math.BigInteger;
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,7 +16,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private BigInteger id;
+    private Long id;
 
     @NotBlank(message = "Le nom est obligatoire")
     @Column(nullable = false)
@@ -70,7 +68,7 @@ public class User {
         this.role = role;
     }
 
-    public User(BigInteger id, String firstName, String lastName, String email, String password, Role role) {
+    public User(Long id, String firstName, String lastName, String email, String password, Role role) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -81,7 +79,7 @@ public class User {
 
     // ========== GETTERS ==========
 
-    public BigInteger getId() { return id; }
+    public Long getId() { return id; }
     public String getFirstName() { return firstName; }
     public String getLastName() { return lastName; }
     public String getEmail() { return email; }
@@ -92,7 +90,7 @@ public class User {
 
     // ========== SETTERS ==========
 
-    public void setId(BigInteger id) { this.id = id; }
+    public void setId(Long id) { this.id = id; }
     public void setFirstName(String firstName) { this.firstName = firstName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
     public void setEmail(String email) { this.email = email; }
