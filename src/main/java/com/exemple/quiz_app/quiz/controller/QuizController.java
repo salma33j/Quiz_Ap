@@ -18,7 +18,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/teacher")
-@PreAuthorize("hasRole('ENSEIGNANT')")
+@PreAuthorize("hasAnyRole('ENSEIGNANT', 'ADMIN')")
 public class QuizController {
 
     @Autowired

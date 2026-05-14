@@ -1,24 +1,32 @@
 package com.exemple.quiz_app.AI.config;
 
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class GeminiConfig {
 
+    private static final Logger log = LoggerFactory.getLogger(GeminiConfig.class);
+
     @Value("${gemini.api.key:}")
     private String apiKey;
 
-    @Value("${gemini.api.url:https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent}")
+    // ✅ Valeur par défaut corrigée
+    @Value("${gemini.api.url:https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent}")
     private String apiUrl;
 
-    public String getApiKey() {
-        return apiKey;
+    @PostConstruct
+    void logResolvedGeminiEndpoint() {
+        log.info("✅ Gemini URL utilisée : {}", apiUrl);
+        log.info("✅ Clé configurée : {}", apiKey != null && !apiKey.isEmpty() ? "OUI" : "NON");
     }
 
-    public String getApiUrl() {
-        return apiUrl + "?key=" + apiKey;
-    }
+    public String getApiKey() { return apiKey; }
+
+    public String getApiUrl() { return apiUrl + "?key=" + apiKey; }
 
     public boolean isApiConfigured() {
         return apiKey != null && !apiKey.isEmpty();

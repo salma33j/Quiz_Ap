@@ -22,6 +22,10 @@ logging.level.org.springframework.security=DEBUG
 jwt.secret=mySuperSecretKeyForJWTGeneration2025QuizApp
 jwt.expirationMs=86400000   # 24h
 
-# Gemini API
-gemini.api.key=AIzaSyVotreCleApiIci
-gemini.api.url=https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent
+# Fichier optionnel pour secrets locaux (clÃ© Gemini, etc.) â copier application-local.properties.example
+spring.config.import=optional:classpath:application-local.properties
+
+# Gemini API â gemini-pro n'est plus disponible sur v1beta ; utiliser gemini-1.5-flash (ou gemini-2.0-flash selon ListModels).
+# ClÃ© : variable GEMINI_API_KEY, ou gemini.api.key dans application-local.properties (non versionnÃ©).
+gemini.api.key=ta_clè
+gemini.api.url=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent

@@ -11,7 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/student")
-@PreAuthorize("hasRole('ETUDIANT')")  //  Bloque tout le contrôleur
+@PreAuthorize("hasAnyRole('ETUDIANT', 'ADMIN')")
 public class StudentQuestionController {
 
     @Autowired
@@ -22,7 +22,7 @@ public class StudentQuestionController {
      * 🔐 Seul ÉTUDIANT (vérifié par @PreAuthorize)
      */
     @GetMapping("/quizzes/{quizId}/questions")
-    @PreAuthorize("hasRole('ETUDIANT')")
+    @PreAuthorize("hasAnyRole('ETUDIANT', 'ADMIN')")
     public ResponseEntity<List<QuestionDto>> getQuestionsForStudent(@PathVariable Long quizId) {
         return ResponseEntity.ok(questionService.getQuestionsByQuizForStudent(quizId));
     }

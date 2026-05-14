@@ -37,7 +37,7 @@ public class StudentQuizService {
             dto.setId(quiz.getId());
             dto.setTitre(quiz.getTitre());
             dto.setTheme(quiz.getTheme());
-            dto.setEnseignantNom(quiz.getEnseignant().getNom());
+            dto.setEnseignantNom(teacherDisplayName(quiz.getEnseignant()));
             dto.setQuestionCount(quiz.getQuestionCount());
             dto.setTimeLimit(quiz.getTimeLimit());
             dto.setAvailableUntil(quiz.getAvailableUntil());
@@ -67,7 +67,7 @@ public class StudentQuizService {
             dto.setId(quiz.getId());
             dto.setTitre(quiz.getTitre());
             dto.setTheme(quiz.getTheme());
-            dto.setEnseignantNom(quiz.getEnseignant().getNom());
+            dto.setEnseignantNom(teacherDisplayName(quiz.getEnseignant()));
             dto.setQuestionCount(quiz.getQuestionCount());
             dto.setTimeLimit(quiz.getTimeLimit());
             dto.setAvailableUntil(quiz.getAvailableUntil());
@@ -98,7 +98,7 @@ public class StudentQuizService {
         dto.setId(quiz.getId());
         dto.setTitre(quiz.getTitre());
         dto.setTheme(quiz.getTheme());
-        dto.setEnseignantNom(quiz.getEnseignant().getNom());
+        dto.setEnseignantNom(teacherDisplayName(quiz.getEnseignant()));
         dto.setQuestionCount(quiz.getQuestionCount());
         dto.setTimeLimit(quiz.getTimeLimit());
         dto.setAvailableUntil(quiz.getAvailableUntil());
@@ -144,5 +144,13 @@ public class StudentQuizService {
         result.put("questionCount", quiz.getQuestionCount());
         result.put("availableUntil", quiz.getAvailableUntil());
         return result;
+    }
+
+    /** Nom affiché de l'enseignant : pas de colonne "nom" en base, seulement firstName + lastName sur {@link User}. */
+    private static String teacherDisplayName(User enseignant) {
+        if (enseignant == null) {
+            return null;
+        }
+        return enseignant.getFullName();
     }
 }

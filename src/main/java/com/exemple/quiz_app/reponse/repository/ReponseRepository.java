@@ -44,7 +44,9 @@ public interface ReponseRepository extends JpaRepository<Reponse, Long> {
     @Query("SELECT COUNT(DISTINCT r.student) FROM Reponse r WHERE r.quiz = :quiz")
     long countDistinctStudentsByQuiz(@Param("quiz") Quiz quiz);
 
-    List<Reponse> findByStudentAndQuestionQuizId(User student, Long id);
+    // Réponses d'un étudiant pour un quiz (chemin explicite pour éviter toute ambiguïté Spring Data)
+    @Query("SELECT r FROM Reponse r WHERE r.student = :student AND r.question.quiz.id = :quizId")
+    List<Reponse> findByStudentAndQuestionQuizId(@Param("student") User student, @Param("quizId") Long quizId);
 
 
     // 🔥 AJOUTER CETTE MÉTHODE

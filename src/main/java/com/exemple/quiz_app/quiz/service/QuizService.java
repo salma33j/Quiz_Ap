@@ -198,17 +198,23 @@ public class QuizService {
             throw new RuntimeException("Quiz expire, plus d'ajout possible");
         }
 
+        if (studentList.getStudents() == null || studentList.getStudents().isEmpty()) {
+            throw new RuntimeException("La liste students est vide ou absente");
+        }
+
         int added = 0;
         for (StudentListDto.StudentInfo info : studentList.getStudents()) {
-            User student = userRepository.findByEmail(info.getEmail()).orElse(null);
-            if (student == null) {
-                // 🔥 CORRECTION : Utiliser firstName et lastName
-                student = new User();
-                student.setFirstName(info.getNom());
-                student.setLastName(info.getPrenom());
-                student.setEmail(info.getEmail());
-                student.setRole(Role.ETUDIANT);
-                student = userRepository.save(student);
+            if (info == null || info.getEmail() == null || info.getEmail().isBlank()) {
+                throw new RuntimeException("Chaque etudiant doit avoir un email");
+            }
+            String email = info.getEmail().trim();
+            User student = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException(
+                            "Aucun compte pour l'email \"" + email
+                                    + "\". L'etudiant doit d'abord s'inscrire (POST /api/auth/register avec role ETUDIANT)."));
+
+            if (student.getRole() != Role.ETUDIANT && student.getRole() != Role.ADMIN) {
+                throw new RuntimeException("L'email \"" + email + "\" n'est pas un compte etudiant");
             }
 
             if (!quizStudentRepository.existsByQuizAndStudent(quiz, student)) {

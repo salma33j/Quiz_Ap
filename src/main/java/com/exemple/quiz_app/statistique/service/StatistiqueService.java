@@ -113,13 +113,11 @@ public class StatistiqueService {
     public StatistiqueDto getMyPerformance() {
         User student = authService.getCurrentUser();
 
-        if (student.getRole() != Role.ETUDIANT) {
+        if (student.getRole() != Role.ETUDIANT && student.getRole() != Role.ADMIN) {
             throw new RuntimeException("Acces reserve aux etudiants");
         }
 
-        // 🔥 CORRECTION: Déclarer correctement currentUser et myResults
-        User currentUser = authService.getCurrentUser();
-        List<Resultat> myResults = resultatRepository.findByStudentOrderByCompletedDateDesc(currentUser);
+        List<Resultat> myResults = resultatRepository.findByStudentOrderByCompletedDateDesc(student);
 
         if (myResults.isEmpty()) {
             return StatistiqueDto.builder()
@@ -140,7 +138,7 @@ public class StatistiqueService {
     public StatistiqueDto.StudentStatDto getMyRanking(Long quizId) {
         User student = authService.getCurrentUser();
 
-        if (student.getRole() != Role.ETUDIANT) {
+        if (student.getRole() != Role.ETUDIANT && student.getRole() != Role.ADMIN) {
             throw new RuntimeException("Acces reserve aux etudiants");
         }
 

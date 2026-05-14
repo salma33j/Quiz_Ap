@@ -66,7 +66,7 @@ public class StatistiqueController {
      * GET /api/statistiques/student/my-performance
      */
     @GetMapping("/student/my-performance")
-    @PreAuthorize("hasRole('ETUDIANT')")
+    @PreAuthorize("hasAnyRole('ETUDIANT', 'ADMIN')")
     public ResponseEntity<StatistiqueDto> getMyPerformance() {
         return ResponseEntity.ok(statistiqueService.getMyPerformance());
     }
@@ -76,7 +76,7 @@ public class StatistiqueController {
      * GET /api/statistiques/student/ranking/{quizId}
      */
     @GetMapping("/student/ranking/{quizId}")
-    @PreAuthorize("hasRole('ETUDIANT')")
+    @PreAuthorize("hasAnyRole('ETUDIANT', 'ADMIN')")
     public ResponseEntity<StatistiqueDto.StudentStatDto> getMyRanking(@PathVariable Long quizId) {
         return ResponseEntity.ok(statistiqueService.getMyRanking(quizId));
     }

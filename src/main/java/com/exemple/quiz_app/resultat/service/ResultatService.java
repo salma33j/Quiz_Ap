@@ -279,7 +279,11 @@ public class ResultatService {
         int excellent = 0, tresBien = 0, bien = 0, assezBien = 0, moyen = 0, insuffisant = 0;
 
         for (Resultat r : resultats) {
-            double score = r.getScorePercentage();
+            Double scorePct = r.getScorePercentage();
+            if (scorePct == null) {
+                continue;
+            }
+            double score = scorePct;
             if (score >= 90) excellent++;
             else if (score >= 80) tresBien++;
             else if (score >= 70) bien++;
@@ -313,7 +317,7 @@ public class ResultatService {
 
                 if (reponse != null) {
                     totalReponses++;
-                    if (reponse.getIsCorrect()) {
+                    if (Boolean.TRUE.equals(reponse.getIsCorrect())) {
                         correctReponses++;
                     }
                 }

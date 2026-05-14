@@ -34,13 +34,10 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ Endpoints publics (authentification)
-                        .requestMatchers(
-                                "/api/auth/**",
-                                "/auth/**"
-                        ).permitAll()
+                        // Connexion / inscription sans JWT (les autres routes /api/auth/** sont protégées par @PreAuthorize)
+                        .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
 
-                        // ✅ Endpoints publics pour tests et documentation
                         .requestMatchers(
                                 "/actuator/health",
                                 "/swagger-ui/**",
@@ -48,54 +45,10 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // ✅ Rôle ENSEIGNANT uniquement
-                        .requestMatchers(
-                                "/api/quiz/create",
-                                "/api/quiz/update/**",
-                                "/api/quiz/delete/**",
-                                "/api/quiz/toggle/**",
-                                "/api/quiz/activate/**",
-                                "/api/quiz/deactivate/**",
-                                "/api/question/create/**",
-                                "/api/question/update/**",
-                                "/api/question/delete/**",
-                                "/api/reponse/create/**",
-                                "/api/reponse/update/**",
-                                "/api/reponse/delete/**",
-                                "/api/statistique/**",
-                                "/api/statistique/quiz/**",
-                                "/api/resultat/quiz/**",
-                                "/api/ai/generate-quiz"
-                        ).hasRole("TEACHER")
+                        // Rôles applicatifs = enum Role (ENSEIGNANT, ETUDIANT, ADMIN) → authorities ROLE_*
+                        .requestMatchers("/api/teacher/**").hasAnyRole("ENSEIGNANT", "ADMIN")
+                        .requestMatchers("/api/student/**").hasAnyRole("ETUDIANT", "ADMIN")
 
-                        // ✅ Rôle ÉTUDIANT uniquement
-                        .requestMatchers(
-                                "/api/quiz/available",
-                                "/api/quiz/active",
-                                "/api/quiz/participate/**",
-                                "/api/question/quiz/**",
-                                "/api/reponse/question/**",
-                                "/api/resultat/submit/**",
-                                "/api/resultat/my-results",
-                                "/api/resultat/history",
-                                "/api/resultat/score/**",
-                                "/api/statistique/my-performance"
-                        ).hasRole("STUDENT")
-
-                        // ✅ Endpoints accessibles aux deux rôles (enseignant + étudiant)
-                        .requestMatchers(
-                                "/api/quiz/**/details",
-                                "/api/quiz/**/info"
-                        ).hasAnyRole("TEACHER", "STUDENT")
-
-                        // ✅ Rôle ADMIN (optionnel - gestion globale)
-                        .requestMatchers(
-                                "/api/admin/**",
-                                "/api/auth/users/**",
-                                "/api/statistique/all"
-                        ).hasRole("ADMIN")
-
-                        // ✅ Toute autre requête nécessite une authentification
                         .anyRequest().authenticated()
                 )
                 // Ajouter le filtre JWT avant le filtre d'authentification standard

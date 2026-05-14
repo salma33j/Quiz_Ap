@@ -12,7 +12,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/student")
-@PreAuthorize("hasRole('ETUDIANT')")
+@PreAuthorize("hasAnyRole('ETUDIANT', 'ADMIN')")
 public class StudentQuizController {
 
     @Autowired
