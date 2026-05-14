@@ -38,10 +38,14 @@ public class ResultatService {
     private final AuthService authService;
     private final AiFeedbackService aiFeedbackService;
 
+    /**
+     * Enregistrer ou mettre à jour un résultat
+     */
     @Transactional
     public ResultatDto saveOrUpdateResultat(ResultatRequestDto resultatRequestDto) {
         User currentUser = authService.getCurrentUser();
 
+        // Déterminer l'étudiant
         User student;
         if (resultatRequestDto.getStudentId() != null &&
                 (currentUser.getRole() == Role.ENSEIGNANT || currentUser.getRole() == Role.ADMIN)) {
@@ -61,6 +65,7 @@ public class ResultatService {
             throw new RuntimeException("Ce quiz n'est plus disponible");
         }
 
+        // 🔥 CORRECTION : utiliser findByStudentAndQuizId
         Resultat resultat = resultatRepository.findByStudentAndQuizId(student, quiz.getId())
                 .orElse(null);
 
@@ -70,10 +75,11 @@ public class ResultatService {
             resultatMapper.updateEntity(resultatRequestDto, resultat);
         }
 
+        // Si le résultat est marqué comme complété
         if (resultatRequestDto.getIsCompleted() != null && resultatRequestDto.getIsCompleted() &&
                 (resultat.getIsCompleted() == null || !resultat.getIsCompleted())) {
             calculateFinalScore(resultat, student, quiz);
-            resultat.markAsCompleted();
+            resultat.markAsCompleted(); // Utiliser la méthode de l'entité
 
             if (resultatRequestDto.getGenerateFeedback() != null && resultatRequestDto.getGenerateFeedback()) {
                 generateAndSaveFeedback(resultat, resultatRequestDto.getLanguage());
@@ -84,8 +90,12 @@ public class ResultatService {
         return resultatMapper.toDto(savedResultat);
     }
 
+    /**
+     * Calculer le score final à partir des réponses
+     */
     private void calculateFinalScore(Resultat resultat, User student, Quiz quiz) {
         List<Question> questions = questionRepository.findByQuizId(quiz.getId());
+        // 🔥 CORRECTION : utiliser findByStudentAndQuestionQuizId
         List<Reponse> reponses = reponseRepository.findByStudentAndQuestionQuizId(student, quiz.getId());
 
         int totalPointsPossible = questions.stream().mapToInt(Question::getPoints).sum();
@@ -101,6 +111,9 @@ public class ResultatService {
         resultat.setGrade(resultat.getGradeLetter());
     }
 
+    /**
+     * Générer et sauvegarder le feedback IA pour un résultat
+     */
     @Transactional
     public ResultatDto generateAndSaveFeedback(Resultat resultat, String language) {
         if (resultat == null || !resultat.getIsCompleted()) {
@@ -111,6 +124,7 @@ public class ResultatService {
         User student = resultat.getStudent();
 
         List<Question> questions = questionRepository.findByQuizId(quiz.getId());
+        // 🔥 CORRECTION : utiliser findByStudentAndQuestionQuizId
         List<Reponse> reponses = reponseRepository.findByStudentAndQuestionQuizId(student, quiz.getId());
 
         FeedbackRequestDto feedbackRequest = new FeedbackRequestDto();
@@ -155,6 +169,9 @@ public class ResultatService {
         return resultatMapper.toDto(resultat);
     }
 
+    /**
+     * Générer du feedback IA pour un résultat par ID
+     */
     @Transactional
     public ResultatDto generateFeedbackForResultat(Long resultatId, String language) {
         User currentUser = authService.getCurrentUser();
@@ -172,11 +189,15 @@ public class ResultatService {
         return generateAndSaveFeedback(resultat, language);
     }
 
+    /**
+     * Obtenir le résultat d'un étudiant pour un quiz
+     */
     public ResultatDto getResultatByStudentAndQuiz(Long quizId) {
         User currentUser = authService.getCurrentUser();
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
 
+        // 🔥 CORRECTION : utiliser findByStudentAndQuizId
         Resultat resultat = resultatRepository.findByStudentAndQuizId(currentUser, quiz.getId())
                 .orElse(null);
 
@@ -188,13 +209,16 @@ public class ResultatService {
      */
     public List<ResultatDto> getResultatsByStudent() {
         User currentUser = authService.getCurrentUser();
-        // 🔥 CORRIGÉ: utiliser findByStudentOrderByCompletedDateDesc
+        // 🔥 CORRECTION : utiliser findByStudentOrderByCompletedDateDesc
         List<Resultat> resultats = resultatRepository.findByStudentOrderByCompletedDateDesc(currentUser);
         return resultats.stream()
                 .map(resultatMapper::toDto)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Obtenir tous les résultats pour un quiz (pour enseignant)
+     */
     public List<ResultatDto> getResultatsByQuiz(Long quizId) {
         User currentUser = authService.getCurrentUser();
         Quiz quiz = quizRepository.findById(quizId)
@@ -205,12 +229,16 @@ public class ResultatService {
             throw new RuntimeException("Vous n'êtes pas autorisé à voir les résultats de ce quiz");
         }
 
+        // 🔥 CORRECTION : utiliser findByQuizIdOrderByScorePercentageDesc
         List<Resultat> resultats = resultatRepository.findByQuizIdOrderByScorePercentageDesc(quiz.getId());
         return resultats.stream()
                 .map(resultatMapper::toDto)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Obtenir les statistiques pour un quiz
+     */
     public QuizStatisticsDto getQuizStatistics(Long quizId) {
         User currentUser = authService.getCurrentUser();
         Quiz quiz = quizRepository.findById(quizId)
@@ -221,6 +249,7 @@ public class ResultatService {
             throw new RuntimeException("Vous n'êtes pas autorisé à voir les statistiques de ce quiz");
         }
 
+        // 🔥 CORRECTION : utiliser les nouvelles méthodes
         Double averageScore = resultatRepository.getAverageScoreByQuizId(quiz.getId());
         Double bestScore = resultatRepository.getBestScoreByQuizId(quiz.getId());
         long totalStudents = resultatRepository.countByQuizIdAndStatus(quiz.getId(), Resultat.SubmissionStatus.SUBMITTED);
@@ -244,13 +273,13 @@ public class ResultatService {
      * Obtenir la distribution des scores
      */
     private ScoreDistribution getScoreDistribution(Quiz quiz) {
-        // 🔥 CORRIGÉ: utiliser findByQuizIdOrderByScorePercentageDesc
+        // 🔥 CORRECTION : utiliser findByQuizIdOrderByScorePercentageDesc
         List<Resultat> resultats = resultatRepository.findByQuizIdOrderByScorePercentageDesc(quiz.getId());
 
         int excellent = 0, tresBien = 0, bien = 0, assezBien = 0, moyen = 0, insuffisant = 0;
 
         for (Resultat r : resultats) {
-            double score = r.getScorePercentage() != null ? r.getScorePercentage() : 0;
+            double score = r.getScorePercentage();
             if (score >= 90) excellent++;
             else if (score >= 80) tresBien++;
             else if (score >= 70) bien++;
@@ -262,8 +291,12 @@ public class ResultatService {
         return new ScoreDistribution(excellent, tresBien, bien, assezBien, moyen, insuffisant);
     }
 
+    /**
+     * Obtenir les statistiques par question
+     */
     private List<QuestionStatsDto> getQuestionStatistics(Quiz quiz) {
         List<Question> questions = questionRepository.findByQuizId(quiz.getId());
+        // 🔥 CORRECTION : utiliser findByQuizIdOrderByScorePercentageDesc
         List<Resultat> resultats = resultatRepository.findByQuizIdOrderByScorePercentageDesc(quiz.getId());
         List<QuestionStatsDto> stats = new ArrayList<>();
 
@@ -280,7 +313,7 @@ public class ResultatService {
 
                 if (reponse != null) {
                     totalReponses++;
-                    if (Boolean.TRUE.equals(reponse.getIsCorrect())) {
+                    if (reponse.getIsCorrect()) {
                         correctReponses++;
                     }
                 }
@@ -298,7 +331,11 @@ public class ResultatService {
         return stats;
     }
 
+    /**
+     * Obtenir le classement des étudiants pour un quiz
+     */
     public List<RankingDto> getRanking(Quiz quiz) {
+        // 🔥 CORRECTION : utiliser getRankingByQuizId
         List<Object[]> results = resultatRepository.getRankingByQuizId(quiz.getId());
         List<RankingDto> ranking = new ArrayList<>();
         int rank = 1;
@@ -307,24 +344,32 @@ public class ResultatService {
             RankingDto dto = RankingDto.builder()
                     .rank(rank++)
                     .studentId((Long) row[0])
-                    .studentName(row[1] + " " + row[2])
-                    .scorePercentage((Double) row[4])
-                    .earnedPoints((Integer) row[5])
-                    .totalPoints((Integer) row[6])
+                    .studentName((String) row[1])
+                    .scorePercentage((Double) row[3])
+                    .earnedPoints((Integer) row[4])
+                    .totalPoints((Integer) row[5])
                     .build();
             ranking.add(dto);
         }
         return ranking;
     }
 
+    /**
+     * Supprimer un résultat par étudiant et quiz
+     */
     @Transactional
     public void deleteResultatByStudentAndQuiz(Long quizId) {
         User currentUser = authService.getCurrentUser();
+        // 🔥 CORRECTION : utiliser deleteByStudentIdAndQuizId
         resultatRepository.deleteByStudentIdAndQuizId(currentUser.getId().longValue(), quizId);
     }
 
+    /**
+     * Vérifier si un étudiant a complété le quiz
+     */
     public boolean hasCompletedQuiz(Long quizId) {
         User currentUser = authService.getCurrentUser();
+        // 🔥 CORRECTION : utiliser hasStudentCompletedQuiz
         return resultatRepository.hasStudentCompletedQuiz(currentUser.getId().longValue(), quizId);
     }
 

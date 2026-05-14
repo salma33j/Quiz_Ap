@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,8 +24,6 @@ public class AuthController {
 
     @Autowired
     private QuizAdminService quizAdminService;
-
-    // ================= AUTHENTIFICATION (PUBLIC) =================
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -46,8 +43,6 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // ================= PROFIL UTILISATEUR (PROTEGE) =================
-
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AuthResponse> getCurrentUser() {
@@ -55,7 +50,6 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // 🔥 CORRECTION: utiliser Long au lieu de Long
     @PutMapping("/profile/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AuthResponse> updateProfile(
@@ -68,7 +62,6 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // 🔥 CORRECTION: utiliser Long au lieu de Long
     @PutMapping("/user/{id}/password")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AuthResponse> changePassword(
@@ -77,8 +70,6 @@ public class AuthController {
         AuthResponse response = authService.changePassword(id, request);
         return ResponseEntity.ok(response);
     }
-
-    // ================= ADMIN ONLY : GESTION DES UTILISATEURS =================
 
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
@@ -92,14 +83,12 @@ public class AuthController {
         }
     }
 
-    // 🔥 CORRECTION: utiliser Long au lieu de Long
     @GetMapping("/user/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AuthResponse> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(authService.getUserById(id));
     }
 
-    // 🔥 CORRECTION: utiliser Long au lieu de Long
     @PutMapping("/promote/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AuthResponse> promoteToTeacher(@PathVariable Long userId) {
@@ -107,15 +96,12 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // 🔥 CORRECTION: utiliser Long au lieu de Long
     @DeleteMapping("/user/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AuthResponse> deleteUser(@PathVariable Long id) {
         AuthResponse response = authService.deleteUser(id);
         return ResponseEntity.ok(response);
     }
-
-    // ================= ADMIN ONLY : GESTION DES QUIZ EXPIRE =================
 
     @GetMapping("/admin/quizzes/expired")
     @PreAuthorize("hasRole('ADMIN')")
@@ -145,10 +131,7 @@ public class AuthController {
     public ResponseEntity<?> softDeleteQuiz(@PathVariable Long quizId) {
         try {
             Quiz quiz = quizAdminService.softDeleteQuiz(quizId);
-            return ResponseEntity.ok(Map.of(
-                    "message", "Quiz marque comme supprime",
-                    "quiz", quiz
-            ));
+            return ResponseEntity.ok(Map.of("message", "Quiz marque comme supprime", "quiz", quiz));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
@@ -159,10 +142,7 @@ public class AuthController {
     public ResponseEntity<?> restoreQuiz(@PathVariable Long quizId) {
         try {
             Quiz quiz = quizAdminService.restoreQuiz(quizId);
-            return ResponseEntity.ok(Map.of(
-                    "message", "Quiz restaure avec succes",
-                    "quiz", quiz
-            ));
+            return ResponseEntity.ok(Map.of("message", "Quiz restaure avec succes", "quiz", quiz));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
@@ -173,10 +153,7 @@ public class AuthController {
     public ResponseEntity<?> blockQuiz(@PathVariable Long quizId) {
         try {
             Quiz quiz = quizAdminService.blockQuiz(quizId);
-            return ResponseEntity.ok(Map.of(
-                    "message", "Quiz bloque avec succes",
-                    "quiz", quiz
-            ));
+            return ResponseEntity.ok(Map.of("message", "Quiz bloque avec succes", "quiz", quiz));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
@@ -190,10 +167,7 @@ public class AuthController {
         try {
             String newExpirationDate = request.get("newExpirationDate");
             Quiz quiz = quizAdminService.extendQuizExpiration(quizId, newExpirationDate);
-            return ResponseEntity.ok(Map.of(
-                    "message", "Date d'expiration prolongee",
-                    "quiz", quiz
-            ));
+            return ResponseEntity.ok(Map.of("message", "Date d'expiration prolongee", "quiz", quiz));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

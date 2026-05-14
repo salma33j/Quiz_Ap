@@ -6,7 +6,7 @@ public class AuthResponse {
     private String token;
     private String refreshToken;
     private String type;
-    private Long userId;  //  Changé de Long à Long
+    private Long userId;  //  Changé de Long à BigInteger
     private String username;
     private String email;
     private String role;

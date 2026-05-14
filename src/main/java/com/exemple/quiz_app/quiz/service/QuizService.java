@@ -254,7 +254,7 @@ public class QuizService {
             throw new RuntimeException("Vous n'etes pas le proprietaire");
         }
 
-        User student = userRepository.findById(Long.valueOf(studentId))
+        User student = userRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Etudiant non trouve"));
 
         QuizStudent qs = quizStudentRepository.findByQuizAndStudent(quiz, student)

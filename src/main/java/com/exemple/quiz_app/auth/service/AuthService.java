@@ -18,8 +18,10 @@ public class AuthService {
 
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private PasswordEncoder passwordEncoder;
+
     @Autowired
     private JwtUtil jwtUtil;
 
@@ -41,13 +43,10 @@ public class AuthService {
             try { role = Role.valueOf(request.getRole().toUpperCase()); }
             catch (IllegalArgumentException e) { role = Role.ETUDIANT; }
         }
-        User user = new User(
-                request.getFirstName(), request.getLastName(),
-                request.getEmail(), passwordEncoder.encode(request.getPassword()), role
-        );
+        User user = new User(request.getFirstName(), request.getLastName(),
+                request.getEmail(), passwordEncoder.encode(request.getPassword()), role);
         user = userRepository.save(user);
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-
         AuthResponse response = new AuthResponse();
         response.setToken(token);
         response.setUserId(user.getId());
@@ -66,7 +65,6 @@ public class AuthService {
             return AuthResponse.error("Email ou mot de passe incorrect");
         }
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-
         AuthResponse response = new AuthResponse();
         response.setToken(token);
         response.setUserId(user.getId());
@@ -103,7 +101,7 @@ public class AuthService {
         return userRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
-    public AuthResponse getUserById(Long id) {           // ← Long
+    public AuthResponse getUserById(Long id) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN && !requester.getId().equals(id)) {
             return AuthResponse.error("Acces refuse");
@@ -122,7 +120,7 @@ public class AuthService {
                 .orElse(AuthResponse.error("Utilisateur introuvable"));
     }
 
-    public AuthResponse promoteToTeacher(Long userId) {  // ← Long
+    public AuthResponse promoteToTeacher(Long userId) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN) {
             return AuthResponse.error("Acces refuse - Reserve aux administrateurs");
@@ -130,10 +128,8 @@ public class AuthService {
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) return AuthResponse.error("Utilisateur introuvable");
         if (user.getRole() == Role.ENSEIGNANT) return AuthResponse.error("L'utilisateur est deja enseignant");
-
         user.setRole(Role.ENSEIGNANT);
         userRepository.save(user);
-
         AuthResponse response = new AuthResponse();
         response.setUserId(user.getId());
         response.setUsername(user.getFirstName() + " " + user.getLastName());
@@ -144,7 +140,7 @@ public class AuthService {
         return response;
     }
 
-    public AuthResponse deleteUser(Long id) {            // ← Long
+    public AuthResponse deleteUser(Long id) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN) return AuthResponse.error("Acces refuse");
         if (!userRepository.existsById(id)) return AuthResponse.error("Utilisateur introuvable");
@@ -152,7 +148,7 @@ public class AuthService {
         return AuthResponse.success("Utilisateur supprime");
     }
 
-    public AuthResponse updateProfile(Long id, RegisterRequest request) {  // ← Long
+    public AuthResponse updateProfile(Long id, RegisterRequest request) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN && !requester.getId().equals(id)) {
             return AuthResponse.error("Acces refuse");
@@ -166,7 +162,6 @@ public class AuthService {
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
         userRepository.save(user);
-
         AuthResponse response = new AuthResponse();
         response.setUserId(user.getId());
         response.setUsername(user.getFirstName() + " " + user.getLastName());
@@ -177,7 +172,7 @@ public class AuthService {
         return response;
     }
 
-    public AuthResponse changePassword(Long id, ChangePasswordRequest request) {  // ← Long
+    public AuthResponse changePassword(Long id, ChangePasswordRequest request) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN && !requester.getId().equals(id)) {
             return AuthResponse.error("Acces refuse");
