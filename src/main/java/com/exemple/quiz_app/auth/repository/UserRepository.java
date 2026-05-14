@@ -1,17 +1,30 @@
 // auth/repository/UserRepository.java
 package com.exemple.quiz_app.auth.repository;
 
+import com.exemple.quiz_app.auth.model.Role;
 import com.exemple.quiz_app.auth.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigInteger;
+
+import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, BigInteger> {
+public interface UserRepository extends JpaRepository<User, Long > {
 
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
-    boolean existsById(BigInteger id);
+    boolean existsById(Long id);
+
+
+    // 🔥 AJOUTER CES MÉTHODES
+    long countByRole(Role role);
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.role = :role")
+    long countUsersByRole(@Param("role") Role role);
+
+    List<User> findByRole(Role role);
 }

@@ -1,11 +1,11 @@
 package com.exemple.quiz_app.auth.dto;
 
-import java.math.BigInteger;
+
 import java.time.LocalDateTime;
 
 public class UserDto {
 
-    private BigInteger id;
+    private Long id;
     private String firstName;
     private String lastName;
     private String email;
@@ -15,7 +15,7 @@ public class UserDto {
 
     public UserDto() {}
 
-    public UserDto(BigInteger id, String firstName, String lastName, String email, String role,
+    public UserDto(Long id, String firstName, String lastName, String email, String role,
                    LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.firstName = firstName;
@@ -26,8 +26,8 @@ public class UserDto {
         this.updatedAt = updatedAt;
     }
 
-    public BigInteger getId() { return id; }
-    public void setId(BigInteger id) { this.id = id; }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
     public String getFirstName() { return firstName; }
     public void setFirstName(String firstName) { this.firstName = firstName; }

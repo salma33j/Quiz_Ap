@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigInteger;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,11 +55,11 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // 🔥 CORRECTION: utiliser BigInteger au lieu de Long
+    // 🔥 CORRECTION: utiliser Long au lieu de Long
     @PutMapping("/profile/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AuthResponse> updateProfile(
-            @PathVariable BigInteger id,
+            @PathVariable Long id,
             @Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.updateProfile(id, request);
         if (response.getMessage() != null && response.getMessage().contains("refuse")) {
@@ -68,11 +68,11 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // 🔥 CORRECTION: utiliser BigInteger au lieu de Long
+    // 🔥 CORRECTION: utiliser Long au lieu de Long
     @PutMapping("/user/{id}/password")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AuthResponse> changePassword(
-            @PathVariable BigInteger id,
+            @PathVariable Long id,
             @Valid @RequestBody ChangePasswordRequest request) {
         AuthResponse response = authService.changePassword(id, request);
         return ResponseEntity.ok(response);
@@ -92,25 +92,25 @@ public class AuthController {
         }
     }
 
-    // 🔥 CORRECTION: utiliser BigInteger au lieu de Long
+    // 🔥 CORRECTION: utiliser Long au lieu de Long
     @GetMapping("/user/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<AuthResponse> getUserById(@PathVariable BigInteger id) {
+    public ResponseEntity<AuthResponse> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(authService.getUserById(id));
     }
 
-    // 🔥 CORRECTION: utiliser BigInteger au lieu de Long
+    // 🔥 CORRECTION: utiliser Long au lieu de Long
     @PutMapping("/promote/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<AuthResponse> promoteToTeacher(@PathVariable BigInteger userId) {
+    public ResponseEntity<AuthResponse> promoteToTeacher(@PathVariable Long userId) {
         AuthResponse response = authService.promoteToTeacher(userId);
         return ResponseEntity.ok(response);
     }
 
-    // 🔥 CORRECTION: utiliser BigInteger au lieu de Long
+    // 🔥 CORRECTION: utiliser Long au lieu de Long
     @DeleteMapping("/user/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<AuthResponse> deleteUser(@PathVariable BigInteger id) {
+    public ResponseEntity<AuthResponse> deleteUser(@PathVariable Long id) {
         AuthResponse response = authService.deleteUser(id);
         return ResponseEntity.ok(response);
     }
