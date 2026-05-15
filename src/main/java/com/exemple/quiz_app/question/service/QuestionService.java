@@ -12,24 +12,29 @@ import com.exemple.quiz_app.question.dto.QuestionResponseDto;
 import com.exemple.quiz_app.question.entity.Question;
 import com.exemple.quiz_app.question.repository.QuestionRepository;
 import com.exemple.quiz_app.quiz.entity.Quiz;
+import com.exemple.quiz_app.quiz.entity.QuizSession;
 import com.exemple.quiz_app.quiz.repository.QuizRepository;
+import com.exemple.quiz_app.quiz.repository.QuizSessionRepository;
 import com.exemple.quiz_app.quiz.service.QuizService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class QuestionService {
 
-    @Autowired private QuestionRepository questionRepository;
-    @Autowired private QuizRepository quizRepository;
-    @Autowired private QuizService quizService;
-    @Autowired private AuthService authService;
-    @Autowired private AiQuizGenerationService aiQuizGenerationService;
+    private final QuestionRepository questionRepository;
+    private final QuizRepository quizRepository;
+    private final QuizService quizService;
+    private final AuthService authService;
+    private final AiQuizGenerationService aiQuizGenerationService;
+    private final QuizSessionRepository quizSessionRepository;  // 🔥 AJOUTÉ
 
     // ========== VÉRIFICATIONS MÉTIER ==========
 
@@ -43,7 +48,7 @@ public class QuestionService {
 
     private void checkTeacherOwnership(Quiz quiz, User teacher) {
         if (!quiz.getEnseignant().getId().equals(teacher.getId())) {
-            throw new RuntimeException("Vous n'etes pas le proprietaire de ce quiz");
+            throw new RuntimeException("Vous n'êtes pas le propriétaire de ce quiz");
         }
     }
 
@@ -58,7 +63,7 @@ public class QuestionService {
         }
 
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz non trouve"));
+                .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
 
         if (currentUser.getRole() != Role.ADMIN) {
             checkTeacherOwnership(quiz, currentUser);
@@ -94,7 +99,7 @@ public class QuestionService {
         }
 
         Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new RuntimeException("Question non trouvee"));
+                .orElseThrow(() -> new RuntimeException("Question non trouvée"));
 
         Quiz quiz = question.getQuiz();
 
@@ -121,7 +126,7 @@ public class QuestionService {
         }
 
         Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new RuntimeException("Question non trouvee"));
+                .orElseThrow(() -> new RuntimeException("Question non trouvée"));
 
         Quiz quiz = question.getQuiz();
         Long quizId = quiz.getId();
@@ -144,11 +149,11 @@ public class QuestionService {
         User currentUser = authService.getCurrentUser();
 
         if (!isTeacherOrAdmin(currentUser)) {
-            throw new RuntimeException("Seul un enseignant peut voir les reponses des questions");
+            throw new RuntimeException("Seul un enseignant peut voir les réponses des questions");
         }
 
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz non trouve"));
+                .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
 
         if (currentUser.getRole() != Role.ADMIN) {
             checkTeacherOwnership(quiz, currentUser);
@@ -162,11 +167,11 @@ public class QuestionService {
         User currentUser = authService.getCurrentUser();
 
         if (!isTeacherOrAdmin(currentUser)) {
-            throw new RuntimeException("Acces reserve aux enseignants");
+            throw new RuntimeException("Accès réservé aux enseignants");
         }
 
         Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new RuntimeException("Question non trouvee"));
+                .orElseThrow(() -> new RuntimeException("Question non trouvée"));
 
         Quiz quiz = question.getQuiz();
 
@@ -179,12 +184,11 @@ public class QuestionService {
 
     // ========== GÉNÉRATION IA ==========
 
-    public QuizGenerationResponseDto generateQuestionsByIA(
-            String theme, int numberOfQuestions, String difficulty) {
+    public QuizGenerationResponseDto generateQuestionsByIA(String theme, int numberOfQuestions, String difficulty) {
         User currentUser = authService.getCurrentUser();
 
         if (!isTeacherOrAdmin(currentUser)) {
-            throw new RuntimeException("Seul un enseignant peut generer des questions par IA");
+            throw new RuntimeException("Seul un enseignant peut générer des questions par IA");
         }
 
         QuizGenerationRequestDto request = new QuizGenerationRequestDto();
@@ -196,14 +200,12 @@ public class QuestionService {
     }
 
     @Transactional
-    public List<QuestionResponseDto> generateAndSaveQuestions(
-            Long quizId, String theme, int numberOfQuestions, String difficulty) {
-
+    public List<QuestionResponseDto> generateAndSaveQuestions(Long quizId, String theme, int numberOfQuestions, String difficulty) {
         // 1. Générer via IA
         QuizGenerationResponseDto generated = aiQuizGenerationService
                 .generateQuizContent(buildRequest(theme, numberOfQuestions, difficulty));
 
-        // 2. Convertir automatiquement ✅
+        // 2. Convertir automatiquement avec sécurisation
         List<QuestionRequestDto> converted = generated.getQuestions().stream()
                 .map(this::convertToRequestDto)
                 .collect(Collectors.toList());
@@ -220,51 +222,95 @@ public class QuestionService {
         return req;
     }
 
+    /**
+     * 🔥 SÉCURISÉ : Convertir une question générée par IA en QuestionRequestDto
+     * Gère tous les cas : options null, taille insuffisante, type TEXT, etc.
+     */
     private QuestionRequestDto convertToRequestDto(QuizGenerationResponseDto.GeneratedQuestionDto q) {
         QuestionRequestDto dto = new QuestionRequestDto();
-        dto.setEnonce(q.getQuestionText());
-        dto.setType(q.getType());
-        dto.setPoints(q.getPoints() != null ? q.getPoints() : 1);
 
+        // 1. Énoncé
+        dto.setEnonce(q.getQuestionText() != null ? q.getQuestionText() : "Question sans énoncé");
+
+        // 2. Type
+        dto.setType(q.getType() != null ? q.getType() : "MCQ");
+
+        // 3. Points
+        dto.setPoints(q.getPoints() != null && q.getPoints() > 0 ? q.getPoints() : 1);
+
+        // 4. Options (sécurisé)
         List<String> options = q.getOptions();
-        if (options != null) {
-            if (options.size() > 0) dto.setChoixA(options.get(0));
-            if (options.size() > 1) dto.setChoixB(options.get(1));
-            if (options.size() > 2) dto.setChoixC(options.get(2));
-            if (options.size() > 3) dto.setChoixD(options.get(3));
+        if (options != null && !options.isEmpty()) {
+            dto.setChoixA(options.size() > 0 ? options.get(0) : null);
+            dto.setChoixB(options.size() > 1 ? options.get(1) : null);
+            dto.setChoixC(options.size() > 2 ? options.get(2) : null);
+            dto.setChoixD(options.size() > 3 ? options.get(3) : null);
+        } else {
+            dto.setChoixA(null);
+            dto.setChoixB(null);
+            dto.setChoixC(null);
+            dto.setChoixD(null);
         }
 
-        // ✅ Toujours convertir correctAnswer en A/B/C/D
+        // 5. Réponse correcte (sécurisé)
         String correct = q.getCorrectAnswer();
-        if (options != null && options.contains(correct)) {
-            // Trouve l'index et convertit en lettre
-            int index = options.indexOf(correct);
-            dto.setReponseCorrecte(String.valueOf((char)('A' + index)));
-        } else if ("Vrai".equalsIgnoreCase(correct) || "True".equalsIgnoreCase(correct)) {
-            dto.setReponseCorrecte("A");
-        } else if ("Faux".equalsIgnoreCase(correct) || "False".equalsIgnoreCase(correct)) {
-            dto.setReponseCorrecte("B");
-        } else {
-            // TYPE TEXT — tronquer à 50 caractères max
-            dto.setReponseCorrecte(correct != null && correct.length() > 50
-                    ? correct.substring(0, 50)
-                    : correct);
+        List<String> opts = q.getOptions();
+
+        // Cas 1 : QCM avec options et réponse trouvable
+        if ("MCQ".equalsIgnoreCase(q.getType()) && opts != null && correct != null && !opts.isEmpty()) {
+            // Recherche de la réponse dans les options
+            int index = -1;
+            for (int i = 0; i < opts.size(); i++) {
+                if (opts.get(i) != null && opts.get(i).equalsIgnoreCase(correct)) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index >= 0) {
+                dto.setReponseCorrecte(String.valueOf((char) ('A' + index)));
+            } else {
+                // Si non trouvé, chercher par A/B/C/D
+                if ("A".equalsIgnoreCase(correct) || "a".equals(correct)) dto.setReponseCorrecte("A");
+                else if ("B".equalsIgnoreCase(correct)) dto.setReponseCorrecte("B");
+                else if ("C".equalsIgnoreCase(correct)) dto.setReponseCorrecte("C");
+                else if ("D".equalsIgnoreCase(correct)) dto.setReponseCorrecte("D");
+                else dto.setReponseCorrecte("A"); // Fallback
+            }
+        }
+        // Cas 2 : Vrai/Faux
+        else if ("TRUE_FALSE".equalsIgnoreCase(q.getType())) {
+            if ("Vrai".equalsIgnoreCase(correct) || "True".equalsIgnoreCase(correct) || "true".equals(correct)) {
+                dto.setReponseCorrecte("A");
+            } else if ("Faux".equalsIgnoreCase(correct) || "False".equalsIgnoreCase(correct) || "false".equals(correct)) {
+                dto.setReponseCorrecte("B");
+            } else {
+                dto.setReponseCorrecte("A"); // Fallback
+            }
+        }
+        // Cas 3 : Question ouverte (TEXT)
+        else if ("TEXT".equalsIgnoreCase(q.getType())) {
+            dto.setReponseCorrecte(correct != null && correct.length() > 200
+                    ? correct.substring(0, 200) : correct);
+        }
+        // Cas 4 : Fallback
+        else {
+            dto.setReponseCorrecte(correct != null && correct.length() > 200
+                    ? correct.substring(0, 200) : correct);
         }
 
         return dto;
     }
 
     @Transactional
-    public List<QuestionResponseDto> saveGeneratedQuestions(
-            Long quizId, List<QuestionRequestDto> validatedQuestions) {
+    public List<QuestionResponseDto> saveGeneratedQuestions(Long quizId, List<QuestionRequestDto> validatedQuestions) {
         User currentUser = authService.getCurrentUser();
 
         if (!isTeacherOrAdmin(currentUser)) {
-            throw new RuntimeException("Seul un enseignant peut sauvegarder des questions generees par IA");
+            throw new RuntimeException("Seul un enseignant peut sauvegarder des questions générées par IA");
         }
 
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz non trouve"));
+                .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
 
         if (currentUser.getRole() != Role.ADMIN) {
             checkTeacherOwnership(quiz, currentUser);
@@ -283,23 +329,35 @@ public class QuestionService {
 
     // ========== ÉTUDIANT : VOIR QUESTIONS ==========
 
+    /**
+     * 🔥 CORRIGÉ : Avec vérification de session et de temps
+     */
     public List<QuestionDto> getQuestionsByQuizForStudent(Long quizId) {
         User currentUser = authService.getCurrentUser();
 
         if (!isStudent(currentUser)) {
-            throw new RuntimeException("Acces reserve aux etudiants");
+            throw new RuntimeException("Accès réservé aux étudiants");
         }
 
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz non trouve"));
+                .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
 
-        if (!quizService.isStudentAllowed(quizId, currentUser.getId())) {
-            throw new RuntimeException("Vous n'etes pas autorise a acceder a ce quiz");
+        if (!quizService.isStudentAllowed(quizId, currentUser.getId().longValue())) {
+            throw new RuntimeException("Vous n'êtes pas autorisé à accéder à ce quiz");
         }
 
         if (!quiz.isAvailable()) {
             throw new RuntimeException("Ce quiz n'est pas disponible");
         }
+
+        // 🔥 VÉRIFICATION DE LA SESSION ET DU TEMPS
+        Optional<QuizSession> session = quizSessionRepository.findByStudentAndQuiz(currentUser, quiz);
+        if (session.isPresent() && session.get().isExpired()) {
+            throw new RuntimeException("Temps écoulé ! Vous ne pouvez plus répondre aux questions.");
+        }
+
+        // Si la session n'existe pas encore, on ne bloque pas (le quiz n'a pas encore été démarré)
+        // Le frontend devra appeler /start avant de pouvoir répondre
 
         return questionRepository.findByQuizId(quizId)
                 .stream().map(this::mapToStudentDto).collect(Collectors.toList());
@@ -309,20 +367,26 @@ public class QuestionService {
         User currentUser = authService.getCurrentUser();
 
         if (!isStudent(currentUser)) {
-            throw new RuntimeException("Acces reserve aux etudiants");
+            throw new RuntimeException("Accès réservé aux étudiants");
         }
 
         Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new RuntimeException("Question non trouvee"));
+                .orElseThrow(() -> new RuntimeException("Question non trouvée"));
 
         Quiz quiz = question.getQuiz();
 
-        if (!quizService.isStudentAllowed(quiz.getId(), currentUser.getId())) {
-            throw new RuntimeException("Acces non autorise");
+        if (!quizService.isStudentAllowed(quiz.getId(), currentUser.getId().longValue())) {
+            throw new RuntimeException("Accès non autorisé");
         }
 
         if (!quiz.isAvailable()) {
             throw new RuntimeException("Ce quiz n'est pas disponible");
+        }
+
+        // 🔥 VÉRIFICATION DE LA SESSION ET DU TEMPS
+        Optional<QuizSession> session = quizSessionRepository.findByStudentAndQuiz(currentUser, quiz);
+        if (session.isPresent() && session.get().isExpired()) {
+            throw new RuntimeException("Temps écoulé ! Vous ne pouvez plus répondre aux questions.");
         }
 
         return mapToStudentDto(question);
@@ -340,7 +404,11 @@ public class QuestionService {
         question.setReponseCorrecte(request.getReponseCorrecte());
         question.setPoints(request.getPoints() != null ? request.getPoints() : 1);
         if (request.getType() != null) {
-            question.setType(Question.QuestionType.valueOf(request.getType()));
+            try {
+                question.setType(Question.QuestionType.valueOf(request.getType()));
+            } catch (IllegalArgumentException e) {
+                question.setType(Question.QuestionType.MCQ);
+            }
         }
         question.setQuiz(quiz);
         return question;
@@ -355,7 +423,11 @@ public class QuestionService {
         question.setReponseCorrecte(request.getReponseCorrecte());
         if (request.getPoints() != null) question.setPoints(request.getPoints());
         if (request.getType() != null) {
-            question.setType(Question.QuestionType.valueOf(request.getType()));
+            try {
+                question.setType(Question.QuestionType.valueOf(request.getType()));
+            } catch (IllegalArgumentException e) {
+                // Garder le type existant
+            }
         }
     }
 

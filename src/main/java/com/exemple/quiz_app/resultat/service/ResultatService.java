@@ -45,15 +45,10 @@ public class ResultatService {
     public ResultatDto saveOrUpdateResultat(ResultatRequestDto resultatRequestDto) {
 
         User currentUser = authService.getCurrentUser();
-
         User student = currentUser;
 
-        if (student.getRole() != Role.ETUDIANT &&
-                student.getRole() != Role.ADMIN) {
-
-            throw new RuntimeException(
-                    "Seuls les étudiants peuvent avoir des résultats"
-            );
+        if (student.getRole() != Role.ETUDIANT && student.getRole() != Role.ADMIN) {
+            throw new RuntimeException("Seuls les étudiants peuvent avoir des résultats");
         }
 
         Quiz quiz = quizRepository.findById(resultatRequestDto.getQuizId())
@@ -68,69 +63,70 @@ public class ResultatService {
                 .orElse(null);
 
         if (resultat == null) {
-
-            resultat = resultatMapper.toEntity(
-                    resultatRequestDto,
-                    quiz,
-                    student
-            );
-
+            resultat = resultatMapper.toEntity(resultatRequestDto, quiz, student);
         } else {
-
             resultatMapper.updateEntity(resultatRequestDto, resultat);
         }
 
-        // 🔥 Calcul score uniquement quand quiz terminé
-        if (Boolean.TRUE.equals(resultatRequestDto.getIsCompleted())
-                && !Boolean.TRUE.equals(resultat.getIsCompleted())) {
+        // Mettre à jour les champs importants même si non complété
+        if (resultatRequestDto.getTotalPoints() != null) {
+            resultat.setTotalPoints(resultatRequestDto.getTotalPoints());
+        }
+        if (resultatRequestDto.getEarnedPoints() != null) {
+            resultat.setEarnedPoints(resultatRequestDto.getEarnedPoints());
+        }
+        if (resultatRequestDto.getScorePercentage() != null) {
+            resultat.setScorePercentage(resultatRequestDto.getScorePercentage());
+        }
+        if (resultatRequestDto.getScore() != null) {
+            resultat.setScore(resultatRequestDto.getScore());
+        }
 
-            calculateFinalScore(resultat, student, quiz);
+        // Si le quiz est terminé
+        if (Boolean.TRUE.equals(resultatRequestDto.getIsCompleted())) {
 
-            resultat.markAsCompleted();
+            // Recalculer le score final si nécessaire
+            if (resultat.getTotalPoints() == null || resultat.getEarnedPoints() == null) {
+                calculateFinalScore(resultat, student, quiz);
+            }
 
-            // 🔥 Génération AI uniquement si demandé
+            // Marquer comme complété (même si déjà fait)
+            if (!Boolean.TRUE.equals(resultat.getIsCompleted())) {
+                resultat.markAsCompleted();
+                resultat.setCompletedDate(LocalDateTime.now());
+                resultat.setGrade(resultat.getGradeLetter());
+            } else {
+                // Si déjà complété, juste mettre à jour la date si nécessaire
+                if (resultat.getCompletedDate() == null) {
+                    resultat.setCompletedDate(LocalDateTime.now());
+                }
+            }
+
+            // Génération AI si demandé (même si déjà fait, on peut regénérer)
             if (Boolean.TRUE.equals(resultatRequestDto.getGenerateFeedback())) {
-
-                generateAndSaveFeedback(
-                        resultat,
-                        resultatRequestDto.getLanguage()
-                );
+                generateAndSaveFeedback(resultat, resultatRequestDto.getLanguage() != null ?
+                        resultatRequestDto.getLanguage() : "fr");
             }
         }
 
         Resultat savedResultat = resultatRepository.save(resultat);
-
         return resultatMapper.toDto(savedResultat);
     }
 
     /**
      * Calcul score final
      */
-    private void calculateFinalScore(
-            Resultat resultat,
-            User student,
-            Quiz quiz
-    ) {
+    private void calculateFinalScore(Resultat resultat, User student, Quiz quiz) {
 
-        List<Question> questions =
-                questionRepository.findByQuizId(quiz.getId());
-
-        List<Reponse> reponses =
-                reponseRepository.findByStudentAndQuestionQuizId(
-                        student,
-                        quiz.getId()
-                );
+        List<Question> questions = questionRepository.findByQuizId(quiz.getId());
+        List<Reponse> reponses = reponseRepository.findByStudentAndQuestionQuizId(student, quiz.getId());
 
         int totalPointsPossible = questions.stream()
                 .mapToInt(Question::getPoints)
                 .sum();
 
         int earnedPoints = reponses.stream()
-                .mapToInt(r ->
-                        r.getPointsEarned() != null
-                                ? r.getPointsEarned()
-                                : 0
-                )
+                .mapToInt(r -> r.getPointsEarned() != null ? r.getPointsEarned() : 0)
                 .sum();
 
         double scorePercentage = totalPointsPossible > 0
@@ -138,133 +134,134 @@ public class ResultatService {
                 : 0;
 
         resultat.setTotalPoints(totalPointsPossible);
-
         resultat.setEarnedPoints(earnedPoints);
-
         resultat.setScore((double) earnedPoints);
-
         resultat.setScorePercentage(scorePercentage);
-
         resultat.setIsCompleted(true);
-
-        resultat.setCompletedDate(LocalDateTime.now());
-
         resultat.setGrade(resultat.getGradeLetter());
     }
 
     /**
      * 🔥 FEEDBACK AI OPTIMISÉ
-     * Très faible consommation quota
      */
     @Transactional
-    public ResultatDto generateAndSaveFeedback(
-            Resultat resultat,
-            String language
-    ) {
+    public ResultatDto generateAndSaveFeedback(Resultat resultat, String language) {
 
-        if (resultat == null || !resultat.getIsCompleted()) {
+        if (resultat == null) {
+            throw new RuntimeException("Résultat non trouvé");
+        }
 
-            throw new RuntimeException(
-                    "Le résultat doit être complété avant de générer un feedback"
-            );
+        // Si le résultat n'est pas marqué comme complété, on le force
+        if (!Boolean.TRUE.equals(resultat.getIsCompleted())) {
+            resultat.setIsCompleted(true);
+            resultat.setStatus(Resultat.SubmissionStatus.SUBMITTED);
         }
 
         Quiz quiz = resultat.getQuiz();
 
         FeedbackRequestDto feedbackRequest = new FeedbackRequestDto();
-
         feedbackRequest.setResultatId(resultat.getId());
-
         feedbackRequest.setQuizTitle(quiz.getTitre());
-
         feedbackRequest.setQuizTheme(quiz.getTheme());
-
         feedbackRequest.setScore(resultat.getScorePercentage());
-
         feedbackRequest.setTotalPoints(resultat.getTotalPoints());
-
         feedbackRequest.setEarnedPoints(resultat.getEarnedPoints());
+        feedbackRequest.setLanguage(language != null ? language : "fr");
 
-        feedbackRequest.setLanguage(
-                language != null ? language : "fr"
-        );
-
-        // 🔥 Déterminer niveau étudiant localement
+        // Déterminer niveau étudiant localement
+        double score = resultat.getScorePercentage() != null ? resultat.getScorePercentage() : 0;
         String performanceLevel;
 
-        double score = resultat.getScorePercentage();
-
         if (score >= 80) {
-
             performanceLevel = "excellent";
-
         } else if (score >= 60) {
-
             performanceLevel = "good";
-
         } else if (score >= 40) {
-
             performanceLevel = "average";
-
         } else {
-
             performanceLevel = "weak";
         }
 
-        // 🔥 Petit contexte AI
         feedbackRequest.setPerformanceLevel(performanceLevel);
 
-        // ❌ IMPORTANT :
-        // NE PAS envoyer toutes les questions
-        // pour économiser quota AI
+        try {
+            FeedbackResponseDto feedbackResponse = aiFeedbackService.generateFeedback(feedbackRequest);
 
-        FeedbackResponseDto feedbackResponse =
-                aiFeedbackService.generateFeedback(feedbackRequest);
-
-        resultat.setFeedbackIa(feedbackResponse.getFeedback());
-
-        resultat.setStrengths(feedbackResponse.getStrengths());
-
-        resultat.setWeaknesses(feedbackResponse.getWeaknesses());
-
-        resultat.setRecommendations(
-                feedbackResponse.getRecommendations()
-        );
-
-        resultat.setSuggestedQuiz(
-                feedbackResponse.getSuggestedQuiz()
-        );
-
-        resultat.setGrade(feedbackResponse.getGrade());
+            resultat.setFeedbackIa(feedbackResponse.getFeedback());
+            resultat.setStrengths(feedbackResponse.getStrengths());
+            resultat.setWeaknesses(feedbackResponse.getWeaknesses());
+            resultat.setRecommendations(feedbackResponse.getRecommendations());
+            resultat.setSuggestedQuiz(feedbackResponse.getSuggestedQuiz());
+            resultat.setGrade(feedbackResponse.getGrade());
+        } catch (Exception e) {
+            // Fallback si l'API AI échoue
+            resultat.setFeedbackIa(generateFallbackFeedback(score));
+            resultat.setStrengths(getFallbackStrengths(score));
+            resultat.setWeaknesses(getFallbackWeaknesses(score));
+            resultat.setRecommendations(getFallbackRecommendations(score));
+            resultat.setGrade(getFallbackGrade(score));
+        }
 
         resultatRepository.save(resultat);
-
         return resultatMapper.toDto(resultat);
+    }
+
+    /**
+     * Feedback fallback si l'API AI est indisponible
+     */
+    private String generateFallbackFeedback(double score) {
+        if (score >= 80) {
+            return "🎉 Félicitations ! Excellent résultat de " + String.format("%.1f", score) + "%. Vous maîtrisez parfaitement le sujet.";
+        } else if (score >= 60) {
+            return "👍 Très bien ! Résultat de " + String.format("%.1f", score) + "%. Bonne maîtrise du sujet, quelques points à améliorer.";
+        } else if (score >= 40) {
+            return "📚 Bien ! Résultat de " + String.format("%.1f", score) + "%. Vous avez les bases, mais une révision s'impose.";
+        } else if (score >= 20) {
+            return "⚠️ Résultat insuffisant de " + String.format("%.1f", score) + "%. Nous vous conseillons de reprendre le cours.";
+        } else {
+            return "❌ Résultat très insuffisant de " + String.format("%.1f", score) + "%. Une révision complète du cours est nécessaire.";
+        }
+    }
+
+    private String getFallbackStrengths(double score) {
+        if (score >= 60) return "Bonne compréhension des concepts fondamentaux";
+        return "À développer davantage";
+    }
+
+    private String getFallbackWeaknesses(double score) {
+        if (score >= 80) return "Peu d'erreurs, mais attention aux détails";
+        if (score >= 60) return "Certains concepts avancés à revoir";
+        return "Compréhension globale à améliorer";
+    }
+
+    private String getFallbackRecommendations(double score) {
+        if (score >= 80) return "Passez au niveau supérieur avec des exercices plus complexes";
+        if (score >= 60) return "Revoyez les chapitres où vous avez fait des erreurs";
+        return "Reprenez le cours depuis le début et faites les exercices";
+    }
+
+    private String getFallbackGrade(double score) {
+        if (score >= 90) return "A+";
+        if (score >= 80) return "A";
+        if (score >= 70) return "B";
+        if (score >= 60) return "C";
+        if (score >= 50) return "D";
+        return "F";
     }
 
     /**
      * Générer feedback par ID
      */
     @Transactional
-    public ResultatDto generateFeedbackForResultat(
-            Long resultatId,
-            String language
-    ) {
+    public ResultatDto generateFeedbackForResultat(Long resultatId, String language) {
 
         User currentUser = authService.getCurrentUser();
-
         Resultat resultat = resultatRepository.findById(resultatId)
-                .orElseThrow(() ->
-                        new RuntimeException("Résultat non trouvé")
-                );
+                .orElseThrow(() -> new RuntimeException("Résultat non trouvé"));
 
         if (currentUser.getRole() == Role.ETUDIANT &&
-                !resultat.getStudent().getId()
-                        .equals(currentUser.getId())) {
-
-            throw new RuntimeException(
-                    "Accès refusé"
-            );
+                !resultat.getStudent().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("Accès refusé");
         }
 
         return generateAndSaveFeedback(resultat, language);
@@ -276,19 +273,14 @@ public class ResultatService {
     public ResultatDto getResultatByStudentAndQuiz(Long quizId) {
 
         User currentUser = authService.getCurrentUser();
-
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() ->
-                        new RuntimeException("Quiz non trouvé")
-                );
+                .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
 
         Resultat resultat = resultatRepository
                 .findByStudentAndQuizId(currentUser, quiz.getId())
                 .orElse(null);
 
-        return resultat != null
-                ? resultatMapper.toDto(resultat)
-                : null;
+        return resultat != null ? resultatMapper.toDto(resultat) : null;
     }
 
     /**
@@ -297,12 +289,8 @@ public class ResultatService {
     public List<ResultatDto> getResultatsByStudent() {
 
         User currentUser = authService.getCurrentUser();
-
-        List<Resultat> resultats =
-                resultatRepository
-                        .findByStudentOrderByCompletedDateDesc(
-                                currentUser
-                        );
+        List<Resultat> resultats = resultatRepository
+                .findByStudentOrderByCompletedDateDesc(currentUser);
 
         return resultats.stream()
                 .map(resultatMapper::toDto)
@@ -310,15 +298,12 @@ public class ResultatService {
     }
 
     /**
-     * Résultats quiz
+     * Résultats quiz pour enseignant
      */
     public List<ResultatDto> getResultatsByQuiz(Long quizId) {
 
-        List<Resultat> resultats =
-                resultatRepository
-                        .findByQuizIdOrderByScorePercentageDesc(
-                                quizId
-                        );
+        List<Resultat> resultats = resultatRepository
+                .findByQuizIdOrderByScorePercentageDesc(quizId);
 
         return resultats.stream()
                 .map(resultatMapper::toDto)
@@ -331,11 +316,7 @@ public class ResultatService {
     public boolean hasCompletedQuiz(Long quizId) {
 
         User currentUser = authService.getCurrentUser();
-
-        return resultatRepository.hasStudentCompletedQuiz(
-                currentUser.getId(),
-                quizId
-        );
+        return resultatRepository.hasStudentCompletedQuiz(currentUser.getId(), quizId);
     }
 
     /**
@@ -345,11 +326,7 @@ public class ResultatService {
     public void deleteResultatByStudentAndQuiz(Long quizId) {
 
         User currentUser = authService.getCurrentUser();
-
-        resultatRepository.deleteByStudentIdAndQuizId(
-                currentUser.getId(),
-                quizId
-        );
+        resultatRepository.deleteByStudentIdAndQuizId(currentUser.getId(), quizId);
     }
 
     // ================= STATISTICS =================
@@ -357,35 +334,17 @@ public class ResultatService {
     public QuizStatisticsDto getQuizStatistics(Long quizId) {
 
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() ->
-                        new RuntimeException("Quiz non trouvé")
-                );
+                .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
 
-        Double averageScore =
-                resultatRepository.getAverageScoreByQuizId(
-                        quiz.getId()
-                );
-
-        Double bestScore =
-                resultatRepository.getBestScoreByQuizId(
-                        quiz.getId()
-                );
-
-        long totalStudents =
-                resultatRepository.countByQuizIdAndStatus(
-                        quiz.getId(),
-                        Resultat.SubmissionStatus.SUBMITTED
-                );
+        Double averageScore = resultatRepository.getAverageScoreByQuizId(quiz.getId());
+        Double bestScore = resultatRepository.getBestScoreByQuizId(quiz.getId());
+        long totalStudents = resultatRepository.countByQuizIdAndStatus(quiz.getId(), Resultat.SubmissionStatus.SUBMITTED);
 
         return QuizStatisticsDto.builder()
                 .quizId(quiz.getId())
                 .quizTitle(quiz.getTitre())
-                .averageScore(
-                        averageScore != null ? averageScore : 0
-                )
-                .bestScore(
-                        bestScore != null ? bestScore : 0
-                )
+                .averageScore(averageScore != null ? averageScore : 0)
+                .bestScore(bestScore != null ? bestScore : 0)
                 .totalStudents((int) totalStudents)
                 .ranking(getRanking(quiz))
                 .build();
@@ -396,21 +355,15 @@ public class ResultatService {
      */
     public List<RankingDto> getRanking(Quiz quiz) {
 
-        List<Object[]> results =
-                resultatRepository.getRankingByQuizId(
-                        quiz.getId()
-                );
-
+        List<Object[]> results = resultatRepository.getRankingByQuizId(quiz.getId());
         List<RankingDto> ranking = new ArrayList<>();
-
         int rank = 1;
 
         for (Object[] row : results) {
-
             RankingDto dto = RankingDto.builder()
                     .rank(rank++)
                     .studentId((Long) row[0])
-                    .studentName((String) row[1])
+                    .studentName(row[1] + " " + row[2])
                     .scorePercentage((Double) row[3])
                     .earnedPoints((Integer) row[4])
                     .totalPoints((Integer) row[5])
@@ -429,17 +382,11 @@ public class ResultatService {
     @lombok.NoArgsConstructor
     @lombok.AllArgsConstructor
     public static class QuizStatisticsDto {
-
         private Long quizId;
-
         private String quizTitle;
-
         private Integer totalStudents;
-
         private Double averageScore;
-
         private Double bestScore;
-
         private List<RankingDto> ranking;
     }
 
@@ -448,17 +395,11 @@ public class ResultatService {
     @lombok.NoArgsConstructor
     @lombok.AllArgsConstructor
     public static class RankingDto {
-
         private Integer rank;
-
         private Long studentId;
-
         private String studentName;
-
         private Double scorePercentage;
-
         private Integer earnedPoints;
-
         private Integer totalPoints;
     }
 }
