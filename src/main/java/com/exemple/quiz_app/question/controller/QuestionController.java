@@ -114,4 +114,17 @@ public class QuestionController {
     public ResponseEntity<QuestionResponseDto> getQuestionByIdForTeacher(@PathVariable Long questionId) {
         return ResponseEntity.ok(questionService.getQuestionByIdForTeacher(questionId));
     }
+
+    // Nouveau endpoint dans QuestionController.java
+    @PostMapping("/quizzes/{quizId}/questions/ai/generate-and-save")
+    @PreAuthorize("hasAnyRole('ENSEIGNANT', 'ADMIN')")
+    public ResponseEntity<List<QuestionResponseDto>> generateAndSave(
+            @PathVariable Long quizId,
+            @RequestParam String theme,
+            @RequestParam int numberOfQuestions,
+            @RequestParam(defaultValue = "MOYEN") String difficulty) {
+        return ResponseEntity.ok(
+                questionService.generateAndSaveQuestions(quizId, theme, numberOfQuestions, difficulty)
+        );
+    }
 }

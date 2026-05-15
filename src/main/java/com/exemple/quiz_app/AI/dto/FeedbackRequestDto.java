@@ -1,32 +1,32 @@
 package com.exemple.quiz_app.AI.dto;
 
 import lombok.Data;
-import java.util.List;
 
 @Data
 public class FeedbackRequestDto {
 
-    // Informations de base
+    // ================= INFORMATIONS PRINCIPALES =================
+
     private Long resultatId;
+
     private String studentName;
+
     private String quizTitle;
+
     private String quizTheme;
+
+    // 🔥 Score final uniquement
     private Double score;
+
     private Integer totalPoints;
+
     private Integer earnedPoints;
-    private String language;  // "fr" ou "en"
 
-    // 🔥 Détail des questions et réponses
-    private List<QuestionFeedbackDto> questions;
+    // fr / en
+    private String language;
 
-    @Data
-    public static class QuestionFeedbackDto {
-        private Long questionId;
-        private String questionText;
-        private String studentAnswer;
-        private String correctAnswer;
-        private Boolean isCorrect;
-        private Integer points;
-        private String topic;  // Optionnel: thème de la question
-    }
+    // 🔥 Niveau calculé localement dans Spring Boot
+    // excellent / good / average / weak
+    private String performanceLevel;
+
 }

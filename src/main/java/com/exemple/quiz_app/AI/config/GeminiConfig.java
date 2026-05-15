@@ -15,7 +15,7 @@ public class GeminiConfig {
     private String apiKey;
 
     // ✅ Valeur par défaut corrigée
-    @Value("${gemini.api.url:https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent}")
+    @Value("${gemini.api.url:https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent}")
     private String apiUrl;
 
     @PostConstruct

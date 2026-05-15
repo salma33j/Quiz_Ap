@@ -25,20 +25,11 @@ import java.util.stream.Collectors;
 @Service
 public class QuestionService {
 
-    @Autowired
-    private QuestionRepository questionRepository;
-
-    @Autowired
-    private QuizRepository quizRepository;
-
-    @Autowired
-    private QuizService quizService;
-
-    @Autowired
-    private AuthService authService;
-
-    @Autowired
-    private AiQuizGenerationService aiQuizGenerationService;
+    @Autowired private QuestionRepository questionRepository;
+    @Autowired private QuizRepository quizRepository;
+    @Autowired private QuizService quizService;
+    @Autowired private AuthService authService;
+    @Autowired private AiQuizGenerationService aiQuizGenerationService;
 
     // ========== VÉRIFICATIONS MÉTIER ==========
 
@@ -80,7 +71,6 @@ public class QuestionService {
         Question question = createQuestionFromRequest(request, quiz);
         Question saved = questionRepository.save(question);
         quizService.incrementQuestionCount(quizId);
-
         return mapToResponse(saved);
     }
 
@@ -187,9 +177,10 @@ public class QuestionService {
         return mapToResponse(question);
     }
 
-    // ========== ENSEIGNANT : GÉNÉRATION IA ==========
+    // ========== GÉNÉRATION IA ==========
 
-    public QuizGenerationResponseDto generateQuestionsByIA(String theme, int numberOfQuestions, String difficulty) {
+    public QuizGenerationResponseDto generateQuestionsByIA(
+            String theme, int numberOfQuestions, String difficulty) {
         User currentUser = authService.getCurrentUser();
 
         if (!isTeacherOrAdmin(currentUser)) {
@@ -205,7 +196,67 @@ public class QuestionService {
     }
 
     @Transactional
-    public List<QuestionResponseDto> saveGeneratedQuestions(Long quizId, List<QuestionRequestDto> validatedQuestions) {
+    public List<QuestionResponseDto> generateAndSaveQuestions(
+            Long quizId, String theme, int numberOfQuestions, String difficulty) {
+
+        // 1. Générer via IA
+        QuizGenerationResponseDto generated = aiQuizGenerationService
+                .generateQuizContent(buildRequest(theme, numberOfQuestions, difficulty));
+
+        // 2. Convertir automatiquement ✅
+        List<QuestionRequestDto> converted = generated.getQuestions().stream()
+                .map(this::convertToRequestDto)
+                .collect(Collectors.toList());
+
+        // 3. Sauvegarder
+        return addMultipleQuestions(quizId, converted);
+    }
+
+    private QuizGenerationRequestDto buildRequest(String theme, int n, String difficulty) {
+        QuizGenerationRequestDto req = new QuizGenerationRequestDto();
+        req.setTheme(theme);
+        req.setNumberOfQuestions(n);
+        req.setDifficulty(difficulty);
+        return req;
+    }
+
+    private QuestionRequestDto convertToRequestDto(QuizGenerationResponseDto.GeneratedQuestionDto q) {
+        QuestionRequestDto dto = new QuestionRequestDto();
+        dto.setEnonce(q.getQuestionText());
+        dto.setType(q.getType());
+        dto.setPoints(q.getPoints() != null ? q.getPoints() : 1);
+
+        List<String> options = q.getOptions();
+        if (options != null) {
+            if (options.size() > 0) dto.setChoixA(options.get(0));
+            if (options.size() > 1) dto.setChoixB(options.get(1));
+            if (options.size() > 2) dto.setChoixC(options.get(2));
+            if (options.size() > 3) dto.setChoixD(options.get(3));
+        }
+
+        // ✅ Toujours convertir correctAnswer en A/B/C/D
+        String correct = q.getCorrectAnswer();
+        if (options != null && options.contains(correct)) {
+            // Trouve l'index et convertit en lettre
+            int index = options.indexOf(correct);
+            dto.setReponseCorrecte(String.valueOf((char)('A' + index)));
+        } else if ("Vrai".equalsIgnoreCase(correct) || "True".equalsIgnoreCase(correct)) {
+            dto.setReponseCorrecte("A");
+        } else if ("Faux".equalsIgnoreCase(correct) || "False".equalsIgnoreCase(correct)) {
+            dto.setReponseCorrecte("B");
+        } else {
+            // TYPE TEXT — tronquer à 50 caractères max
+            dto.setReponseCorrecte(correct != null && correct.length() > 50
+                    ? correct.substring(0, 50)
+                    : correct);
+        }
+
+        return dto;
+    }
+
+    @Transactional
+    public List<QuestionResponseDto> saveGeneratedQuestions(
+            Long quizId, List<QuestionRequestDto> validatedQuestions) {
         User currentUser = authService.getCurrentUser();
 
         if (!isTeacherOrAdmin(currentUser)) {
@@ -242,7 +293,7 @@ public class QuestionService {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz non trouve"));
 
-        if (!quizService.isStudentAllowed(quizId, currentUser.getId().longValue())) {
+        if (!quizService.isStudentAllowed(quizId, currentUser.getId())) {
             throw new RuntimeException("Vous n'etes pas autorise a acceder a ce quiz");
         }
 
@@ -266,7 +317,7 @@ public class QuestionService {
 
         Quiz quiz = question.getQuiz();
 
-        if (!quizService.isStudentAllowed(quiz.getId(), currentUser.getId().longValue())) {
+        if (!quizService.isStudentAllowed(quiz.getId(), currentUser.getId())) {
             throw new RuntimeException("Acces non autorise");
         }
 
@@ -302,9 +353,7 @@ public class QuestionService {
         question.setChoixC(request.getChoixC());
         question.setChoixD(request.getChoixD());
         question.setReponseCorrecte(request.getReponseCorrecte());
-        if (request.getPoints() != null) {
-            question.setPoints(request.getPoints());
-        }
+        if (request.getPoints() != null) question.setPoints(request.getPoints());
         if (request.getType() != null) {
             question.setType(Question.QuestionType.valueOf(request.getType()));
         }
