@@ -1,5 +1,8 @@
 package com.exemple.quiz_app.reponse.service;
 
+import com.exemple.quiz_app.AI.client.GeminiApiClient;
+import com.exemple.quiz_app.AI.dto.AiCorrectionRequestDto;
+import com.exemple.quiz_app.AI.dto.AiCorrectionResponseDto;
 import com.exemple.quiz_app.auth.model.Role;
 import com.exemple.quiz_app.auth.model.User;
 import com.exemple.quiz_app.auth.service.AuthService;
@@ -20,6 +23,7 @@ import com.exemple.quiz_app.resultat.dto.ResultatDto;
 import com.exemple.quiz_app.resultat.dto.ResultatRequestDto;
 import com.exemple.quiz_app.resultat.repository.ResultatRepository;
 import com.exemple.quiz_app.resultat.service.ResultatService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,9 +44,14 @@ public class ReponseService {
     private final ResultatService resultatService;
     private final AuthService authService;
     private final ResultatRepository resultatRepository;
+    private final GeminiApiClient geminiApiClient;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    // ==================== SAUVEGARDE D'UNE RÉPONSE (SILENCIEUSE - RETOUR VOID) ====================
 
     @Transactional
-    public ReponseDto saveOrUpdateReponse(ReponseRequestDto request) {
+    public void saveOrUpdateReponse(ReponseRequestDto request) {
         User currentUser = authService.getCurrentUser();
 
         if (currentUser.getRole() != Role.ETUDIANT && currentUser.getRole() != Role.ADMIN) {
@@ -62,7 +71,7 @@ public class ReponseService {
             throw new RuntimeException("Vous n'êtes pas autorisé à participer à ce quiz");
         }
 
-        // 🔥 VÉRIFICATION DE LA SESSION ET DU TEMPS
+        // Vérification de la session et du temps
         QuizSession session = quizSessionRepository.findByStudentAndQuiz(currentUser, quiz)
                 .orElseThrow(() -> new RuntimeException("Session non trouvée. Veuillez démarrer le quiz."));
 
@@ -81,52 +90,137 @@ public class ReponseService {
             throw new RuntimeException("Cette question n'appartient pas au quiz spécifié");
         }
 
+        // EMPÊCHER LA MODIFICATION : Une seule réponse par question
         boolean alreadyAnswered = reponseRepository.existsByStudentAndQuestionAndQuiz(
                 currentUser, question, quiz
         );
 
-        boolean isCorrect = question.checkAnswer(request.getStudentAnswer());
-        Integer pointsEarned = isCorrect ? question.getPoints() : 0;
-
-        Reponse reponse;
         if (alreadyAnswered) {
-            reponse = reponseRepository.findByStudentAndQuestion(currentUser, question)
-                    .orElseThrow(() -> new RuntimeException("Réponse non trouvée"));
-            reponse.setStudentAnswer(request.getStudentAnswer());
-            reponse.setIsCorrect(isCorrect);
-            reponse.setPointsEarned(pointsEarned);
-        } else {
-            reponse = new Reponse();
-            reponse.setQuiz(quiz);
-            reponse.setQuestion(question);
-            reponse.setStudent(currentUser);
-            reponse.setStudentAnswer(request.getStudentAnswer());
-            reponse.setIsCorrect(isCorrect);
-            reponse.setPointsEarned(pointsEarned);
+            throw new RuntimeException("Vous avez déjà répondu à cette question. La modification n'est pas autorisée.");
         }
 
-        Reponse savedReponse = reponseRepository.save(reponse);
+        // CORRECTION PAR IA POUR LES QUESTIONS TEXT
+        boolean isCorrect = false;
+        Integer pointsEarned = 0;
+
+        if (question.getType() == Question.QuestionType.TEXT) {
+            try {
+                AiCorrectionRequestDto correctionRequest = AiCorrectionRequestDto.builder()
+                        .questionText(question.getEnonce())
+                        .expectedAnswer(question.getReponseCorrecte())
+                        .studentAnswer(request.getStudentAnswer())
+                        .pointsMax(question.getPoints())
+                        .language("fr")
+                        .build();
+
+                AiCorrectionResponseDto correction = callAiForCorrection(correctionRequest);
+                isCorrect = correction.getIsCorrect();
+                pointsEarned = correction.getPointsEarned();
+
+            } catch (Exception e) {
+                // Fallback si l'IA échoue
+                isCorrect = question.checkAnswer(request.getStudentAnswer());
+                pointsEarned = isCorrect ? question.getPoints() : 0;
+            }
+        } else {
+            // Pour MCQ et TRUE_FALSE, utiliser la logique standard
+            isCorrect = question.checkAnswer(request.getStudentAnswer());
+            pointsEarned = isCorrect ? question.getPoints() : 0;
+        }
+
+        // Créer et sauvegarder la réponse
+        Reponse reponse = new Reponse();
+        reponse.setQuiz(quiz);
+        reponse.setQuestion(question);
+        reponse.setStudent(currentUser);
+        reponse.setStudentAnswer(request.getStudentAnswer());
+        reponse.setIsCorrect(isCorrect);
+        reponse.setPointsEarned(pointsEarned);
+
+        reponseRepository.save(reponse);
         updateResultat(currentUser, quiz);
 
-        return mapToResponseDto(savedReponse);
+        // 🔥 AUCUN RETOUR - méthode void (rien n'est retourné au frontend)
     }
 
     /**
-     * Soumettre le quiz et retourner score + feedback généré par IA
+     * Appeler l'IA pour corriger une réponse TEXT
      */
-    @Transactional
-    public QuizSubmissionResponseDto submitQuizAndGetResult(List<ReponseRequestDto> requests) {
+    private AiCorrectionResponseDto callAiForCorrection(AiCorrectionRequestDto request) {
+        String prompt = buildCorrectionPrompt(request);
+        String response = geminiApiClient.callGemini(prompt);
+        return parseCorrectionResponse(response, request.getPointsMax());
+    }
 
-        if (requests == null || requests.isEmpty()) {
-            throw new RuntimeException("Aucune réponse à soumettre");
+    /**
+     * Construire le prompt pour la correction IA
+     */
+    private String buildCorrectionPrompt(AiCorrectionRequestDto request) {
+        return String.format("""
+            Tu es un professeur expert. Corrige la réponse de l'étudiant et retourne UNIQUEMENT un JSON valide.
+
+            Question : %s
+            Réponse attendue : %s
+            Réponse de l'étudiant : %s
+            Points maximum : %d
+
+            Consignes :
+            1. Si la réponse est correcte ou très proche → isCorrect = true, pointsEarned = pointsMax
+            2. Si la réponse est partiellement correcte → isCorrect = false, pointsEarned = max(1, pointsMax/2)
+            3. Si la réponse est fausse → isCorrect = false, pointsEarned = 0
+
+            Format JSON attendu :
+            {
+                "isCorrect": true/false,
+                "pointsEarned": 0,
+                "feedback": "feedback court",
+                "explanation": "explication",
+                "similarityScore": 0.0
+            }
+            """,
+                request.getQuestionText(),
+                request.getExpectedAnswer(),
+                request.getStudentAnswer(),
+                request.getPointsMax()
+        );
+    }
+
+    /**
+     * Parser la réponse JSON de l'IA
+     */
+    private AiCorrectionResponseDto parseCorrectionResponse(String response, int pointsMax) {
+        try {
+            String cleanedResponse = response.replace("```json", "").replace("```", "").trim();
+            com.fasterxml.jackson.databind.JsonNode json = objectMapper.readTree(cleanedResponse);
+
+            return AiCorrectionResponseDto.builder()
+                    .isCorrect(json.has("isCorrect") && json.get("isCorrect").asBoolean())
+                    .pointsEarned(json.has("pointsEarned") ? json.get("pointsEarned").asInt() : 0)
+                    .feedback(json.has("feedback") ? json.get("feedback").asText() : "")
+                    .explanation(json.has("explanation") ? json.get("explanation").asText() : "")
+                    .similarityScore(json.has("similarityScore") ? json.get("similarityScore").asDouble() : 0.0)
+                    .build();
+        } catch (Exception e) {
+            return AiCorrectionResponseDto.builder()
+                    .isCorrect(false)
+                    .pointsEarned(0)
+                    .feedback("Erreur de correction")
+                    .explanation("")
+                    .similarityScore(0.0)
+                    .build();
         }
+    }
 
-        Long quizId = requests.get(0).getQuizId();
+    // ==================== SOUMISSION FINALE (SANS BODY) ====================
+
+    @Transactional
+    public QuizSubmissionResponseDto submitQuizAndGetResult(Long quizId) {
+
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
         User currentUser = authService.getCurrentUser();
 
-        // 🔥 VÉRIFICATION DE LA SESSION ET DU TEMPS AVANT SOUMISSION
+        // Vérification de la session et du temps avant soumission
         QuizSession session = quizSessionRepository.findByStudentAndQuiz(currentUser, quiz)
                 .orElseThrow(() -> new RuntimeException("Session non trouvée. Veuillez démarrer le quiz."));
 
@@ -138,22 +232,13 @@ public class ReponseService {
         session.markAsCompleted();
         quizSessionRepository.save(session);
 
-        // 1. Sauvegarder les réponses
-        for (ReponseRequestDto request : requests) {
-            try {
-                saveOrUpdateReponse(request);
-            } catch (Exception e) {
-                System.err.println("Erreur sauvegarde: " + e.getMessage());
-            }
-        }
-
-        // 2. Récupérer toutes les questions et réponses
+        // Récupérer toutes les questions et réponses déjà sauvegardées
         List<Question> questions = questionRepository.findByQuizId(quizId);
         List<Reponse> existingReponses = reponseRepository.findByStudentAndQuiz(currentUser, quiz);
         Map<Long, Reponse> reponseMap = existingReponses.stream()
                 .collect(Collectors.toMap(r -> r.getQuestion().getId(), r -> r));
 
-        // 3. Calculer le score
+        // Calculer le score
         int totalPointsPossible = 0;
         int earnedPoints = 0;
         int answeredCount = 0;
@@ -174,7 +259,7 @@ public class ReponseService {
         double percentage = totalPointsPossible > 0 ?
                 (earnedPoints * 100.0) / totalPointsPossible : 0;
 
-        // 4. Sauvegarder le résultat avec génération IA
+        // Sauvegarder le résultat avec génération IA
         ResultatRequestDto resultatRequest = ResultatRequestDto.builder()
                 .quizId(quizId)
                 .isCompleted(true)
@@ -189,23 +274,23 @@ public class ReponseService {
 
         ResultatDto resultatDto = resultatService.saveOrUpdateResultat(resultatRequest);
 
-        // 5. Récupérer le feedback généré par l'IA (dans resultatDto)
+        // Récupérer le feedback généré par l'IA
         String grade = resultatDto.getGrade() != null ? resultatDto.getGrade() : generateFallbackGrade(percentage);
         String feedbackIA = resultatDto.getFeedbackIa();
         String recommendations = resultatDto.getRecommendations();
         String strengths = resultatDto.getStrengths();
         String weaknesses = resultatDto.getWeaknesses();
 
-        // 6. Si l'IA n'a pas fonctionné, utiliser le feedback local
+        // Si l'IA n'a pas fonctionné, utiliser le feedback local
         if (feedbackIA == null || feedbackIA.isEmpty()) {
             feedbackIA = generateFallbackFeedback(percentage, correctCount, answeredCount, questions.size());
             recommendations = generateFallbackRecommendations(percentage, questions.size() - answeredCount, answeredCount - correctCount);
         }
 
-        // 7. Construire le feedback structuré final
+        // Construire le feedback structuré final
         String finalFeedback = buildStructuredFeedback(quiz, percentage, correctCount, answeredCount, questions.size(), feedbackIA, strengths, weaknesses);
 
-        // 8. Retourner la réponse
+        // Retourner la réponse
         return QuizSubmissionResponseDto.builder()
                 .score((double) earnedPoints)
                 .earnedPoints(earnedPoints)
@@ -220,8 +305,43 @@ public class ReponseService {
                 .build();
     }
 
+    // ==================== CORRECTIONS DÉTAILLÉES ====================
+
+    public List<ReponseDetailDto> getCorrectionsDetails(Long quizId) {
+        User currentUser = authService.getCurrentUser();
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
+
+        List<Reponse> reponses = reponseRepository.findByStudentAndQuiz(currentUser, quiz);
+
+        if (reponses.isEmpty()) {
+            throw new RuntimeException("Vous n'avez pas encore répondu à des questions");
+        }
+
+        List<Question> questions = questionRepository.findByQuizId(quizId);
+        Map<Long, Reponse> reponseMap = reponses.stream()
+                .collect(Collectors.toMap(r -> r.getQuestion().getId(), r -> r));
+
+        return questions.stream().map(question -> {
+            Reponse reponse = reponseMap.get(question.getId());
+            return ReponseDetailDto.builder()
+                    .questionId(question.getId())
+                    .questionText(question.getEnonce())
+                    .studentAnswer(reponse != null ? reponse.getStudentAnswer() : "Non répondue")
+                    .correctAnswer(question.getCorrectAnswerText())
+                    .isCorrect(reponse != null && reponse.getIsCorrect())
+                    .pointsEarned(reponse != null && reponse.getPointsEarned() != null ? reponse.getPointsEarned() : 0)
+                    .pointsMax(question.getPoints())
+                    .options(question.getAllOptions())
+                    .explanation(generateExplanation(question, reponse))
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    // ==================== MÉTHODES PRIVÉES ====================
+
     /**
-     * Construire un feedback structuré à partir des données IA
+     * Construire un feedback structuré
      */
     private String buildStructuredFeedback(Quiz quiz, double percentage, int correctCount, int answeredCount, int totalQuestions, String feedbackIA, String strengths, String weaknesses) {
         StringBuilder fb = new StringBuilder();
@@ -266,28 +386,27 @@ public class ReponseService {
     }
 
     /**
-     * Feedback fallback (si l'API IA échoue)
+     * Feedback fallback
      */
     private String generateFallbackFeedback(double percentage, int correctCount, int answeredCount, int totalQuestions) {
         if (percentage >= 85) {
-            return "🎉 EXCELLENT ! Vous maîtrisez parfaitement le sujet. Félicitations pour ce brillant résultat !";
+            return "🎉 EXCELLENT ! Vous maîtrisez parfaitement le sujet.";
         } else if (percentage >= 70) {
-            return "👍 TRÈS BIEN ! Bonne maîtrise du sujet. Quelques points à améliorer pour être parfait.";
+            return "👍 TRÈS BIEN ! Bonne maîtrise du sujet.";
         } else if (percentage >= 55) {
-            return "📖 BIEN ! Vous avez les bases. Revoyez les erreurs pour progresser.";
+            return "📖 BIEN ! Vous avez les bases.";
         } else if (percentage >= 40) {
-            return "⚠️ RÉSULTAT MOYEN. Une révision s'impose pour valider le module.";
+            return "⚠️ RÉSULTAT MOYEN. Une révision s'impose.";
         } else {
-            return "❌ RÉSULTAT INSUFFISANT. Nous vous conseillons de reprendre le cours.";
+            return "❌ RÉSULTAT INSUFFISANT. Reprenez le cours.";
         }
     }
 
     /**
-     * Recommandations fallback (si l'API IA échoue)
+     * Recommandations fallback
      */
     private String generateFallbackRecommendations(double percentage, int unansweredCount, int incorrectCount) {
         List<String> recos = new ArrayList<>();
-
         if (unansweredCount > 0) {
             recos.add("📌 " + unansweredCount + " question(s) sans réponse");
         }
@@ -297,16 +416,14 @@ public class ReponseService {
         if (percentage < 60) {
             recos.add("📌 Reprendre le cours sur ce thème");
         }
-
         if (recos.isEmpty()) {
             return "📌 Continuez vos efforts !";
         }
-
         return String.join("\n", recos);
     }
 
     /**
-     * Grade fallback (si l'API IA échoue)
+     * Grade fallback
      */
     private String generateFallbackGrade(double percentage) {
         if (percentage >= 90) return "A+";
@@ -318,75 +435,19 @@ public class ReponseService {
     }
 
     /**
-     * Récupérer les corrections détaillées pour le bouton "Voir corrections"
-     */
-    public List<ReponseDetailDto> getCorrectionsDetails(Long quizId) {
-        User currentUser = authService.getCurrentUser();
-        Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
-
-        List<Reponse> reponses = reponseRepository.findByStudentAndQuiz(currentUser, quiz);
-
-        if (reponses.isEmpty()) {
-            throw new RuntimeException("Vous n'avez pas encore répondu à des questions");
-        }
-
-        List<Question> questions = questionRepository.findByQuizId(quizId);
-        Map<Long, Reponse> reponseMap = reponses.stream()
-                .collect(Collectors.toMap(r -> r.getQuestion().getId(), r -> r));
-
-        return questions.stream().map(question -> {
-            Reponse reponse = reponseMap.get(question.getId());
-            return ReponseDetailDto.builder()
-                    .questionId(question.getId())
-                    .questionText(question.getEnonce())
-                    .studentAnswer(reponse != null ? reponse.getStudentAnswer() : "Non répondue")
-                    .correctAnswer(question.getCorrectAnswerText())
-                    .isCorrect(reponse != null && reponse.getIsCorrect())
-                    .pointsEarned(reponse != null && reponse.getPointsEarned() != null ? reponse.getPointsEarned() : 0)
-                    .pointsMax(question.getPoints())
-                    .options(question.getAllOptions())
-                    .explanation(generateExplanation(question, reponse))
-                    .build();
-        }).collect(Collectors.toList());
-    }
-
-    /**
-     * Générer une explication pour chaque question
+     * Générer une explication simple
      */
     private String generateExplanation(Question question, Reponse reponse) {
         if (reponse == null) {
-            return "⚠️ Vous n'avez pas répondu à cette question.\n\n" +
-                    "💡 La bonne réponse était : " + question.getCorrectAnswerText();
+            return "Non répondue - Bonne réponse : " + question.getCorrectAnswerText();
         }
 
         if (reponse.getIsCorrect()) {
-            String[] messages = {"Excellent !", "Bravo !", "Bien joué !", "Parfait !", "Continuez comme ça !"};
-            String randomMessage = messages[(int)(Math.random() * messages.length)];
-            return "✓ Bonne réponse ! " + randomMessage;
+            return "✓ Correct";
         } else {
-            StringBuilder explanation = new StringBuilder();
-            explanation.append("✗ Mauvaise réponse.\n\n");
-            explanation.append("Votre réponse : ").append(reponse.getStudentAnswer()).append("\n");
-            explanation.append("Réponse correcte : ").append(question.getCorrectAnswerText()).append("\n\n");
-
-            if (question.getType() == Question.QuestionType.MCQ) {
-                explanation.append("💡 Conseil : Relisez le cours sur ce sujet pour bien comprendre la différence entre les options.");
-            } else if (question.getType() == Question.QuestionType.TRUE_FALSE) {
-                explanation.append("💡 Conseil : Vérifiez bien les concepts clés avant de répondre Vrai/Faux.");
-            } else {
-                explanation.append("💡 Conseil : Reformulez la réponse avec vos propres mots pour mieux retenir.");
-            }
-
-            return explanation.toString();
+            return "✗ Incorrect\nVotre réponse : " + reponse.getStudentAnswer() +
+                    "\nBonne réponse : " + question.getCorrectAnswerText();
         }
-    }
-
-    @Transactional
-    public List<ReponseDto> saveAllReponses(List<ReponseRequestDto> requests) {
-        return requests.stream()
-                .map(this::saveOrUpdateReponse)
-                .collect(Collectors.toList());
     }
 
     private void updateResultat(User student, Quiz quiz) {
@@ -409,13 +470,25 @@ public class ReponseService {
         resultatService.saveOrUpdateResultat(resultatRequest);
     }
 
+    // ==================== MÉTHODES POUR COMPATIBILITÉ (peuvent être supprimées si non utilisées) ====================
+
+    @Transactional
+    public List<ReponseDto> saveAllReponses(List<ReponseRequestDto> requests) {
+        List<ReponseDto> responses = new ArrayList<>();
+        for (ReponseRequestDto request : requests) {
+            saveOrUpdateReponse(request);
+            // Ne pas retourner de DTO car méthode void
+        }
+        return responses;
+    }
+
     public List<ReponseDto> getReponsesByStudentAndQuiz(Long quizId) {
         User currentUser = authService.getCurrentUser();
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
         List<Reponse> reponses = reponseRepository.findByStudentAndQuiz(currentUser, quiz);
         return reponses.stream()
-                .map(this::mapToResponseDto)
+                .map(this::mapToMinimalDto)
                 .collect(Collectors.toList());
     }
 
@@ -428,8 +501,27 @@ public class ReponseService {
                 .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
         List<Reponse> reponses = reponseRepository.findByQuizWithStudent(quiz);
         return reponses.stream()
-                .map(this::mapToResponseDto)
+                .map(this::mapToMinimalDto)
                 .collect(Collectors.toList());
+    }
+
+    private ReponseDto mapToMinimalDto(Reponse reponse) {
+        Question question = reponse.getQuestion();
+        return ReponseDto.builder()
+                .id(reponse.getId())
+                .quizId(reponse.getQuiz() != null ? reponse.getQuiz().getId() : null)
+                .quizTitle(reponse.getQuiz() != null ? reponse.getQuiz().getTitre() : null)
+                .questionId(question != null ? question.getId() : null)
+                .questionText(question != null ? question.getEnonce() : null)
+                .questionType(question != null && question.getType() != null ? question.getType().name() : "MCQ")
+                .studentAnswer(reponse.getStudentAnswer())
+                .correctAnswer(question != null ? question.getCorrectAnswerText() : null)
+                .isCorrect(reponse.getIsCorrect())
+                .pointsEarned(reponse.getPointsEarned())
+                .pointsMax(question != null ? question.getPoints() : 0)
+                .answeredAt(reponse.getAnsweredAt())
+                .feedback(null)
+                .build();
     }
 
     @Transactional
@@ -466,27 +558,5 @@ public class ReponseService {
             return quiz.getEnseignant().getId().equals(currentUser.getId());
         }
         return quizStudentRepository.existsByQuizAndStudent(quiz, currentUser);
-    }
-
-    private ReponseDto mapToResponseDto(Reponse reponse) {
-        Question question = reponse.getQuestion();
-        return ReponseDto.builder()
-                .id(reponse.getId())
-                .quizId(reponse.getQuiz() != null ? reponse.getQuiz().getId() : null)
-                .quizTitle(reponse.getQuiz() != null ? reponse.getQuiz().getTitre() : null)
-                .questionId(question != null ? question.getId() : null)
-                .questionText(question != null ? question.getEnonce() : null)
-                .questionType(question != null && question.getType() != null ? question.getType().name() : "MCQ")
-                .studentAnswer(reponse.getStudentAnswer())
-                .correctAnswer(question != null ? question.getCorrectAnswerText() : null)
-                .isCorrect(reponse.getIsCorrect())
-                .pointsEarned(reponse.getPointsEarned())
-                .pointsMax(question != null ? question.getPoints() : 0)
-                .answeredAt(reponse.getAnsweredAt())
-                .feedback(reponse.getIsCorrect() != null && reponse.getIsCorrect() ?
-                        "✓ Bonne réponse !" :
-                        "✗ Mauvaise réponse. La bonne réponse était : " +
-                                (question != null ? question.getCorrectAnswerText() : "Inconnue"))
-                .build();
     }
 }

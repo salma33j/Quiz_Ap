@@ -25,13 +25,11 @@ public class AuthController {
     @Autowired
     private QuizAdminService quizAdminService;
 
+    // ❌ INSCRIPTION PUBLIQUE DÉSACTIVÉE
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        AuthResponse response = authService.register(request);
-        if (response.getMessage() != null && response.getMessage().contains("Email déjà utilisé")) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-        }
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(AuthResponse.error("❌ L'inscription publique est désactivée. Veuillez contacter l'administrateur."));
     }
 
     @PostMapping("/login")
@@ -46,8 +44,7 @@ public class AuthController {
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AuthResponse> getCurrentUser() {
-        AuthResponse response = authService.getCurrentUserInfo();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(authService.getCurrentUserInfo());
     }
 
     @PutMapping("/profile/{id}")
@@ -67,8 +64,7 @@ public class AuthController {
     public ResponseEntity<AuthResponse> changePassword(
             @PathVariable Long id,
             @Valid @RequestBody ChangePasswordRequest request) {
-        AuthResponse response = authService.changePassword(id, request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(authService.changePassword(id, request));
     }
 
     @GetMapping("/users")
@@ -89,19 +85,43 @@ public class AuthController {
         return ResponseEntity.ok(authService.getUserById(id));
     }
 
+    // ✅ ADMIN : Créer un étudiant
+    @PostMapping("/admin/create-etudiant")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AuthResponse> createEtudiant(
+            @Valid @RequestBody RegisterRequest request) {
+        AuthResponse response = authService.createEtudiant(request);
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // ✅ ADMIN : Créer un enseignant
+    @PostMapping("/admin/create-enseignant")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AuthResponse> createEnseignant(
+            @Valid @RequestBody RegisterRequest request) {
+        AuthResponse response = authService.createEnseignant(request);
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
     @PutMapping("/promote/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AuthResponse> promoteToTeacher(@PathVariable Long userId) {
-        AuthResponse response = authService.promoteToTeacher(userId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(authService.promoteToTeacher(userId));
     }
 
     @DeleteMapping("/user/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AuthResponse> deleteUser(@PathVariable Long id) {
-        AuthResponse response = authService.deleteUser(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(authService.deleteUser(id));
     }
+
+    // ========== ADMIN - GESTION DES QUIZ ==========
 
     @GetMapping("/admin/quizzes/expired")
     @PreAuthorize("hasRole('ADMIN')")

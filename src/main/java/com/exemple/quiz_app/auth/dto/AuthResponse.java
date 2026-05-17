@@ -1,12 +1,10 @@
 package com.exemple.quiz_app.auth.dto;
 
-
-
 public class AuthResponse {
     private String token;
     private String refreshToken;
     private String type;
-    private Long userId;  //  Changé de Long à BigInteger
+    private Long userId;
     private String username;
     private String email;
     private String role;
@@ -15,13 +13,16 @@ public class AuthResponse {
     private boolean success;
     private Long expiresIn;
 
+    // ✅ NOUVEAU : indique si l'utilisateur doit changer son mot de passe
+    private boolean mustChangePassword;
+
     // Constructeur par défaut
     public AuthResponse() {
         this.type = "Bearer";
         this.success = true;
+        this.mustChangePassword = false;
     }
 
-    // Constructeur pour connexion réussie (minimum requis)
     public AuthResponse(String token, String username, String role, Long id) {
         this();
         this.token = token;
@@ -30,20 +31,17 @@ public class AuthResponse {
         this.userId = id;
     }
 
-    // Constructeur pour connexion réussie avec email
     public AuthResponse(String token, String username, String email, String role, Long id) {
         this(token, username, role, id);
         this.email = email;
     }
 
-    // Constructeur pour réponse d'erreur
     public AuthResponse(String message, boolean success) {
         this();
         this.message = message;
         this.success = success;
     }
 
-    // Constructeur complet
     public AuthResponse(String token, String refreshToken, String type, Long id,
                         String username, String email, String role, String fullName,
                         Long expiresIn) {
@@ -57,6 +55,7 @@ public class AuthResponse {
         this.fullName = fullName;
         this.expiresIn = expiresIn;
         this.success = true;
+        this.mustChangePassword = false;
     }
 
     // Getters
@@ -71,6 +70,7 @@ public class AuthResponse {
     public String getMessage() { return message; }
     public boolean isSuccess() { return success; }
     public Long getExpiresIn() { return expiresIn; }
+    public boolean isMustChangePassword() { return mustChangePassword; }
 
     // Setters
     public void setToken(String token) { this.token = token; }
@@ -84,18 +84,16 @@ public class AuthResponse {
     public void setMessage(String message) { this.message = message; }
     public void setSuccess(boolean success) { this.success = success; }
     public void setExpiresIn(Long expiresIn) { this.expiresIn = expiresIn; }
+    public void setMustChangePassword(boolean mustChangePassword) { this.mustChangePassword = mustChangePassword; }
 
-    // Méthode utilitaire pour créer une réponse d'erreur
     public static AuthResponse error(String message) {
         return new AuthResponse(message, false);
     }
 
-    // Méthode utilitaire pour créer une réponse de succès simple
     public static AuthResponse success(String token, String username, String role, Long id) {
         return new AuthResponse(token, username, role, id);
     }
 
-    // Méthode utilitaire pour créer une réponse de succès sans token
     public static AuthResponse success(String message) {
         AuthResponse response = new AuthResponse();
         response.setSuccess(true);
@@ -107,17 +105,13 @@ public class AuthResponse {
     public String toString() {
         return "AuthResponse{" +
                 "token='***'" +
-                ", refreshToken='***'" +
-                ", type='" + type + '\'' +
                 ", userId=" + userId +
                 ", username='" + username + '\'' +
                 ", email='" + email + '\'' +
                 ", role='" + role + '\'' +
-                ", fullName='" + fullName + '\'' +
                 ", message='" + message + '\'' +
                 ", success=" + success +
-                ", expiresIn=" + expiresIn +
+                ", mustChangePassword=" + mustChangePassword +
                 '}';
     }
-
 }

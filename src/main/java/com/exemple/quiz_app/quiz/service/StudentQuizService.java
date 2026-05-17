@@ -41,39 +41,59 @@ public class StudentQuizService {
     @Autowired
     private QuestionRepository questionRepository;
 
+    /**
+     * Quizzes disponibles (uniquement "À faire")
+     * Ne montre PAS les quiz terminés, expirés, ou avec session expirée
+     */
     public List<QuizForStudentDto> getAvailableQuizzes() {
         User student = authService.getCurrentUser();
         LocalDateTime now = LocalDateTime.now();
 
-        return quizRepository.findAvailableQuizzesForStudent(student, now).stream().map(quiz -> {
-            QuizForStudentDto dto = new QuizForStudentDto();
-            dto.setId(quiz.getId());
-            dto.setTitre(quiz.getTitre());
-            dto.setTheme(quiz.getTheme());
-            dto.setEnseignantNom(teacherDisplayName(quiz.getEnseignant()));
-            dto.setQuestionCount(quiz.getQuestionCount());
-            dto.setTimeLimit(quiz.getTimeLimit());
-            dto.setAvailableUntil(quiz.getAvailableUntil());
+        return quizRepository.findAvailableQuizzesForStudent(student, now).stream()
+                .filter(quiz -> {
+                    // 🔥 Exclure les quiz déjà complétés (soumis)
+                    boolean completed = resultatRepository.hasStudentCompletedQuiz(student.getId().longValue(), quiz.getId());
+                    if (completed) return false;
 
-            boolean completed = resultatRepository.hasStudentCompletedQuiz(student.getId().longValue(), quiz.getId());
-            if (completed) {
-                dto.setStatus("Termine");
-                dto.setTimeRemainingSeconds(0L);
-            } else {
-                dto.setStatus("A faire");
-                if (quiz.getAvailableUntil() != null) {
-                    long remaining = ChronoUnit.SECONDS.between(now, quiz.getAvailableUntil());
-                    dto.setTimeRemainingSeconds(Math.max(0, remaining));
-                } else {
-                    dto.setTimeRemainingSeconds(-1L);
-                }
-            }
-            return dto;
-        }).collect(Collectors.toList());
+                    // 🔥 Exclure les quiz avec session expirée
+                    Optional<QuizSession> session = quizSessionRepository.findByStudentAndQuiz(student, quiz);
+                    if (session.isPresent() && session.get().isExpired()) {
+                        return false;
+                    }
+
+                    return true;
+                })
+                .map(quiz -> {
+                    QuizForStudentDto dto = new QuizForStudentDto();
+                    dto.setId(quiz.getId());
+                    dto.setTitre(quiz.getTitre());
+                    dto.setTheme(quiz.getTheme());
+                    dto.setEnseignantNom(teacherDisplayName(quiz.getEnseignant()));
+                    dto.setQuestionCount(quiz.getQuestionCount());
+                    dto.setTimeLimit(quiz.getTimeLimit());
+                    dto.setAvailableUntil(quiz.getAvailableUntil());
+                    dto.setStatus("À faire");
+
+                    if (quiz.getAvailableUntil() != null) {
+                        long remaining = ChronoUnit.SECONDS.between(now, quiz.getAvailableUntil());
+                        dto.setTimeRemainingSeconds(Math.max(0, remaining));
+                    } else {
+                        dto.setTimeRemainingSeconds(-1L);
+                    }
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
+    /**
+     * Historique complet des quizzes
+     * - Terminé = soumis OU session expirée
+     * - Expiré = date du professeur dépassée uniquement
+     * - À faire = quiz disponible
+     */
     public List<QuizForStudentDto> getQuizHistory() {
         User student = authService.getCurrentUser();
+        LocalDateTime now = LocalDateTime.now();
 
         return quizRepository.findAllQuizzesForStudent(student).stream().map(quiz -> {
             QuizForStudentDto dto = new QuizForStudentDto();
@@ -86,12 +106,30 @@ public class StudentQuizService {
             dto.setAvailableUntil(quiz.getAvailableUntil());
 
             boolean completed = resultatRepository.hasStudentCompletedQuiz(student.getId().longValue(), quiz.getId());
-            if (completed) {
-                dto.setStatus("Termine");
-            } else if (quiz.getAvailableUntil() != null && quiz.getAvailableUntil().isBefore(LocalDateTime.now())) {
-                dto.setStatus("Expire");
-            } else {
-                dto.setStatus("Non commence");
+            Optional<QuizSession> session = quizSessionRepository.findByStudentAndQuiz(student, quiz);
+            boolean isSessionExpired = session.isPresent() && session.get().isExpired();
+
+            // 🔥 1. Vérifier si la date du professeur est dépassée -> EXPIRÉ
+            boolean isDateExpired = quiz.getAvailableUntil() != null && now.isAfter(quiz.getAvailableUntil());
+
+            if (isDateExpired) {
+                dto.setStatus("Expiré");
+                dto.setTimeRemainingSeconds(0L);
+            }
+            // 🔥 2. Vérifier si terminé (soumis OU session expirée) -> TERMINÉ
+            else if (completed || isSessionExpired) {
+                dto.setStatus("Terminé");
+                dto.setTimeRemainingSeconds(0L);
+            }
+            // 🔥 3. Sinon -> À FAIRE
+            else {
+                dto.setStatus("À faire");
+                if (quiz.getAvailableUntil() != null) {
+                    long remaining = ChronoUnit.SECONDS.between(now, quiz.getAvailableUntil());
+                    dto.setTimeRemainingSeconds(Math.max(0, remaining));
+                } else {
+                    dto.setTimeRemainingSeconds(-1L);
+                }
             }
             return dto;
         }).collect(Collectors.toList());
@@ -101,11 +139,11 @@ public class StudentQuizService {
         User student = authService.getCurrentUser();
 
         if (!quizRepository.isStudentAllowed(quizId, student.getId().longValue())) {
-            throw new RuntimeException("Acces non autorise");
+            throw new RuntimeException("Accès non autorisé");
         }
 
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz non trouve"));
+                .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
 
         QuizForStudentDto dto = new QuizForStudentDto();
         dto.setId(quiz.getId());
@@ -116,19 +154,25 @@ public class StudentQuizService {
         dto.setTimeLimit(quiz.getTimeLimit());
         dto.setAvailableUntil(quiz.getAvailableUntil());
 
-        if (resultatRepository.hasStudentCompletedQuiz(student.getId().longValue(), quizId)) {
-            dto.setStatus("Termine");
+        boolean completed = resultatRepository.hasStudentCompletedQuiz(student.getId().longValue(), quizId);
+        Optional<QuizSession> session = quizSessionRepository.findByStudentAndQuiz(student, quiz);
+        boolean isSessionExpired = session.isPresent() && session.get().isExpired();
+        boolean isDateExpired = quiz.getAvailableUntil() != null && LocalDateTime.now().isAfter(quiz.getAvailableUntil());
+
+        if (isDateExpired) {
+            dto.setStatus("Expiré");
+        } else if (completed || isSessionExpired) {
+            dto.setStatus("Terminé");
         } else if (!quiz.isAvailable()) {
-            dto.setStatus("Expire");
+            dto.setStatus("Expiré");
         } else {
-            dto.setStatus("A faire");
+            dto.setStatus("À faire");
         }
         return dto;
     }
 
     /**
      * Vérifier si l'étudiant peut participer au quiz
-     * Vérifie : autorisation, disponibilité (date), non complété, session non expirée
      */
     public Map<String, Object> canParticipate(Long quizId) {
         User student = authService.getCurrentUser();
@@ -144,10 +188,17 @@ public class StudentQuizService {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
 
-        // Vérifier si le quiz est disponible (date)
+        // Vérifier si la date du professeur est dépassée
+        if (quiz.getAvailableUntil() != null && LocalDateTime.now().isAfter(quiz.getAvailableUntil())) {
+            result.put("canParticipate", false);
+            result.put("reason", "Ce quiz a expiré (date dépassée)");
+            return result;
+        }
+
+        // Vérifier si le quiz est disponible
         if (!quiz.isAvailable()) {
             result.put("canParticipate", false);
-            result.put("reason", "Ce quiz n'est plus disponible (date expirée)");
+            result.put("reason", "Ce quiz n'est pas disponible");
             return result;
         }
 
@@ -167,7 +218,7 @@ public class StudentQuizService {
             // Si la session est expirée
             if (session.isExpired()) {
                 result.put("canParticipate", false);
-                result.put("reason", "Votre temps est écoulé ! Vous ne pouvez plus répondre.");
+                result.put("reason", "Votre temps est écoulé !");
                 result.put("timeExpired", true);
                 return result;
             }
@@ -197,7 +248,7 @@ public class StudentQuizService {
         result.put("timeLimit", quiz.getTimeLimit());
         result.put("questionCount", quiz.getQuestionCount());
         result.put("availableUntil", quiz.getAvailableUntil());
-        result.put("remainingSeconds", quiz.getTimeLimit() != null ? quiz.getTimeLimit() * 60 : -1);
+        result.put("remainingSeconds", quiz.getTimeLimit() != null ? quiz.getTimeLimit() * 60L : -1L);
         result.put("sessionExists", false);
 
         return result;
@@ -205,7 +256,6 @@ public class StudentQuizService {
 
     /**
      * Démarrer un quiz (créer une session)
-     * Appelé quand l'étudiant clique sur "Commencer le quiz"
      */
     @Transactional
     public void startQuiz(Long quizId) {
@@ -216,6 +266,11 @@ public class StudentQuizService {
         // Vérifier si déjà complété
         if (resultatRepository.hasStudentCompletedQuiz(student.getId().longValue(), quizId)) {
             throw new RuntimeException("Vous avez déjà complété ce quiz");
+        }
+
+        // Vérifier si la date du professeur est dépassée
+        if (quiz.getAvailableUntil() != null && LocalDateTime.now().isAfter(quiz.getAvailableUntil())) {
+            throw new RuntimeException("Ce quiz a expiré");
         }
 
         // Vérifier si le quiz est disponible
@@ -234,7 +289,6 @@ public class StudentQuizService {
             if (session.getStatus() == QuizSession.SessionStatus.COMPLETED) {
                 throw new RuntimeException("Quiz déjà soumis");
             }
-            // Session active, continuer
             return;
         }
 
@@ -247,7 +301,7 @@ public class StudentQuizService {
     }
 
     /**
-     * Vérifier le temps restant (appel périodique par le frontend)
+     * Vérifier le temps restant
      */
     public Map<String, Object> getRemainingTime(Long quizId) {
         User student = authService.getCurrentUser();
@@ -302,7 +356,7 @@ public class StudentQuizService {
     }
 
     /**
-     * Récupérer le temps restant en secondes pour le frontend (timer)
+     * Récupérer le temps restant en secondes
      */
     public Long getRemainingSecondsForQuiz(Long quizId) {
         User student = authService.getCurrentUser();
@@ -315,7 +369,6 @@ public class StudentQuizService {
             return session.get().getRemainingSeconds();
         }
 
-        // Si pas de session, retourner la limite totale
         if (quiz.getTimeLimit() != null) {
             return quiz.getTimeLimit() * 60L;
         }
@@ -324,12 +377,11 @@ public class StudentQuizService {
     }
 
     /**
-     * 🔥 Récupérer les questions d'un quiz pour l'étudiant (sans réponses correctes)
+     * Récupérer les questions d'un quiz pour l'étudiant
      */
     public List<QuestionDto> getQuizQuestions(Long quizId) {
         User student = authService.getCurrentUser();
 
-        // Vérifier si autorisé
         if (!quizRepository.isStudentAllowed(quizId, student.getId().longValue())) {
             throw new RuntimeException("Accès non autorisé");
         }
@@ -337,31 +389,29 @@ public class StudentQuizService {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
 
-        // Vérifier si le quiz est disponible
+        // Vérifier si la date du professeur est dépassée
+        if (quiz.getAvailableUntil() != null && LocalDateTime.now().isAfter(quiz.getAvailableUntil())) {
+            throw new RuntimeException("Ce quiz a expiré");
+        }
+
         if (!quiz.isAvailable()) {
             throw new RuntimeException("Ce quiz n'est plus disponible");
         }
 
-        // Vérifier si déjà complété
         if (resultatRepository.hasStudentCompletedQuiz(student.getId().longValue(), quizId)) {
             throw new RuntimeException("Vous avez déjà complété ce quiz");
         }
 
-        // Vérifier si la session n'est pas expirée
         Optional<QuizSession> session = quizSessionRepository.findByStudentAndQuiz(student, quiz);
         if (session.isPresent() && session.get().isExpired()) {
             throw new RuntimeException("Temps écoulé ! Vous ne pouvez plus répondre");
         }
 
-        // Récupérer les questions sans les réponses correctes
         return questionRepository.findByQuizId(quizId).stream()
                 .map(this::mapToStudentQuestionDto)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Mapper Question → QuestionDto (sans réponse correcte)
-     */
     private QuestionDto mapToStudentQuestionDto(Question question) {
         QuestionDto dto = new QuestionDto();
         dto.setId(question.getId());
@@ -372,9 +422,6 @@ public class StudentQuizService {
         return dto;
     }
 
-    /**
-     * Nom affiché de l'enseignant
-     */
     private static String teacherDisplayName(User enseignant) {
         if (enseignant == null) {
             return null;

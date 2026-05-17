@@ -1,7 +1,6 @@
 package com.exemple.quiz_app.reponse.controller;
 
 import com.exemple.quiz_app.reponse.dto.ReponseDetailDto;
-import com.exemple.quiz_app.reponse.dto.ReponseDto;
 import com.exemple.quiz_app.reponse.dto.ReponseRequestDto;
 import com.exemple.quiz_app.reponse.dto.QuizSubmissionResponseDto;
 import com.exemple.quiz_app.reponse.service.ReponseService;
@@ -22,28 +21,31 @@ public class ReponseController {
     private final ReponseService reponseService;
 
     /**
-     * 1. Sauvegarder/mettre à jour une réponse (pour suivant/précédent)
+     * 1. Sauvegarder une réponse (SANS RETOUR - silence total)
+     * Appelé à chaque clique sur "Suivant"
+     * 🔥 Retourne 204 No Content - rien n'est affiché côté frontend
      */
     @PostMapping
     @PreAuthorize("hasAnyRole('ETUDIANT', 'ADMIN')")
-    public ResponseEntity<ReponseDto> saveReponse(@Valid @RequestBody ReponseRequestDto request) {
-        ReponseDto response = reponseService.saveOrUpdateReponse(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    public ResponseEntity<Void> saveReponse(@Valid @RequestBody ReponseRequestDto request) {
+        reponseService.saveOrUpdateReponse(request);
+        return ResponseEntity.noContent().build();  // 🔥 204 - AUCUNE DONNÉE RETOURNÉE
     }
 
     /**
-     * 2. Soumettre le quiz → score + feedback IA
+     * 2. Soumettre le quiz (SANS BODY) → score + feedback IA
+     * Appelé au clique sur "Soumettre"
      */
-    @PostMapping("/quiz/submit")
+    @PostMapping("/quiz/{quizId}/submit")
     @PreAuthorize("hasAnyRole('ETUDIANT', 'ADMIN')")
-    public ResponseEntity<QuizSubmissionResponseDto> submitQuiz(
-            @Valid @RequestBody List<ReponseRequestDto> requests) {
-        QuizSubmissionResponseDto result = reponseService.submitQuizAndGetResult(requests);
+    public ResponseEntity<QuizSubmissionResponseDto> submitQuiz(@PathVariable Long quizId) {
+        QuizSubmissionResponseDto result = reponseService.submitQuizAndGetResult(quizId);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     /**
      * 3. Voir les corrections (bouton "Voir corrections")
+     * Appelé après soumission
      */
     @GetMapping("/quiz/{quizId}/corrections")
     @PreAuthorize("hasAnyRole('ETUDIANT', 'ADMIN')")

@@ -64,7 +64,7 @@ CREATE TABLE question (
                           choixB VARCHAR(100),
                           choixC VARCHAR(100),
                           choixD VARCHAR(100),
-                          reponse_correcte VARCHAR(50) NOT NULL,
+                          reponse_correcte TEXT NOT NULL,
                           points INT DEFAULT 1,
                           type VARCHAR(20) DEFAULT 'MCQ',
                           id_quiz BIGINT NOT NULL,

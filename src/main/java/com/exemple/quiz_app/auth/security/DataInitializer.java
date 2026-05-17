@@ -28,7 +28,7 @@ public class DataInitializer implements CommandLineRunner {
 
         // Constructeur : (firstName, lastName, email, password, role)
         userRepository.save(new User("Admin", "System",
-                "admin@quizapp.com", passwordEncoder.encode("admin123"), Role.ADMIN));
+                "akilsalma33@gmail.com", passwordEncoder.encode("admin123"), Role.ADMIN));
 
         userRepository.save(new User("Professeur", "Alpha",
                 "prof.alpha@quizapp.com", passwordEncoder.encode("teacher123"), Role.ENSEIGNANT));

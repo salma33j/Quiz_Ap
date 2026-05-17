@@ -25,6 +25,12 @@ public class AuthService {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private EmailService emailService;
+
+    // =========================================================
+    // MÉTHODE UTILITAIRE : obtenir l'utilisateur connecté
+    // =========================================================
     public User getCurrentUser() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || auth.getName() == null || auth.getName().equals("anonymousUser")) {
@@ -34,36 +40,22 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
     }
 
+    // =========================================================
+    // ❌ REGISTER — DÉSACTIVÉ (plus d'inscription publique)
+    // =========================================================
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            return AuthResponse.error("Email deja utilise");
-        }
-        Role role = Role.ETUDIANT;
-        if (request.getRole() != null) {
-            try { role = Role.valueOf(request.getRole().toUpperCase()); }
-            catch (IllegalArgumentException e) { role = Role.ETUDIANT; }
-        }
-        User user = new User(request.getFirstName(), request.getLastName(),
-                request.getEmail(), passwordEncoder.encode(request.getPassword()), role);
-        user = userRepository.save(user);
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-        AuthResponse response = new AuthResponse();
-        response.setToken(token);
-        response.setUserId(user.getId());
-        response.setUsername(user.getFirstName() + " " + user.getLastName());
-        response.setEmail(user.getEmail());
-        response.setRole(user.getRole().name());
-        response.setMessage("Inscription reussie");
-        response.setSuccess(true);
-        response.setType("Bearer");
-        return response;
+        return AuthResponse.error("❌ L'inscription publique est désactivée. Seul l'administrateur peut créer des comptes.");
     }
 
+    // =========================================================
+    // LOGIN
+    // =========================================================
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail()).orElse(null);
         if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             return AuthResponse.error("Email ou mot de passe incorrect");
         }
+
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
         AuthResponse response = new AuthResponse();
         response.setToken(token);
@@ -71,12 +63,96 @@ public class AuthService {
         response.setUsername(user.getFirstName() + " " + user.getLastName());
         response.setEmail(user.getEmail());
         response.setRole(user.getRole().name());
+        response.setMustChangePassword(user.isMustChangePassword());
         response.setMessage("Connexion reussie");
         response.setSuccess(true);
         response.setType("Bearer");
         return response;
     }
 
+    // =========================================================
+    // ✅ ADMIN : Créer un compte ÉTUDIANT
+    // =========================================================
+    public AuthResponse createEtudiant(RegisterRequest request) {
+        User requester = getCurrentUser();
+        if (requester.getRole() != Role.ADMIN) {
+            return AuthResponse.error("Acces refuse - Reserve aux administrateurs");
+        }
+        if (userRepository.existsByEmail(request.getEmail())) {
+            return AuthResponse.error("Email deja utilise");
+        }
+
+        String provisoryPassword = genererMotDePasse("Etu");
+
+        User user = new User(
+                request.getFirstName(), request.getLastName(),
+                request.getEmail(),
+                passwordEncoder.encode(provisoryPassword),
+                Role.ETUDIANT
+        );
+        user.setMustChangePassword(true);
+        user = userRepository.save(user);
+
+        emailService.sendEtudiantCredentials(
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                provisoryPassword
+        );
+
+        AuthResponse response = new AuthResponse();
+        response.setUserId(user.getId());
+        response.setUsername(user.getFirstName() + " " + user.getLastName());
+        response.setEmail(user.getEmail());
+        response.setRole("ETUDIANT");
+        response.setMessage("Compte etudiant cree avec succes. Un email a ete envoye a " + user.getEmail());
+        response.setSuccess(true);
+        return response;
+    }
+
+    // =========================================================
+    // ✅ ADMIN : Créer un compte ENSEIGNANT
+    // =========================================================
+    public AuthResponse createEnseignant(RegisterRequest request) {
+        User requester = getCurrentUser();
+        if (requester.getRole() != Role.ADMIN) {
+            return AuthResponse.error("Acces refuse - Reserve aux administrateurs");
+        }
+        if (userRepository.existsByEmail(request.getEmail())) {
+            return AuthResponse.error("Email deja utilise");
+        }
+
+        String provisoryPassword = genererMotDePasse("Prof");
+
+        User user = new User(
+                request.getFirstName(), request.getLastName(),
+                request.getEmail(),
+                passwordEncoder.encode(provisoryPassword),
+                Role.ENSEIGNANT
+        );
+        user.setMustChangePassword(true);
+        user = userRepository.save(user);
+
+        emailService.sendEnseignantCredentials(
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                provisoryPassword
+        );
+
+        AuthResponse response = new AuthResponse();
+        response.setUserId(user.getId());
+        response.setUsername(user.getFirstName() + " " + user.getLastName());
+        response.setEmail(user.getEmail());
+        response.setRole("ENSEIGNANT");
+        response.setMessage("Compte enseignant cree avec succes. Un email a ete envoye a " + user.getEmail());
+        response.setSuccess(true);
+        return response;
+    }
+
+    // =========================================================
+    // GET CURRENT USER INFO
+    // =========================================================
     public AuthResponse getCurrentUserInfo() {
         try {
             User user = getCurrentUser();
@@ -85,6 +161,7 @@ public class AuthService {
             response.setUsername(user.getFirstName() + " " + user.getLastName());
             response.setEmail(user.getEmail());
             response.setRole(user.getRole().name());
+            response.setMustChangePassword(user.isMustChangePassword());
             response.setMessage("Utilisateur trouve");
             response.setSuccess(true);
             return response;
@@ -93,6 +170,9 @@ public class AuthService {
         }
     }
 
+    // =========================================================
+    // GET ALL USERS (admin seulement)
+    // =========================================================
     public List<UserDto> getAllUsers() {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN) {
@@ -101,6 +181,9 @@ public class AuthService {
         return userRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
+    // =========================================================
+    // GET USER BY ID
+    // =========================================================
     public AuthResponse getUserById(Long id) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN && !requester.getId().equals(id)) {
@@ -113,6 +196,7 @@ public class AuthService {
                     response.setUsername(user.getFirstName() + " " + user.getLastName());
                     response.setEmail(user.getEmail());
                     response.setRole(user.getRole().name());
+                    response.setMustChangePassword(user.isMustChangePassword());
                     response.setMessage("OK");
                     response.setSuccess(true);
                     return response;
@@ -120,6 +204,9 @@ public class AuthService {
                 .orElse(AuthResponse.error("Utilisateur introuvable"));
     }
 
+    // =========================================================
+    // PROMOTE TO TEACHER (admin seulement)
+    // =========================================================
     public AuthResponse promoteToTeacher(Long userId) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN) {
@@ -130,6 +217,7 @@ public class AuthService {
         if (user.getRole() == Role.ENSEIGNANT) return AuthResponse.error("L'utilisateur est deja enseignant");
         user.setRole(Role.ENSEIGNANT);
         userRepository.save(user);
+
         AuthResponse response = new AuthResponse();
         response.setUserId(user.getId());
         response.setUsername(user.getFirstName() + " " + user.getLastName());
@@ -140,6 +228,9 @@ public class AuthService {
         return response;
     }
 
+    // =========================================================
+    // DELETE USER (admin seulement)
+    // =========================================================
     public AuthResponse deleteUser(Long id) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN) return AuthResponse.error("Acces refuse");
@@ -148,6 +239,9 @@ public class AuthService {
         return AuthResponse.success("Utilisateur supprime");
     }
 
+    // =========================================================
+    // UPDATE PROFILE
+    // =========================================================
     public AuthResponse updateProfile(Long id, RegisterRequest request) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN && !requester.getId().equals(id)) {
@@ -162,6 +256,7 @@ public class AuthService {
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
         userRepository.save(user);
+
         AuthResponse response = new AuthResponse();
         response.setUserId(user.getId());
         response.setUsername(user.getFirstName() + " " + user.getLastName());
@@ -172,6 +267,9 @@ public class AuthService {
         return response;
     }
 
+    // =========================================================
+    // CHANGE PASSWORD
+    // =========================================================
     public AuthResponse changePassword(Long id, ChangePasswordRequest request) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN && !requester.getId().equals(id)) {
@@ -183,10 +281,24 @@ public class AuthService {
             return AuthResponse.error("Ancien mot de passe incorrect");
         }
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setMustChangePassword(false);
         userRepository.save(user);
-        return AuthResponse.success("Mot de passe modifie");
+        return AuthResponse.success("Mot de passe modifie avec succes");
     }
 
+    // =========================================================
+    // MÉTHODE UTILITAIRE : générer un mot de passe provisoire
+    // =========================================================
+    private String genererMotDePasse(String prefix) {
+        int nombre = (int) (Math.random() * 9000 + 1000);
+        String[] specials = {"@", "#", "!", "&"};
+        String special = specials[(int) (Math.random() * specials.length)];
+        return prefix + special + nombre;
+    }
+
+    // =========================================================
+    // MAPPER User → UserDto
+    // =========================================================
     private UserDto mapToDto(User user) {
         UserDto dto = new UserDto();
         dto.setId(user.getId());

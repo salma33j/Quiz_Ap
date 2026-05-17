@@ -29,3 +29,16 @@ spring.config.import=optional:classpath:application-local.properties
 # ClÃ© : variable GEMINI_API_KEY, ou gemini.api.key dans application-local.properties (non versionnÃ©).
 gemini.api.key=ta_clè
 gemini.api.url=https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent
+
+✅ CONFIGURATION EMAIL (Gmail)
+# ============================================
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=ton_émail
+spring.mail.password=mot_de_passe(16caractères)
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.properties.mail.smtp.starttls.required=true
+spring.mail.properties.mail.smtp.connectiontimeout=5000
+spring.mail.properties.mail.smtp.timeout=5000
+spring.mail.properties.mail.smtp.writetimeout=5000

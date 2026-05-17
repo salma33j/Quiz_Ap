@@ -40,6 +40,10 @@ public class User {
     @Column(nullable = false, length = 20)
     private Role role;
 
+    // ✅ NOUVEAU : forcer le changement de mot de passe à la première connexion
+    @Column(nullable = false)
+    private boolean mustChangePassword = false;
+
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -57,6 +61,7 @@ public class User {
         this.email = email;
         this.password = password;
         this.role = role;
+        this.mustChangePassword = false;
     }
 
     public User(String fullName, String email, String password, Role role) {
@@ -66,6 +71,7 @@ public class User {
         this.email = email;
         this.password = password;
         this.role = role;
+        this.mustChangePassword = false;
     }
 
     public User(Long id, String firstName, String lastName, String email, String password, Role role) {
@@ -75,6 +81,7 @@ public class User {
         this.email = email;
         this.password = password;
         this.role = role;
+        this.mustChangePassword = false;
     }
 
     // ========== GETTERS ==========
@@ -85,6 +92,7 @@ public class User {
     public String getEmail() { return email; }
     public String getPassword() { return password; }
     public Role getRole() { return role; }
+    public boolean isMustChangePassword() { return mustChangePassword; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 
@@ -96,18 +104,14 @@ public class User {
     public void setEmail(String email) { this.email = email; }
     public void setPassword(String password) { this.password = password; }
     public void setRole(Role role) { this.role = role; }
+    public void setMustChangePassword(boolean mustChangePassword) { this.mustChangePassword = mustChangePassword; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
     // ========== MÉTHODES UTILITAIRES ==========
 
-    public String getNom() {
-        return firstName + " " + lastName;
-    }
-
-    public String getFullName() {
-        return firstName + " " + lastName;
-    }
+    public String getNom() { return firstName + " " + lastName; }
+    public String getFullName() { return firstName + " " + lastName; }
 
     @Override
     public String toString() {
@@ -117,6 +121,7 @@ public class User {
                 ", lastName='" + lastName + '\'' +
                 ", email='" + email + '\'' +
                 ", role=" + role +
+                ", mustChangePassword=" + mustChangePassword +
                 '}';
     }
 }
