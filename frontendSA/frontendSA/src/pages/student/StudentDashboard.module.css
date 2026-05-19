@@ -1,0 +1,47 @@
+.page {
+  min-height: 100vh;
+  padding: 30px;
+  background: linear-gradient(135deg, #eef6ff 0%, #dbe9ff 100%);
+  color: #081032;
+  display: grid;
+  place-items: center;
+}
+
+.card {
+  width: min(760px, 100%);
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 34px;
+  box-shadow: 0 28px 80px rgba(7, 16, 57, 0.1);
+}
+
+.card h1 {
+  margin: 0 0 14px;
+  font-size: 2.4rem;
+}
+
+.card p {
+  margin: 0 0 24px;
+  color: #5c6d94;
+  line-height: 1.75;
+}
+
+.actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.actionButton {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 22px;
+  background: #2f5dff;
+  color: #ffffff;
+  border-radius: 18px;
+  font-weight: 800;
+  min-width: 220px;
+  text-align: center;
+}
