@@ -10,8 +10,19 @@
     "preview": "vite preview"
   },
   "dependencies": {
+<<<<<<< HEAD
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
+=======
+    "axios": "^1.16.1",
+    "jwt-decode": "^4.0.0",
+    "lucide-react": "^1.16.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-hot-toast": "^2.6.0",
+    "react-router-dom": "^7.15.1",
+    "recharts": "^3.8.1"
+>>>>>>> ce815fa9aee1338c0c474c9a320e800112b44a33
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
@@ -120,3 +121,10 @@ function App() {
 }
 
 export default App
+=======
+import AppRoutes from "./routes/AppRoutes";
+
+export default function App() {
+  return <AppRoutes />;
+}
+>>>>>>> ce815fa9aee1338c0c474c9a320e800112b44a33
