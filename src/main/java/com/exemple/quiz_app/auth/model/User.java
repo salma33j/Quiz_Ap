@@ -8,6 +8,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
+import com.exemple.quiz_app.classe.entity.Classe;
 
 @Entity
 @Table(name = "users")
@@ -50,6 +51,12 @@ public class User {
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
+    @Column(unique = true)
+    private String cne;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "classe_id")
+    private Classe classe;
 
     // ========== CONSTRUCTEURS ==========
 
@@ -123,5 +130,20 @@ public class User {
                 ", role=" + role +
                 ", mustChangePassword=" + mustChangePassword +
                 '}';
+    }
+    public String getCne() {
+        return cne;
+    }
+
+    public void setCne(String cne) {
+        this.cne = cne;
+    }
+
+    public Classe getClasse() {
+        return classe;
+    }
+
+    public void setClasse(Classe classe) {
+        this.classe = classe;
     }
 }

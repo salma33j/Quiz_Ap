@@ -102,6 +102,9 @@ public class QuizService {
         quiz.setAvailableFrom(request.getAvailableFrom());
         quiz.setAvailableUntil(request.getAvailableUntil());
         quiz.setTimeLimit(request.getTimeLimit());
+        quiz.setCreationType("AI".equals(request.getCreationType())
+                ? Quiz.CreationType.AI
+                : Quiz.CreationType.MANUAL);
 
         return mapToResponse(quizRepository.save(quiz));
     }
@@ -137,8 +140,8 @@ public class QuizService {
         if (quiz.getStatus() != Quiz.QuizStatus.DRAFT) {
             throw new RuntimeException("Quiz deja publie");
         }
-        if (quiz.getQuestionCount() == null || quiz.getQuestionCount() == 0) {
-            throw new RuntimeException("Ajoutez des questions avant de publier");
+        if (quiz.getQuestionCount() == null || quiz.getQuestionCount() < 10) {
+            throw new RuntimeException("Ajoutez au moins 10 questions avant de publier");
         }
         if (quizRepository.countAllowedStudents(id) == 0) {
             throw new RuntimeException("Ajoutez au moins un etudiant avant de publier");

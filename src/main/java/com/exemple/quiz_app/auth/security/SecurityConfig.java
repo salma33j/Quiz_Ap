@@ -35,7 +35,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         // Connexion / inscription sans JWT (les autres routes /api/auth/** sont protégées par @PreAuthorize)
-                        .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers("/", "/api/auth/register", "/api/auth/login").permitAll()
                         .requestMatchers("/auth/**").permitAll()
 
                         .requestMatchers(
@@ -71,7 +71,11 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:3000",      // React local
+                "http://127.0.0.1:3000",
                 "http://localhost:5173",      // Vite React
+                "http://127.0.0.1:5173",
+                "http://localhost:9091",
+                "http://127.0.0.1:9091",
                 "https://votre-frontend.vercel.app"  // Vercel en production
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
