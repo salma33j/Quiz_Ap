@@ -4,7 +4,7 @@ import Login from "../pages/auth/Login";
 import RoleRoute from "./RoleRoute";
 
 import DashboardLayout from "../components/layout/DashboardLayout";
-
+import StudentLayout from "../components/layout/StudentLayout";
 import TeacherDashboard from "../pages/teacher/TeacherDashboard";
 import MyQuizzes from "../pages/teacher/MyQuizzes";
 import CreateQuiz from "../pages/teacher/CreateQuiz";
@@ -24,7 +24,10 @@ import TakeQuiz from "../pages/student/TakeQuiz";
 import Profile from "../pages/profile/Profile";
 import Unauthorized from "../pages/errors/Unauthorized";
 import NotFound from "../pages/errors/NotFound";
-
+import AvailableQuizzes from "../pages/student/AvailableQuizzes";
+import MyHistory from "../pages/student/MyHistory";
+import MyPerformance from "../pages/student/MyPerformance";
+import QuizCorrections from "../pages/student/QuizCorrections";
 export default function AppRoutes() {
   return (
     <Routes>
@@ -69,13 +72,28 @@ export default function AppRoutes() {
 
       {/* Student protected routes */}
       <Route element={<RoleRoute allowedRoles={["ETUDIANT", "STUDENT"]} />}>
-        <Route path="/student">
-          <Route index element={<StudentDashboard />} />
-          <Route path="dashboard" element={<StudentDashboard />} />
-          <Route path="quizzes/:id" element={<QuizDetailsStudent />} />
-          <Route path="quizzes/:id/take" element={<TakeQuiz />} />
-        </Route>
-      </Route>
+          <Route path="/student" element={<StudentLayout />}>
+    
+           <Route index element={<StudentDashboard />} />
+    
+           <Route path="dashboard" element={<StudentDashboard />} />
+
+           <Route path="quizzes" element={<AvailableQuizzes />} />
+
+           <Route path="history" element={<MyHistory />} />
+
+           <Route path="performance" element={<MyPerformance />} />
+
+           <Route path="corrections" element={<QuizCorrections />} />
+
+           <Route path="quizzes/:id" element={<QuizDetailsStudent />} />
+
+           <Route path="quizzes/:id/take" element={<TakeQuiz />} />
+
+          <Route path="profile" element={<Profile />} />
+
+       </Route>
+     </Route>
 
       {/* 404 */}
       <Route path="*" element={<NotFound />} />

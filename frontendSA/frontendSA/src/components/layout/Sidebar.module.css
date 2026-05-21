@@ -71,11 +71,15 @@
   font-weight: 950;
 
   white-space: nowrap;
+  
+  /* SEULE MODIFICATION ICI - Couleur QuizApp */
+  color: #f0abfc;
 }
 
 .logoBox p {
   margin: 4px 0 0;
 
+  /* PAS DE CHANGEMENT ICI - Gardé couleur originale */
   color: #b8c8ee;
 
   font-size: 13px;
@@ -91,6 +95,11 @@
 .collapsed .logoBox img {
   width: 60px;
   height: 60px;
+}
+
+.collapsed .logoBox h2,
+.collapsed .logoBox p {
+  display: none;
 }
 
 .toggleBtn {
