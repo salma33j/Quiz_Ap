@@ -10,6 +10,7 @@ import com.exemple.quiz_app.classe.dto.StudentRequest;
 import com.exemple.quiz_app.classe.dto.StudentResponse;
 import com.exemple.quiz_app.classe.entity.Classe;
 import com.exemple.quiz_app.classe.repository.ClasseRepository;
+import com.exemple.quiz_app.matiere.repository.MatiereRepository;
 import com.exemple.quiz_app.quiz.entity.Quiz;
 import com.exemple.quiz_app.quiz.entity.QuizStudent;
 import com.exemple.quiz_app.quiz.repository.QuizRepository;
@@ -22,7 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +35,7 @@ public class ClasseService {
     private final UserRepository userRepository;
     private final QuizRepository quizRepository;
     private final QuizStudentRepository quizStudentRepository;
+    private final MatiereRepository matiereRepository;
     private final AuthService authService;
     private final PasswordEncoder passwordEncoder;
 
@@ -40,6 +44,7 @@ public class ClasseService {
             UserRepository userRepository,
             QuizRepository quizRepository,
             QuizStudentRepository quizStudentRepository,
+            MatiereRepository matiereRepository,
             AuthService authService,
             PasswordEncoder passwordEncoder
     ) {
@@ -47,6 +52,7 @@ public class ClasseService {
         this.userRepository = userRepository;
         this.quizRepository = quizRepository;
         this.quizStudentRepository = quizStudentRepository;
+        this.matiereRepository = matiereRepository;
         this.authService = authService;
         this.passwordEncoder = passwordEncoder;
     }
@@ -54,7 +60,23 @@ public class ClasseService {
     public List<ClasseResponse> getMyClasses() {
         User enseignant = authService.getCurrentUser();
 
-        return classeRepository.findByEnseignantOrderByCreatedAtDesc(enseignant)
+        if (enseignant.getRole() == Role.ADMIN) {
+            return getAllClasses();
+        }
+
+        return classeRepository.findDistinctByEnseignantOrEnseignantsContainingOrderByCreatedAtDesc(enseignant, enseignant)
+                .stream()
+                .map(this::toClasseResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<ClasseResponse> getAllClasses() {
+        User requester = authService.getCurrentUser();
+        if (requester.getRole() != Role.ADMIN) {
+            throw new RuntimeException("Acces reserve aux administrateurs.");
+        }
+
+        return classeRepository.findAllByOrderByCreatedAtDesc()
                 .stream()
                 .map(this::toClasseResponse)
                 .collect(Collectors.toList());
@@ -62,7 +84,11 @@ public class ClasseService {
 
     @Transactional
     public ClasseResponse createClasse(ClasseRequest request) {
-        User enseignant = authService.getCurrentUser();
+        User requester = authService.getCurrentUser();
+        List<User> enseignants = requester.getRole() == Role.ADMIN
+                ? getSelectedTeachers(request.getTeacherIds())
+                : List.of(requester);
+        User enseignant = enseignants.get(0);
 
         if (request.getName() == null || request.getName().isBlank()) {
             throw new RuntimeException("Le nom de la classe est obligatoire.");
@@ -77,6 +103,7 @@ public class ClasseService {
         classe.setFiliere(request.getFiliere());
         classe.setNiveau(request.getNiveau());
         classe.setEnseignant(enseignant);
+        classe.setEnseignants(new HashSet<>(enseignants));
 
         return toClasseResponse(classeRepository.save(classe));
     }
@@ -85,7 +112,7 @@ public class ClasseService {
     public void deleteClasse(Long classId) {
         User enseignant = authService.getCurrentUser();
 
-        Classe classe = getClasseOwnedByTeacher(classId, enseignant);
+        Classe classe = getClasseAccessibleByCurrentUser(classId, enseignant);
 
         List<User> students = userRepository.findByClasseIdOrderByLastNameAscFirstNameAsc(classId);
 
@@ -94,13 +121,14 @@ public class ClasseService {
             userRepository.save(student);
         }
 
+        matiereRepository.deleteByClasseId(classId);
         classeRepository.delete(classe);
     }
 
     public List<StudentResponse> getStudents(Long classId) {
         User enseignant = authService.getCurrentUser();
 
-        getClasseOwnedByTeacher(classId, enseignant);
+        getClasseAccessibleByCurrentUser(classId, enseignant);
 
         return userRepository.findByClasseIdOrderByLastNameAscFirstNameAsc(classId)
                 .stream()
@@ -111,7 +139,7 @@ public class ClasseService {
     @Transactional
     public StudentResponse addStudent(Long classId, StudentRequest request) {
         User enseignant = authService.getCurrentUser();
-        Classe classe = getClasseOwnedByTeacher(classId, enseignant);
+        Classe classe = getClasseAccessibleByCurrentUser(classId, enseignant);
 
         if (request.getFirstName() == null || request.getFirstName().isBlank()) {
             throw new RuntimeException("Le prénom est obligatoire.");
@@ -139,6 +167,7 @@ public class ClasseService {
         }
 
         student.setCne(request.getCne());
+        student.setCodeApoge(request.getCodeApoge());
         student.setClasse(classe);
 
         return toStudentResponse(userRepository.save(student));
@@ -148,7 +177,7 @@ public class ClasseService {
     public void deleteStudentFromClass(Long classId, Long studentId) {
         User enseignant = authService.getCurrentUser();
 
-        getClasseOwnedByTeacher(classId, enseignant);
+        getClasseAccessibleByCurrentUser(classId, enseignant);
 
         User student = userRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Étudiant introuvable."));
@@ -160,7 +189,7 @@ public class ClasseService {
     @Transactional
     public int importStudents(Long classId, MultipartFile file) {
         User enseignant = authService.getCurrentUser();
-        Classe classe = getClasseOwnedByTeacher(classId, enseignant);
+        Classe classe = getClasseAccessibleByCurrentUser(classId, enseignant);
 
         int imported = 0;
 
@@ -174,27 +203,48 @@ public class ClasseService {
 
                 if (row == null) continue;
 
-                String cne = getCell(row, 0);
-                String firstName = getCell(row, 1);
-                String lastName = getCell(row, 2);
-                String email = getCell(row, 3);
+                boolean formOrder = getCell(row, 2).contains("@");
+                String firstName = formOrder ? getCell(row, 0) : getCell(row, 1);
+                String lastName = formOrder ? getCell(row, 1) : getCell(row, 2);
+                String email = formOrder ? getCell(row, 2) : getCell(row, 3);
+                String cne = formOrder ? getCell(row, 3) : getCell(row, 0);
+                String codeApoge = getCell(row, 4);
 
-                if (email == null || email.isBlank()) continue;
+                if (firstName.isBlank() || lastName.isBlank() || email.isBlank() || cne.isBlank() || codeApoge.isBlank()) {
+                    throw new RuntimeException("Ligne " + (i + 1) + " incomplete. Colonnes attendues : Prenom, Nom, Email, CNE, Code Apogee.");
+                }
 
                 User student = userRepository.findByEmail(email.trim())
                         .orElse(null);
 
+                if (student == null && userRepository.existsByCne(cne.trim())) {
+                    throw new RuntimeException("Ligne " + (i + 1) + " : CNE deja utilise.");
+                }
+                if (student == null && userRepository.existsByCodeApoge(codeApoge.trim())) {
+                    throw new RuntimeException("Ligne " + (i + 1) + " : Code Apogee deja utilise.");
+                }
+                if (student != null && userRepository.existsByCneAndIdNot(cne.trim(), student.getId())) {
+                    throw new RuntimeException("Ligne " + (i + 1) + " : CNE deja utilise par un autre etudiant.");
+                }
+                if (student != null && userRepository.existsByCodeApogeAndIdNot(codeApoge.trim(), student.getId())) {
+                    throw new RuntimeException("Ligne " + (i + 1) + " : Code Apogee deja utilise par un autre etudiant.");
+                }
+
                 if (student == null) {
                     student = new User();
-                    student.setFirstName(firstName);
-                    student.setLastName(lastName);
-                    student.setEmail(email);
+                    student.setFirstName(firstName.trim());
+                    student.setLastName(lastName.trim());
+                    student.setEmail(email.trim());
                     student.setRole(Role.ETUDIANT);
                     student.setPassword(passwordEncoder.encode("Etudiant@123"));
                     student.setMustChangePassword(true);
+                } else {
+                    student.setFirstName(firstName.trim());
+                    student.setLastName(lastName.trim());
                 }
 
-                student.setCne(cne);
+                student.setCne(cne.trim());
+                student.setCodeApoge(codeApoge.trim());
                 student.setClasse(classe);
 
                 userRepository.save(student);
@@ -238,15 +288,68 @@ public class ClasseService {
         return added;
     }
 
+    @Transactional
+    public ClasseResponse assignTeachersToClass(Long classId, List<Long> teacherIds) {
+        User requester = authService.getCurrentUser();
+        if (requester.getRole() != Role.ADMIN) {
+            throw new RuntimeException("Acces reserve aux administrateurs.");
+        }
+
+        Classe classe = classeRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Classe introuvable."));
+        List<User> teachers = getSelectedTeachers(teacherIds);
+
+        classe.setEnseignant(teachers.get(0));
+        classe.setEnseignants(new HashSet<>(teachers));
+        return toClasseResponse(classeRepository.save(classe));
+    }
+
+    @Transactional
+    public ClasseResponse updateClasse(Long classId, ClasseRequest request) {
+        User requester = authService.getCurrentUser();
+        if (requester.getRole() != Role.ADMIN) {
+            throw new RuntimeException("Acces reserve aux administrateurs.");
+        }
+
+        Classe classe = classeRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Classe introuvable."));
+
+        if (request.getName() == null || request.getName().isBlank()) {
+            throw new RuntimeException("Le nom de la classe est obligatoire.");
+        }
+
+        List<User> teachers = getSelectedTeachers(request.getTeacherIds());
+
+        classe.setName(request.getName().trim());
+        classe.setFiliere(request.getFiliere());
+        classe.setNiveau(request.getNiveau());
+        classe.setEnseignant(teachers.get(0));
+        classe.setEnseignants(new HashSet<>(teachers));
+
+        return toClasseResponse(classeRepository.save(classe));
+    }
+
     private Classe getClasseOwnedByTeacher(Long classId, User enseignant) {
         Classe classe = classeRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Classe introuvable."));
 
-        if (!classe.getEnseignant().getId().equals(enseignant.getId())) {
+        boolean isPrimaryTeacher = classe.getEnseignant() != null && classe.getEnseignant().getId().equals(enseignant.getId());
+        boolean isAssignedTeacher = classe.getEnseignants() != null && classe.getEnseignants().stream()
+                .anyMatch(item -> item.getId().equals(enseignant.getId()));
+
+        if (!isPrimaryTeacher && !isAssignedTeacher) {
             throw new RuntimeException("Accès interdit à cette classe.");
         }
 
         return classe;
+    }
+
+    private Classe getClasseAccessibleByCurrentUser(Long classId, User requester) {
+        if (requester.getRole() == Role.ADMIN) {
+            return classeRepository.findById(classId)
+                    .orElseThrow(() -> new RuntimeException("Classe introuvable."));
+        }
+        return getClasseOwnedByTeacher(classId, requester);
     }
 
     private ClasseResponse toClasseResponse(Classe classe) {
@@ -258,7 +361,44 @@ public class ClasseService {
         response.setStudentCount(
                 (long) userRepository.findByClasseIdOrderByLastNameAscFirstNameAsc(classe.getId()).size()
         );
+        if (classe.getEnseignant() != null) {
+            User enseignant = classe.getEnseignant();
+            response.setEnseignantId(enseignant.getId());
+            response.setEnseignantName(enseignant.getFirstName() + " " + enseignant.getLastName());
+            response.setEnseignantEmail(enseignant.getEmail());
+        }
+        Set<User> enseignants = classe.getEnseignants();
+        if (enseignants == null || enseignants.isEmpty()) {
+            enseignants = new HashSet<>();
+            if (classe.getEnseignant() != null) {
+                enseignants.add(classe.getEnseignant());
+            }
+        }
+        response.setEnseignantIds(enseignants.stream().map(User::getId).collect(Collectors.toList()));
+        response.setEnseignantNames(
+                enseignants.stream()
+                        .map(user -> user.getFirstName() + " " + user.getLastName())
+                        .collect(Collectors.toList())
+        );
         return response;
+    }
+
+    private List<User> getSelectedTeachers(List<Long> teacherIds) {
+        if (teacherIds == null || teacherIds.isEmpty()) {
+            throw new RuntimeException("Veuillez selectionner au moins un enseignant pour cette classe.");
+        }
+
+        List<User> teachers = teacherIds.stream()
+                .distinct()
+                .map(id -> userRepository.findById(id)
+                        .orElseThrow(() -> new RuntimeException("Enseignant introuvable.")))
+                .collect(Collectors.toList());
+
+        if (teachers.stream().anyMatch(user -> user.getRole() != Role.ENSEIGNANT)) {
+            throw new RuntimeException("Tous les utilisateurs selectionnes doivent etre des enseignants.");
+        }
+
+        return teachers;
     }
 
     private StudentResponse toStudentResponse(User user) {
@@ -268,6 +408,7 @@ public class ClasseService {
         response.setLastName(user.getLastName());
         response.setEmail(user.getEmail());
         response.setCne(user.getCne());
+        response.setCodeApoge(user.getCodeApoge());
         return response;
     }
 

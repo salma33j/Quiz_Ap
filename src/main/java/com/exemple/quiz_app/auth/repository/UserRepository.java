@@ -16,4 +16,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByClasseIdOrderByLastNameAscFirstNameAsc(Long classeId);
 
     boolean existsByCne(String cne);
+
+    boolean existsByCodeApoge(String codeApoge);
+
+    boolean existsByCneAndIdNot(String cne, Long id);
+
+    boolean existsByCodeApogeAndIdNot(String codeApoge, Long id);
 }

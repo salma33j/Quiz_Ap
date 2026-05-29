@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "classes")
@@ -25,6 +27,14 @@ public class Classe {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "enseignant_id", nullable = false)
     private User enseignant;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "classe_enseignants",
+            joinColumns = @JoinColumn(name = "classe_id"),
+            inverseJoinColumns = @JoinColumn(name = "enseignant_id")
+    )
+    private Set<User> enseignants = new HashSet<>();
 
     private LocalDateTime createdAt;
 

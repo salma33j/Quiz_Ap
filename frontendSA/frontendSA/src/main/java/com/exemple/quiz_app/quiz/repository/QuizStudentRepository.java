@@ -44,6 +44,11 @@ public interface QuizStudentRepository extends JpaRepository<QuizStudent, Long> 
     @Transactional
     void deleteByStudent(User student);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query(value = "DELETE FROM quiz_students WHERE student_id = :studentId", nativeQuery = true)
+    void deleteByStudentId(@Param("studentId") Long studentId);
+
     @Modifying
     @Transactional
     @Query("DELETE FROM QuizStudent qs WHERE qs.quiz.id = :quizId AND qs.student.id = :studentId")

@@ -10,6 +10,9 @@ public class UserDto {
     private String lastName;
     private String email;
     private String role;
+    private String cne;
+    private String codeApoge;
+    private boolean blocked;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -40,6 +43,15 @@ public class UserDto {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public String getCne() { return cne; }
+    public void setCne(String cne) { this.cne = cne; }
+
+    public String getCodeApoge() { return codeApoge; }
+    public void setCodeApoge(String codeApoge) { this.codeApoge = codeApoge; }
+
+    public boolean isBlocked() { return blocked; }
+    public void setBlocked(boolean blocked) { this.blocked = blocked; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

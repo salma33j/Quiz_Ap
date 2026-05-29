@@ -29,4 +29,9 @@ public interface QuizSessionRepository extends JpaRepository<QuizSession, Long> 
     @Transactional
     @Query("DELETE FROM QuizSession qs WHERE qs.quiz.id = :quizId")
     void deleteByQuizId(@Param("quizId") Long quizId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query(value = "DELETE FROM quiz_session WHERE student_id = :studentId", nativeQuery = true)
+    void deleteByStudentId(@Param("studentId") Long studentId);
 }

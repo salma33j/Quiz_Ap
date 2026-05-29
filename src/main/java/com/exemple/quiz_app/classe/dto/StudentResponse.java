@@ -9,4 +9,5 @@ public class StudentResponse {
     private String lastName;
     private String email;
     private String cne;
+    private String codeApoge;
 }

@@ -26,11 +26,53 @@ public class ClasseController {
         return ResponseEntity.ok(classeService.getMyClasses());
     }
 
+    @GetMapping("/classes/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<ClasseResponse>> getAllClasses() {
+        return ResponseEntity.ok(classeService.getAllClasses());
+    }
+
     @PostMapping("/classes")
     public ResponseEntity<ClasseResponse> createClasse(
             @RequestBody ClasseRequest request
     ) {
         return ResponseEntity.ok(classeService.createClasse(request));
+    }
+
+    @PutMapping("/classes/{classId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ClasseResponse> updateClasse(
+            @PathVariable Long classId,
+            @RequestBody ClasseRequest request
+    ) {
+        return ResponseEntity.ok(classeService.updateClasse(classId, request));
+    }
+
+    @PostMapping("/classes/{classId}/update")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ClasseResponse> updateClasseWithPost(
+            @PathVariable Long classId,
+            @RequestBody ClasseRequest request
+    ) {
+        return ResponseEntity.ok(classeService.updateClasse(classId, request));
+    }
+
+    @PutMapping("/classes/{classId}/teacher")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ClasseResponse> assignTeacherToClass(
+            @PathVariable Long classId,
+            @RequestBody ClasseRequest request
+    ) {
+        return ResponseEntity.ok(classeService.assignTeachersToClass(classId, request.getTeacherIds()));
+    }
+
+    @PostMapping("/classes/{classId}/teacher")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ClasseResponse> assignTeacherToClassWithPost(
+            @PathVariable Long classId,
+            @RequestBody ClasseRequest request
+    ) {
+        return ResponseEntity.ok(classeService.assignTeachersToClass(classId, request.getTeacherIds()));
     }
 
     @DeleteMapping("/classes/{classId}")

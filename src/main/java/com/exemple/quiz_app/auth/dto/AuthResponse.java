@@ -1,5 +1,7 @@
 package com.exemple.quiz_app.auth.dto;
 
+import java.time.LocalDateTime;
+
 public class AuthResponse {
     private String token;
     private String refreshToken;
@@ -12,6 +14,8 @@ public class AuthResponse {
     private String message;
     private boolean success;
     private Long expiresIn;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     // ✅ NOUVEAU : indique si l'utilisateur doit changer son mot de passe
     private boolean mustChangePassword;
@@ -70,6 +74,8 @@ public class AuthResponse {
     public String getMessage() { return message; }
     public boolean isSuccess() { return success; }
     public Long getExpiresIn() { return expiresIn; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
     public boolean isMustChangePassword() { return mustChangePassword; }
 
     // Setters
@@ -84,6 +90,8 @@ public class AuthResponse {
     public void setMessage(String message) { this.message = message; }
     public void setSuccess(boolean success) { this.success = success; }
     public void setExpiresIn(Long expiresIn) { this.expiresIn = expiresIn; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     public void setMustChangePassword(boolean mustChangePassword) { this.mustChangePassword = mustChangePassword; }
 
     public static AuthResponse error(String message) {

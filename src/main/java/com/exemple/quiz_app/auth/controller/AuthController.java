@@ -1,6 +1,7 @@
 package com.exemple.quiz_app.auth.controller;
 
 import com.exemple.quiz_app.auth.dto.*;
+import com.exemple.quiz_app.quiz.dto.QuizReponse;
 import com.exemple.quiz_app.auth.service.AuthService;
 import com.exemple.quiz_app.quiz.entity.Quiz;
 import com.exemple.quiz_app.quiz.service.QuizAdminService;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +37,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
-        if (response.getMessage() != null && response.getMessage().contains("incorrect")) {
+        if (!response.isSuccess()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
         return ResponseEntity.ok(response);
@@ -51,7 +53,7 @@ public class AuthController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AuthResponse> updateProfile(
             @PathVariable Long id,
-            @Valid @RequestBody RegisterRequest request) {
+            @RequestBody RegisterRequest request) {
         AuthResponse response = authService.updateProfile(id, request);
         if (response.getMessage() != null && response.getMessage().contains("refuse")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
@@ -109,6 +111,42 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PostMapping("/admin/create-admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AuthResponse> createAdmin(
+            @Valid @RequestBody RegisterRequest request) {
+        AuthResponse response = authService.createAdmin(request);
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/admin/import-users/{role}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> importUsers(
+            @PathVariable String role,
+            @RequestParam("file") MultipartFile file) {
+        int imported = authService.importUsers(role, file);
+        return ResponseEntity.ok(Map.of(
+                "message", "Import termine",
+                "imported", imported
+        ));
+    }
+
+    @PostMapping("/admin/emails/send")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AuthResponse> sendAnnouncement(@RequestBody Map<String, String> request) {
+        AuthResponse response = authService.sendAnnouncement(
+                request.getOrDefault("target", "TOUS"),
+                request.getOrDefault("subject", ""),
+                request.getOrDefault("message", "")
+        );
+        return response.isSuccess()
+                ? ResponseEntity.ok(response)
+                : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
     @PutMapping("/promote/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AuthResponse> promoteToTeacher(@PathVariable Long userId) {
@@ -118,10 +156,46 @@ public class AuthController {
     @DeleteMapping("/user/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AuthResponse> deleteUser(@PathVariable Long id) {
-        return ResponseEntity.ok(authService.deleteUser(id));
+        AuthResponse response = authService.deleteUser(id);
+        return response.isSuccess()
+                ? ResponseEntity.ok(response)
+                : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @PostMapping("/admin/users/{id}/block")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AuthResponse> blockUser(@PathVariable Long id) {
+        AuthResponse response = authService.blockUser(id);
+        return response.isSuccess()
+                ? ResponseEntity.ok(response)
+                : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @PostMapping("/admin/users/{id}/unblock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AuthResponse> unblockUser(@PathVariable Long id) {
+        AuthResponse response = authService.unblockUser(id);
+        return response.isSuccess()
+                ? ResponseEntity.ok(response)
+                : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @PostMapping("/admin/users/{id}/reset-password")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AuthResponse> resetUserPassword(@PathVariable Long id) {
+        AuthResponse response = authService.resetPasswordByAdmin(id);
+        return response.isSuccess()
+                ? ResponseEntity.ok(response)
+                : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     // ========== ADMIN - GESTION DES QUIZ ==========
+
+    @GetMapping("/admin/quizzes")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<QuizReponse>> getAllQuizzes() {
+        return ResponseEntity.ok(quizAdminService.getAllQuizzes());
+    }
 
     @GetMapping("/admin/quizzes/expired")
     @PreAuthorize("hasRole('ADMIN')")

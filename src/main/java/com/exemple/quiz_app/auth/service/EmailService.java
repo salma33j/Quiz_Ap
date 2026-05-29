@@ -164,6 +164,62 @@ public class EmailService {
         sendHtmlEmail(toEmail, subject, htmlContent);
     }
 
+    public void sendAdminCredentials(String toEmail, String firstName, String lastName, String password) {
+        String subject = "Vos identifiants Admin - Plateforme Quiz FSB";
+        String htmlContent = """
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;
+                            border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden;">
+                    <div style="background-color: #070a35; padding: 30px; text-align: center;">
+                        <h1 style="color: white; margin: 0; font-size: 24px;">Plateforme Quiz FSB</h1>
+                        <p style="color: #dbeafe; margin: 5px 0 0;">Console administrateur</p>
+                    </div>
+                    <div style="padding: 30px; background-color: #ffffff;">
+                        <p style="font-size: 16px;">Bonjour <strong>%s %s</strong>,</p>
+                        <p>Votre compte administrateur a ete cree sur la plateforme.</p>
+                        <div style="background-color: #f0f7ff; border-left: 4px solid #070a35;
+                                    padding: 20px; border-radius: 5px; margin: 20px 0;">
+                            <p style="margin: 5px 0;"><strong>Email :</strong> %s</p>
+                            <p style="margin: 5px 0;"><strong>Mot de passe provisoire :</strong>
+                                <span style="font-family: monospace; font-size: 16px;
+                                             background: #fff; padding: 2px 8px;
+                                             border-radius: 4px; border: 1px solid #ccc;">%s</span>
+                            </p>
+                            <p style="margin: 5px 0;"><strong>Role :</strong> Admin</p>
+                        </div>
+                        <p style="color: #e65100;"><strong>Important :</strong> Veuillez changer votre mot de passe
+                        des votre premiere connexion.</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="%s/login"
+                               style="background-color: #070a35; color: white; padding: 14px 30px;
+                                      text-decoration: none; border-radius: 6px; font-size: 16px;
+                                      display: inline-block;">
+                                Se connecter maintenant
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                """.formatted(firstName, lastName, toEmail, password, frontendUrl);
+
+        sendHtmlEmail(toEmail, subject, htmlContent);
+    }
+
+    public void sendAnnouncement(String toEmail, String subject, String message) {
+        String htmlContent = """
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;
+                            border: 1px solid #dbeafe; border-radius: 12px; overflow: hidden;">
+                    <div style="background-color: #070a35; padding: 24px; text-align: center;">
+                        <h1 style="color: white; margin: 0; font-size: 22px;">Plateforme Quiz FSB</h1>
+                        <p style="color: #dbeafe; margin: 6px 0 0;">Annonce administrateur</p>
+                    </div>
+                    <div style="padding: 28px; background-color: #ffffff;">
+                        <p style="font-size: 16px; color: #111827; white-space: pre-line;">%s</p>
+                    </div>
+                </div>
+                """.formatted(message);
+
+        sendHtmlEmail(toEmail, subject, htmlContent);
+    }
+
     /**
      * ✅ Méthode générique pour envoyer un email HTML
      */

@@ -5,10 +5,15 @@ import com.exemple.quiz_app.auth.model.Role;
 import com.exemple.quiz_app.auth.model.User;
 import com.exemple.quiz_app.auth.repository.UserRepository;
 import com.exemple.quiz_app.auth.security.JwtUtil;
+import com.exemple.quiz_app.quiz.repository.QuizSessionRepository;
+import com.exemple.quiz_app.quiz.repository.QuizStudentRepository;
+import com.exemple.quiz_app.reponse.repository.ReponseRepository;
+import com.exemple.quiz_app.resultat.repository.ResultatRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,6 +32,18 @@ public class AuthService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private QuizSessionRepository quizSessionRepository;
+
+    @Autowired
+    private QuizStudentRepository quizStudentRepository;
+
+    @Autowired
+    private ResultatRepository resultatRepository;
+
+    @Autowired
+    private ReponseRepository reponseRepository;
 
     // =========================================================
     // MÉTHODE UTILITAIRE : obtenir l'utilisateur connecté
@@ -231,11 +248,20 @@ public class AuthService {
     // =========================================================
     // DELETE USER (admin seulement)
     // =========================================================
+    @Transactional
     public AuthResponse deleteUser(Long id) {
         User requester = getCurrentUser();
         if (requester.getRole() != Role.ADMIN) return AuthResponse.error("Acces refuse");
-        if (!userRepository.existsById(id)) return AuthResponse.error("Utilisateur introuvable");
-        userRepository.deleteById(id);
+        if (requester.getId().equals(id)) return AuthResponse.error("Impossible de supprimer votre propre compte");
+
+        User user = userRepository.findById(id).orElse(null);
+        if (user == null) return AuthResponse.error("Utilisateur introuvable");
+
+        reponseRepository.deleteByStudentId(id);
+        resultatRepository.deleteByStudentId(id);
+        quizSessionRepository.deleteByStudentId(id);
+        quizStudentRepository.deleteByStudentId(id);
+        userRepository.delete(user);
         return AuthResponse.success("Utilisateur supprime");
     }
 

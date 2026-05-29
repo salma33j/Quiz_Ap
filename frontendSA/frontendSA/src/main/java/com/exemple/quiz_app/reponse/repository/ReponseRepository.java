@@ -25,6 +25,11 @@ public interface ReponseRepository extends JpaRepository<Reponse, Long> {
     @Modifying
     @Transactional
     void deleteByStudentAndQuiz(User student, Quiz quiz);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query(value = "DELETE FROM reponses WHERE student_id = :studentId", nativeQuery = true)
+    void deleteByStudentId(@Param("studentId") Long studentId);
     // Compter le nombre de réponses correctes d'un étudiant pour un quiz
     long countByStudentAndQuizAndIsCorrectTrue(User student, Quiz quiz);
     // Trouver toutes les réponses d'un quiz avec les détails des étudiants

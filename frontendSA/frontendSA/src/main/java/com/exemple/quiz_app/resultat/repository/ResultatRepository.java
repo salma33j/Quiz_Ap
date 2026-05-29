@@ -96,6 +96,11 @@ public interface ResultatRepository extends JpaRepository<Resultat, Long> {
     @Transactional
     void deleteByStudent(User student);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query(value = "DELETE FROM resultats WHERE student_id = :studentId", nativeQuery = true)
+    void deleteByStudentId(@Param("studentId") Long studentId);
+
     // ========== MISE À JOUR ==========
 
     @Modifying

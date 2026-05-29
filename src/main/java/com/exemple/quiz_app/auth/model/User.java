@@ -45,6 +45,9 @@ public class User {
     @Column(nullable = false)
     private boolean mustChangePassword = false;
 
+    @Column(nullable = false)
+    private boolean blocked = false;
+
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -53,6 +56,9 @@ public class User {
     private LocalDateTime updatedAt;
     @Column(unique = true)
     private String cne;
+
+    @Column(unique = true)
+    private String codeApoge;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "classe_id")
@@ -100,6 +106,7 @@ public class User {
     public String getPassword() { return password; }
     public Role getRole() { return role; }
     public boolean isMustChangePassword() { return mustChangePassword; }
+    public boolean isBlocked() { return blocked; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 
@@ -112,6 +119,7 @@ public class User {
     public void setPassword(String password) { this.password = password; }
     public void setRole(Role role) { this.role = role; }
     public void setMustChangePassword(boolean mustChangePassword) { this.mustChangePassword = mustChangePassword; }
+    public void setBlocked(boolean blocked) { this.blocked = blocked; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
@@ -129,6 +137,7 @@ public class User {
                 ", email='" + email + '\'' +
                 ", role=" + role +
                 ", mustChangePassword=" + mustChangePassword +
+                ", blocked=" + blocked +
                 '}';
     }
     public String getCne() {
@@ -137,6 +146,14 @@ public class User {
 
     public void setCne(String cne) {
         this.cne = cne;
+    }
+
+    public String getCodeApoge() {
+        return codeApoge;
+    }
+
+    public void setCodeApoge(String codeApoge) {
+        this.codeApoge = codeApoge;
     }
 
     public Classe getClasse() {
