@@ -1,0 +1,466 @@
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  width: 290px;
+  height: 100vh;
+
+  padding: 15px 14px;
+
+  background: linear-gradient(
+    180deg,
+    #070a35 0%,
+    #101456 60%,
+    #151b6b 100%
+  );
+
+  color: white;
+
+  z-index: 1000;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  box-shadow: 22px 0 55px rgba(7, 10, 53, 0.25);
+
+  transition:
+    width 0.28s ease,
+    padding 0.28s ease;
+}
+
+.collapsed {
+  width: 84px;
+  padding: 15px 8px;
+}
+
+/* ========================= */
+/* TOP AREA */
+/* ========================= */
+
+.topArea {
+  display: flex;
+  flex-direction: column;
+
+  flex-shrink: 0;
+}
+
+/* ========================= */
+/* LOGO */
+/* ========================= */
+
+.logoBox {
+  width: 100%;
+  height: 58px;
+
+  padding: 0 0 11px;
+
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+
+  background: transparent;
+
+  color: inherit;
+
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  flex-shrink: 0;
+}
+
+.sidebar:not(.collapsed) .logoBox {
+  margin-bottom: 3px;
+}
+
+.logoBox img {
+  width:54px;
+  height: 52px;
+
+  border-radius: 15px;
+
+  object-fit: cover;
+
+  background: white;
+
+  flex-shrink: 0;
+}
+
+.logoBox h2 {
+  margin: 0;
+
+  font-size: 20px;
+  font-weight: 950;
+
+  white-space: nowrap;
+}
+
+.logoBox p {
+  margin: 2px 0 0;
+
+  color: #b8c8ee;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+.collapsed .logoBox {
+  justify-content: center;
+}
+
+.collapsed .logoBox h2,
+.collapsed .logoBox p {
+  display: none;
+}
+
+/* ========================= */
+/* TOGGLE */
+/* ========================= */
+
+.toggleBtn {
+  width: 42px;
+  height: 42px;
+
+  margin-top: 11px;
+
+  border: none;
+  border-radius: 15px;
+
+  background: rgba(255, 255, 255, 0.1);
+
+  color: white;
+
+  display: grid;
+  place-items: center;
+
+  cursor: pointer;
+
+  flex-shrink: 0;
+
+  transition: 0.22s ease;
+}
+
+.sidebar:not(.collapsed) .toggleBtn {
+  margin-top: 15px;
+  margin-bottom: 3px;
+}
+
+.toggleBtn:hover {
+  background: rgba(100, 150, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.toggleBtn svg {
+  width: 19px;
+  height: 19px;
+}
+
+.collapsed .toggleBtn {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ========================= */
+/* NAVIGATION */
+/* ========================= */
+
+.nav {
+  margin-top: 14px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+
+  flex: 1;
+  
+  overflow-y: visible;
+}
+
+.sidebar:not(.collapsed) .nav {
+  margin-top: 19px;
+  gap: 11px;
+}
+
+/* ========================= */
+/* LINKS - MEILLEURE COULEUR DE SURVOL */
+/* ========================= */
+
+.link {
+  min-height: 43px;
+  height: 43px;
+
+  padding: 0 12px;
+
+  border-radius: 13px;
+
+  color: #dfe8ff;
+
+  text-decoration: none;
+
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  font-size: 13.5px;
+  font-weight: 850;
+
+  flex-shrink: 0;
+
+  transition: all 0.22s ease;
+}
+
+.sidebar:not(.collapsed) .link {
+  min-height: 47.5px;
+  height: 47.5px;
+  padding: 0 13.8px;
+  gap: 13.8px;
+  font-size: 15.2px;
+}
+
+.link svg {
+  width: 19px;
+  height: 19px;
+
+  flex-shrink: 0;
+}
+
+/* Nouvelle couleur de survol - plus visible */
+.link:hover {
+  background: linear-gradient(135deg, rgba(100, 150, 255, 0.25), rgba(80, 120, 255, 0.2));
+  transform: translateX(5px);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* État actif (sélectionné) */
+.active {
+  background: linear-gradient(
+    135deg,
+    #ffffff,
+    #d9edf8
+  );
+
+  color: #080b35;
+
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+}
+
+/* État actif au survol */
+.active:hover {
+  background: linear-gradient(135deg, #f0f4ff, #c5dff5);
+  color: #050828;
+  transform: translateX(5px);
+}
+
+/* ========================= */
+/* COLLAPSED LINKS */
+/* ========================= */
+
+.collapsed .link {
+  width: 54px;
+  min-height: 54px;
+  height: 54px;
+
+  margin-left: auto;
+  margin-right: auto;
+
+  padding: 0;
+
+  justify-content: center;
+
+  border-radius: 16px;
+}
+
+.collapsed .link svg {
+  width: 23px;
+  height: 23px;
+}
+
+.collapsed .link span {
+  display: none;
+}
+
+.collapsed .link:hover {
+  transform: translateY(-2px);
+  background: rgba(100, 150, 255, 0.3);
+}
+
+/* ========================= */
+/* BOTTOM ACTIONS */
+/* ========================= */
+
+.bottomActions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+
+  flex-shrink: 0;
+
+  margin-top: auto;
+  padding-top: 12px;
+  margin-bottom: 64px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sidebar:not(.collapsed) .bottomActions {
+  gap: 11px;
+  padding-top: 5px;
+  margin-bottom:74 px;
+}
+
+/* ========================= */
+/* PROFILE BUTTON - MEILLEURE COULEUR DE SURVOL */
+/* ========================= */
+
+.profileBtn {
+  width: 100%;
+  height: 43px;
+
+  border: none;
+  border-radius: 13px;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  color: white;
+
+  font-size: 13.5px;
+  font-weight: 950;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  cursor: pointer;
+
+  flex-shrink: 0;
+
+  transition: all 0.22s ease;
+}
+
+.sidebar:not(.collapsed) .profileBtn {
+  height: 47.5px;
+  gap: 11.8px;
+  font-size: 15.3px;
+}
+
+/* Nouvelle couleur de survol pour profil */
+.profileBtn:hover {
+  background: rgba(100, 150, 255, 0.25);
+  transform: translateX(5px);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.collapsed .profileBtn {
+  width: 54px;
+  min-height: 54px;
+  height: 54px;
+
+  margin-left: auto;
+  margin-right: auto;
+  margin-top:-9px;
+  margin-bottom:8px;
+  border-radius: 16px;
+}
+
+.collapsed .profileBtn svg {
+  width: 23px;
+  height: 23px;
+}
+
+.collapsed .profileBtn span {
+  display: none;
+}
+
+.collapsed .profileBtn:hover {
+  transform: translateY(-2px);
+}
+
+/* ========================= */
+/* LOGOUT - MEILLEURE COULEUR DE SURVOL */
+/* ========================= */
+
+.logout {
+  width: 100%;
+  height: 47px;
+
+  border: none;
+  border-radius: 13px;
+
+  background: rgba(220, 53, 69, 0.9);
+
+  color: white;
+
+  font-size: 14px;
+  font-weight: 950;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  cursor: pointer;
+
+  flex-shrink: 0;
+
+  transition: all 0.22s ease;
+}
+
+.sidebar:not(.collapsed) .logout {
+  height: 47.5px;
+  gap: 11.8px;
+  margin-top: 0;
+  font-size: 15.3px;
+}
+
+/* Nouvelle couleur de survol pour déconnexion (reste rouge mais plus lumineux) */
+.logout:hover {
+  background: #ff4444;
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
+}
+
+.collapsed .logout {
+  width: 54px;
+  min-height: 54px;
+  height: 54px;
+
+  margin-left: auto;
+  margin-right: auto;
+   margin-top:-12px;
+  border-radius: 16px;
+}
+
+.collapsed .logout svg {
+  width: 23px;
+  height: 23px;
+}
+
+.collapsed .logout span {
+  display: none;
+}
+
+.collapsed .logout:hover {
+  transform: translateY(-2px);
+}
+
+/* ========================= */
+/* RESPONSIVE */
+/* ========================= */
+
+@media (max-width: 900px) {
+  .sidebar {
+    display: none;
+  }
+}
