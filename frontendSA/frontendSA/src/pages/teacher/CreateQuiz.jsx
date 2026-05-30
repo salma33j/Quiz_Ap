@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import teacherQuizApi from "../../api/teacherQuizApi";
@@ -19,6 +19,16 @@ const rememberAiQuizChoice = (quizId, creationType) => {
   }
 
   localStorage.setItem(AI_QUIZ_STORAGE_KEY, JSON.stringify([...ids]));
+};
+
+const formatDateForInput = (value) => {
+  if (!value) return "";
+  return value.length >= 16 ? value.slice(0, 16) : value;
+};
+
+const formatDateTimeForBackend = (value) => {
+  if (!value) return null;
+  return value.length === 16 ? `${value}:00` : value;
 };
 
 const CreateQuiz = () => {
@@ -44,21 +54,7 @@ const CreateQuiz = () => {
   const [loadingQuiz, setLoadingQuiz] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (isEditMode) loadQuiz();
-  }, [editId]);
-
-  const formatDateForInput = (value) => {
-    if (!value) return "";
-    return value.length >= 16 ? value.slice(0, 16) : value;
-  };
-
-  const formatDateTimeForBackend = (value) => {
-    if (!value) return null;
-    return value.length === 16 ? `${value}:00` : value;
-  };
-
-  const loadQuiz = async () => {
+  const loadQuiz = useCallback(async () => {
     try {
       setLoadingQuiz(true);
       setError("");
@@ -86,7 +82,17 @@ const CreateQuiz = () => {
     } finally {
       setLoadingQuiz(false);
     }
-  };
+  }, [editId]);
+
+  useEffect(() => {
+    if (!isEditMode) return undefined;
+
+    const timer = window.setTimeout(() => {
+      void loadQuiz();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [isEditMode, loadQuiz]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -197,7 +203,13 @@ const CreateQuiz = () => {
           </button>
         )}
 
+        <span className={styles.badge}>{isEditMode ? "Modification" : "Création"}</span>
         <h1>{isEditMode ? "Modifier le quiz" : "Créer un nouveau quiz"}</h1>
+        <p>
+          {isEditMode
+            ? "Ajustez les informations principales avant de republier le quiz."
+            : "Préparez le quiz, choisissez la matière et définissez les paramètres."}
+        </p>
       </div>
 
       <form className={styles.card} onSubmit={handleSubmit}>

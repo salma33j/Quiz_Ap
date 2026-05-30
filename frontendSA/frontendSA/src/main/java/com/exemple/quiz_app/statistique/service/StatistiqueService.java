@@ -61,6 +61,12 @@ public class StatistiqueService {
                 .quizId(quiz.getId())
                 .quizTitle(quiz.getTitre())
                 .quizTheme(quiz.getTheme())
+                .classId(quiz.getClasse() != null ? quiz.getClasse().getId() : null)
+                .classeId(quiz.getClasse() != null ? quiz.getClasse().getId() : null)
+                .className(quiz.getClasse() != null ? quiz.getClasse().getName() : null)
+                .classeName(quiz.getClasse() != null ? quiz.getClasse().getName() : null)
+                .subjectName(quiz.getTheme())
+                .matiereName(quiz.getTheme())
                 .enseignantNom(quiz.getEnseignant().getFirstName() + " " + quiz.getEnseignant().getLastName())
                 .totalParticipants(resultats.size())
                 .totalStudentsAllowed(quizRepository.countAllowedStudents(quizId))
@@ -276,12 +282,25 @@ public class StatistiqueService {
 
         for (Resultat r : resultats) {
             User student = r.getStudent();
+            String className = student.getClasse() != null
+                    ? student.getClasse().getName()
+                    : (r.getQuiz().getClasse() != null ? r.getQuiz().getClasse().getName() : null);
+            Long classId = student.getClasse() != null
+                    ? student.getClasse().getId()
+                    : (r.getQuiz().getClasse() != null ? r.getQuiz().getClasse().getId() : null);
+
             classement.add(StatistiqueDto.StudentStatDto.builder()
                     .rang(rang++)
                     .studentId(student.getId().longValue())
                     .studentNom(student.getFirstName())
                     .studentPrenom(student.getLastName())
                     .studentEmail(student.getEmail())
+                    .cne(student.getCne())
+                    .codeApoge(student.getCodeApoge())
+                    .classId(classId)
+                    .classeId(classId)
+                    .className(className)
+                    .classeName(className)
                     .scorePourcentage(r.getScorePercentage())
                     .earnedPoints(r.getEarnedPoints())
                     .totalPoints(r.getTotalPoints())

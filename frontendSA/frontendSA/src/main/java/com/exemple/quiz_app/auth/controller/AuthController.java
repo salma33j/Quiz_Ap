@@ -109,6 +109,16 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PostMapping("/admin/emails/send")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> sendAdminEmail(@Valid @RequestBody AdminEmailRequest request) {
+        try {
+            return ResponseEntity.ok(authService.sendAdminEmail(request));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PutMapping("/promote/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AuthResponse> promoteToTeacher(@PathVariable Long userId) {

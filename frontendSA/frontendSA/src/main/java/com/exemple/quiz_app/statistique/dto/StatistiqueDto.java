@@ -19,6 +19,12 @@ public class StatistiqueDto {
     private Long quizId;
     private String quizTitle;
     private String quizTheme;
+    private Long classId;
+    private Long classeId;
+    private String className;
+    private String classeName;
+    private String subjectName;
+    private String matiereName;
     private String enseignantNom;
     private LocalDateTime periodeDebut;
     private LocalDateTime periodeFin;
@@ -72,6 +78,12 @@ public class StatistiqueDto {
         private String studentNom;
         private String studentPrenom;
         private String studentEmail;
+        private String cne;
+        private String codeApoge;
+        private Long classId;
+        private Long classeId;
+        private String className;
+        private String classeName;
         private Double scorePourcentage;
         private Integer earnedPoints;
         private Integer totalPoints;

@@ -4,6 +4,9 @@ import com.exemple.quiz_app.auth.model.Role;
 import com.exemple.quiz_app.auth.model.User;
 import com.exemple.quiz_app.auth.repository.UserRepository;
 import com.exemple.quiz_app.auth.service.AuthService;
+import com.exemple.quiz_app.auth.service.EmailService;
+import com.exemple.quiz_app.classe.entity.Classe;
+import com.exemple.quiz_app.classe.repository.ClasseRepository;
 import com.exemple.quiz_app.quiz.dto.QuizReponse;
 import com.exemple.quiz_app.quiz.dto.QuizRequest;
 import com.exemple.quiz_app.quiz.dto.StudentListDto;
@@ -25,6 +28,8 @@ import java.util.stream.Collectors;
 @Service
 public class QuizService {
 
+    private static final int MIN_QUESTIONS_TO_PUBLISH = 10;
+
     @Autowired
     private QuizRepository quizRepository;
 
@@ -36,6 +41,12 @@ public class QuizService {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private ClasseRepository classeRepository;
 
     // ========== CRUD ==========
 
@@ -55,6 +66,7 @@ public class QuizService {
         quiz.setAvailableUntil(request.getAvailableUntil());
         quiz.setTimeLimit(request.getTimeLimit());
         quiz.setEnseignant(enseignant);
+        quiz.setClasse(findRequestedClasse(request));
         quiz.setStatus(Quiz.QuizStatus.DRAFT);
 
         if ("AI".equals(request.getCreationType())) {
@@ -102,6 +114,10 @@ public class QuizService {
         quiz.setAvailableFrom(request.getAvailableFrom());
         quiz.setAvailableUntil(request.getAvailableUntil());
         quiz.setTimeLimit(request.getTimeLimit());
+        Classe requestedClasse = findRequestedClasse(request);
+        if (requestedClasse != null) {
+            quiz.setClasse(requestedClasse);
+        }
         quiz.setCreationType("AI".equals(request.getCreationType())
                 ? Quiz.CreationType.AI
                 : Quiz.CreationType.MANUAL);
@@ -140,15 +156,17 @@ public class QuizService {
         if (quiz.getStatus() != Quiz.QuizStatus.DRAFT) {
             throw new RuntimeException("Quiz deja publie");
         }
-        if (quiz.getQuestionCount() == null || quiz.getQuestionCount() == 0) {
-            throw new RuntimeException("Ajoutez des questions avant de publier");
+        if (quiz.getQuestionCount() == null || quiz.getQuestionCount() < MIN_QUESTIONS_TO_PUBLISH) {
+            throw new RuntimeException("Le quiz doit contenir au moins " + MIN_QUESTIONS_TO_PUBLISH + " questions avant de publier");
         }
         if (quizRepository.countAllowedStudents(id) == 0) {
             throw new RuntimeException("Ajoutez au moins un etudiant avant de publier");
         }
 
         quiz.setStatus(Quiz.QuizStatus.PUBLISHED);
-        return mapToResponse(quizRepository.save(quiz));
+        Quiz savedQuiz = quizRepository.save(quiz);
+        notifyAllowedStudents(savedQuiz);
+        return mapToResponse(savedQuiz);
     }
 
     // ========== GESTION DU NOMBRE DE QUESTIONS ==========
@@ -247,10 +265,101 @@ public class QuizService {
             info.setNom(s.getFirstName() != null ? s.getFirstName() : "");
             info.setPrenom(s.getLastName() != null ? s.getLastName() : "");
             info.setEmail(s.getEmail());
-            info.setClasse("Non definie");
-            info.setFiliere("Non definie");
+            info.setCne(s.getCne());
+            info.setCodeApoge(s.getCodeApoge());
+            if (s.getClasse() != null) {
+                info.setClasse(s.getClasse().getName());
+                info.setFiliere(s.getClasse().getFiliere());
+            } else if (quiz.getClasse() != null) {
+                info.setClasse(quiz.getClasse().getName());
+                info.setFiliere(quiz.getClasse().getFiliere());
+            } else {
+                info.setClasse("Non definie");
+                info.setFiliere("Non definie");
+            }
             return info;
         }).collect(Collectors.toList());
+    }
+
+    public List<StudentListDto.StudentInfo> getMyStudents() {
+        User currentUser = authService.getCurrentUser();
+        Map<String, StudentListDto.StudentInfo> studentsByEmail = new HashMap<>();
+
+        if (currentUser.getRole() == Role.ADMIN) {
+            userRepository.findAll().stream()
+                    .filter(user -> user.getRole() == Role.ETUDIANT)
+                    .forEach(student -> studentsByEmail.put(student.getEmail(), mapStudentInfo(student, student.getClasse())));
+            return List.copyOf(studentsByEmail.values());
+        }
+
+        if (currentUser.getRole() != Role.ENSEIGNANT) {
+            throw new RuntimeException("Acces reserve aux enseignants");
+        }
+
+        quizRepository.findByEnseignant(currentUser).forEach(quiz ->
+                quizStudentRepository.findByQuiz(quiz).forEach(qs -> {
+                    User student = qs.getStudent();
+                    studentsByEmail.put(student.getEmail(), mapStudentInfo(student, student.getClasse()));
+                })
+        );
+
+        classeRepository.findByEnseignants_Id(currentUser.getId()).forEach(classe ->
+                userRepository.findByClasseId(classe.getId()).stream()
+                        .filter(user -> user.getRole() == Role.ETUDIANT)
+                        .forEach(student -> studentsByEmail.put(student.getEmail(), mapStudentInfo(student, classe)))
+        );
+
+        return List.copyOf(studentsByEmail.values());
+    }
+
+    @Transactional
+    public Map<String, Object> assignQuizToClass(Long quizId, Long classId) {
+        User enseignant = authService.getCurrentUser();
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Quiz non trouve"));
+        Classe classe = classeRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Classe introuvable"));
+
+        if (!quiz.getEnseignant().getId().equals(enseignant.getId()) && enseignant.getRole() != Role.ADMIN) {
+            throw new RuntimeException("Vous n'etes pas le proprietaire");
+        }
+
+        if (enseignant.getRole() != Role.ADMIN) {
+            boolean assignedTeacher = classe.getEnseignants().stream()
+                    .anyMatch(teacher -> teacher.getId().equals(enseignant.getId()));
+            if (!assignedTeacher) {
+                throw new RuntimeException("Cette classe n'est pas affectee a cet enseignant");
+            }
+        }
+
+        List<User> students = userRepository.findByClasseId(classId).stream()
+                .filter(user -> user.getRole() == Role.ETUDIANT || user.getRole() == Role.ADMIN)
+                .collect(Collectors.toList());
+
+        if (students.isEmpty()) {
+            throw new RuntimeException("Aucun etudiant dans cette classe");
+        }
+
+        int added = 0;
+        for (User student : students) {
+            if (!quizStudentRepository.existsByQuizAndStudent(quiz, student)) {
+                QuizStudent qs = new QuizStudent();
+                qs.setQuiz(quiz);
+                qs.setStudent(student);
+                quizStudentRepository.save(qs);
+                added++;
+            }
+        }
+
+        quiz.setClasse(classe);
+        quizRepository.save(quiz);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Quiz affecte a la classe");
+        response.put("addedCount", added);
+        response.put("totalStudents", students.size());
+        response.put("className", classe.getName());
+        return response;
     }
 
     @Transactional
@@ -282,9 +391,12 @@ public class QuizService {
         status.put("isDeletable", quiz.isDeletable());
         status.put("isAvailable", quiz.isAvailable());
         status.put("questionCount", quiz.getQuestionCount());
-        status.put("allowedStudentsCount", quizRepository.countAllowedStudents(quizId));
+        int allowedStudentsCount = quizRepository.countAllowedStudents(quizId);
+        status.put("allowedStudentsCount", allowedStudentsCount);
         status.put("canBePublished", quiz.getStatus() == Quiz.QuizStatus.DRAFT
-                && quiz.getQuestionCount() != null && quiz.getQuestionCount() > 0);
+                && quiz.getQuestionCount() != null
+                && quiz.getQuestionCount() >= MIN_QUESTIONS_TO_PUBLISH
+                && allowedStudentsCount > 0);
         return status;
     }
 
@@ -294,6 +406,49 @@ public class QuizService {
 
     public int getStudentCount(Long quizId) {
         return quizRepository.countAllowedStudents(quizId);
+    }
+
+    private void notifyAllowedStudents(Quiz quiz) {
+        List<User> students = quizStudentRepository.findStudentsByQuizId(quiz.getId());
+        String className = quiz.getClasse() != null ? quiz.getClasse().getName() : "Non definie";
+
+        for (User student : students) {
+            if (student.getEmail() == null || student.getEmail().isBlank()) {
+                continue;
+            }
+
+            emailService.sendQuizPublishedNotification(
+                    student.getEmail(),
+                    student.getFirstName(),
+                    student.getLastName(),
+                    quiz.getTitre(),
+                    quiz.getTheme(),
+                    className,
+                    quiz.getAvailableUntil(),
+                    quiz.getTimeLimit()
+            );
+        }
+    }
+
+    private Classe findRequestedClasse(QuizRequest request) {
+        Long classId = request.getClassId() != null ? request.getClassId() : request.getClasseId();
+        if (classId == null) {
+            return null;
+        }
+        return classeRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Classe introuvable"));
+    }
+
+    private StudentListDto.StudentInfo mapStudentInfo(User student, Classe classe) {
+        StudentListDto.StudentInfo info = new StudentListDto.StudentInfo();
+        info.setNom(student.getFirstName() != null ? student.getFirstName() : "");
+        info.setPrenom(student.getLastName() != null ? student.getLastName() : "");
+        info.setEmail(student.getEmail());
+        info.setCne(student.getCne());
+        info.setCodeApoge(student.getCodeApoge());
+        info.setClasse(classe != null ? classe.getName() : "Non definie");
+        info.setFiliere(classe != null ? classe.getFiliere() : "Non definie");
+        return info;
     }
 
     // ========== MAPPING ==========
@@ -312,6 +467,16 @@ public class QuizService {
         // 🔥 CORRECTION : Utiliser getFirstName() et getLastName()
         response.setEnseignantNom(quiz.getEnseignant().getFirstName() + " " + quiz.getEnseignant().getLastName());
         response.setTotalStudentsAllowed(quizRepository.countAllowedStudents(quiz.getId()));
+        if (quiz.getClasse() != null) {
+            response.setClassId(quiz.getClasse().getId());
+            response.setClasseId(quiz.getClasse().getId());
+            response.setClassName(quiz.getClasse().getName());
+            response.setClasseName(quiz.getClasse().getName());
+            response.setClassFiliere(quiz.getClasse().getFiliere());
+            response.setClasseFiliere(quiz.getClasse().getFiliere());
+            response.setClassNiveau(quiz.getClasse().getNiveau());
+            response.setClasseNiveau(quiz.getClasse().getNiveau());
+        }
         response.setCreatedAt(quiz.getCreatedAt());
         return response;
     }

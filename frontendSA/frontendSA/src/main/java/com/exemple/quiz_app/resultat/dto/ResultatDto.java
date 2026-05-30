@@ -16,6 +16,16 @@ public class ResultatDto {
     private Long studentId;
     private String studentName;
     private String studentFirstName;
+    private String studentLastName;
+    private String studentEmail;
+    private String cne;
+    private String codeApoge;
+    private Long classId;
+    private Long classeId;
+    private String className;
+    private String classeName;
+    private String subjectName;
+    private String matiereName;
     private Double score;
     private Integer totalPoints;
     private Integer earnedPoints;

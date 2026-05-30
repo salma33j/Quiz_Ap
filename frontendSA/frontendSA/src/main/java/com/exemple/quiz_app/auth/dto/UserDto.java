@@ -10,6 +10,12 @@ public class UserDto {
     private String lastName;
     private String email;
     private String role;
+    private String cne;
+    private String codeApoge;
+    private Long classId;
+    private Long classeId;
+    private String className;
+    private String classeName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -40,6 +46,24 @@ public class UserDto {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public String getCne() { return cne; }
+    public void setCne(String cne) { this.cne = cne; }
+
+    public String getCodeApoge() { return codeApoge; }
+    public void setCodeApoge(String codeApoge) { this.codeApoge = codeApoge; }
+
+    public Long getClassId() { return classId; }
+    public void setClassId(Long classId) { this.classId = classId; }
+
+    public Long getClasseId() { return classeId; }
+    public void setClasseId(Long classeId) { this.classeId = classeId; }
+
+    public String getClassName() { return className; }
+    public void setClassName(String className) { this.className = className; }
+
+    public String getClasseName() { return classeName; }
+    public void setClasseName(String classeName) { this.classeName = classeName; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

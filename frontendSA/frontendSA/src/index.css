@@ -14,6 +14,31 @@
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
+  --page-header-bg:
+    radial-gradient(circle at top right, rgba(255, 246, 201, 0.96) 0%, rgba(255, 250, 215, 0.64) 18%, transparent 42%),
+    linear-gradient(135deg, #ffffff 0%, #f9fdff 54%, #fff9d6 100%);
+  --page-header-border: 1px solid #d8e8f7;
+  --page-header-radius: 32px;
+  --page-header-shadow: 0 24px 60px rgba(8, 16, 48, 0.08);
+  --page-header-padding: 52px;
+  --page-header-gap: 22px;
+  --page-header-badge-bg: #fff8e1;
+  --page-header-badge-border: 1px solid #f3c66d;
+  --page-header-badge-color: #071344;
+  --page-header-badge-padding: 8px 16px;
+  --page-header-badge-font-size: 12px;
+  --page-header-badge-font-weight: 900;
+  --page-header-title-color: #071344;
+  --page-header-title-font: Georgia, "Times New Roman", serif;
+  --page-header-title-size: 52px;
+  --page-header-title-line-height: 1.08;
+  --page-header-title-weight: 950;
+  --page-header-title-letter-spacing: 0;
+  --page-header-title-margin: 20px 0 12px;
+  --page-header-copy-color: #5d6d8b;
+  --page-header-copy-size: 16px;
+  --page-header-copy-line-height: 1.65;
+  --page-header-copy-weight: 800;
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
@@ -27,6 +52,13 @@
 
   @media (max-width: 1024px) {
     font-size: 16px;
+  }
+}
+
+@media (max-width: 750px) {
+  :root {
+    --page-header-padding: 26px;
+    --page-header-title-size: 32px;
   }
 }
 
@@ -52,6 +84,30 @@
 
 body {
   margin: 0;
+}
+
+html,
+* {
+  scrollbar-color: #050505 #dfeaf2;
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #dfeaf2;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #050505;
+  border: 3px solid #dfeaf2;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #000000;
 }
 
 #root {

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -11,11 +12,14 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  PieChart,
 } from "lucide-react";
+import LogoutConfirmDialog from "../common/LogoutConfirmDialog";
 import styles from "./Sidebar.module.css";
 
 export default function Sidebar({ collapsed, setCollapsed }) {
   const navigate = useNavigate();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const menu = [
     { label: "Dashboard", path: "/teacher/dashboard", icon: LayoutDashboard },
@@ -24,8 +28,8 @@ export default function Sidebar({ collapsed, setCollapsed }) {
     { label: "Quiz IA", path: "/teacher/ai-generator", icon: Brain },
     { label: "Résultats", path: "/teacher/results", icon: BarChart3 },
     { label: "Classement", path: "/teacher/ranking", icon: Trophy },
+    { label: "Statistiques", path: "/teacher/statistics", icon: PieChart },
     { label: "Étudiants", path: "/teacher/students", icon: Users },
-    { label: "Profil", path: "/teacher/profile", icon: User },
   ];
 
   const logout = () => {
@@ -33,21 +37,20 @@ export default function Sidebar({ collapsed, setCollapsed }) {
     navigate("/login");
   };
 
+  const goToProfile = () => {
+    navigate("/teacher/profile");
+  };
+
   return (
-    <aside
-      className={`${styles.sidebar} ${
-        collapsed ? styles.collapsed : ""
-      }`}
-    >
-      <div>
+    <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ""}`}>
+      {/* Top section - Logo et toggle */}
+      <div className={styles.topArea}>
         <button
           type="button"
           className={styles.logoBox}
           onClick={() => navigate("/teacher/dashboard")}
-          aria-label="Aller au dashboard"
         >
           <img src="/logo.png" alt="QuizApp" />
-
           {!collapsed && (
             <div>
               <h2>QuizApp</h2>
@@ -56,44 +59,58 @@ export default function Sidebar({ collapsed, setCollapsed }) {
           )}
         </button>
 
-       <button
-  className={styles.toggleBtn}
-  onClick={() => setCollapsed(!collapsed)}
-  type="button"
->
-  {collapsed ? (
-    <ChevronRight size={20} />
-  ) : (
-    <ChevronLeft size={20} />
-  )}
-</button>
-
-        <nav className={styles.nav}>
-          {menu.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.end}
-                title={collapsed ? item.label : ""}
-                className={({ isActive }) =>
-                  isActive ? `${styles.link} ${styles.active}` : styles.link
-                }
-              >
-                <Icon size={20} />
-                {!collapsed && <span>{item.label}</span>}
-              </NavLink>
-            );
-          })}
-        </nav>
+        <button
+          className={styles.toggleBtn}
+          onClick={() => setCollapsed(!collapsed)}
+          type="button"
+        >
+          {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+        </button>
       </div>
 
-      <button className={styles.logout} onClick={logout}>
-        <LogOut size={20} />
-        {!collapsed && <span>Déconnexion</span>}
-      </button>
+      {/* Navigation - Menu principal */}
+      <nav className={styles.nav}>
+        {menu.map((item) => {
+          const Icon = item.icon;
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.end}
+              title={collapsed ? item.label : ""}
+              className={({ isActive }) =>
+                isActive ? `${styles.link} ${styles.active}` : styles.link
+              }
+            >
+              <Icon size={20} />
+              {!collapsed && <span>{item.label}</span>}
+            </NavLink>
+          );
+        })}
+      </nav>
+
+      {/* Bottom section - Actions utilisateur */}
+      <div className={styles.bottomActions}>
+        <button className={styles.profileBtn} onClick={goToProfile}>
+          <User size={20} />
+          {!collapsed && <span>Mon profil</span>}
+        </button>
+
+        <button
+          type="button"
+          className={styles.logout}
+          onClick={() => setShowLogoutConfirm(true)}
+        >
+          <LogOut size={20} />
+          {!collapsed && <span>Déconnexion</span>}
+        </button>
+      </div>
+
+      <LogoutConfirmDialog
+        open={showLogoutConfirm}
+        onCancel={() => setShowLogoutConfirm(false)}
+        onConfirm={logout}
+      />
     </aside>
   );
 }

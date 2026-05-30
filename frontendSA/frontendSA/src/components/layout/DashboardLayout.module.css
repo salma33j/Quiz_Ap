@@ -6,19 +6,19 @@
 .main {
   min-height: 100vh;
   margin-left: 290px;
-  padding: 34px;
+  padding: 16px 34px 30px;
   overflow-x: hidden;
   transition: margin-left 0.28s ease;
 }
 
 .mainCollapsed {
-  margin-left: 96px;
+  margin-left: 84px;
 }
 
 @media (max-width: 900px) {
   .main,
   .mainCollapsed {
     margin-left: 0;
-    padding: 20px;
+    padding: 14px 18px 20px;
   }
 }

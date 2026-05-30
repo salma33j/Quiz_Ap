@@ -5,15 +5,17 @@ import {
   BookOpen,
   Edit,
   Eye,
+  GraduationCap,
   Plus,
   Trash2,
-  Users,
   Trophy,
+  Users,
 } from "lucide-react";
 import teacherQuizApi from "../../api/teacherQuizApi";
 import styles from "./MyQuizzes.module.css";
 
 const AI_QUIZ_STORAGE_KEY = "teacher-ai-quizzes";
+const MIN_QUESTIONS_TO_PUBLISH = 10;
 
 export default function MyQuizzes() {
   const [items, setItems] = useState([]);
@@ -53,11 +55,20 @@ export default function MyQuizzes() {
 
   async function publish(quiz) {
     const questionCount = getQuestionCount(quiz);
+    const allowedCount = getAllowedCount(quiz);
 
-    if (questionCount < 10) {
+    if (questionCount < MIN_QUESTIONS_TO_PUBLISH) {
       setCardErrors((prev) => ({
         ...prev,
-        [quiz.id]: "Le quiz doit contenir au moins 10 questions avant publication.",
+        [quiz.id]: `Le quiz doit contenir au moins ${MIN_QUESTIONS_TO_PUBLISH} questions avant publication.`,
+      }));
+      return;
+    }
+
+    if (allowedCount <= 0) {
+      setCardErrors((prev) => ({
+        ...prev,
+        [quiz.id]: "Affectez au moins un etudiant ou une classe avant publication.",
       }));
       return;
     }
@@ -84,7 +95,7 @@ export default function MyQuizzes() {
     return items.filter((q) => q.status === status).length;
   };
 
-  const getStatusLabel = (status) => {
+const getStatusLabel = (status) => {
     switch (status) {
       case "PUBLISHED":
         return "Publié";
@@ -116,14 +127,99 @@ export default function MyQuizzes() {
     }
   };
 
+  const isAnalyticsAvailable = (q) => {
+    const status = String(q.status || "").toUpperCase();
+    if (status === "EXPIRED") return true;
+    if (status !== "PUBLISHED" || !q.availableUntil) return false;
+
+    const expirationDate = new Date(q.availableUntil);
+    return !Number.isNaN(expirationDate.getTime()) && expirationDate <= new Date();
+  };
+
+  const formatExpirationDate = (q) => {
+    if (!q.availableUntil) return "date d'expiration";
+
+    const expirationDate = new Date(q.availableUntil);
+    if (Number.isNaN(expirationDate.getTime())) return "date d'expiration";
+
+    return expirationDate.toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const getQuestionCount = (q) =>
     q.questionCount ?? q.questionsCount ?? q.nombreQuestions ?? 0;
 
-  const getDuration = (q) =>
-    q.timeLimit ?? q.duration ?? q.duree ?? 0;
+  const getDuration = (q) => q.timeLimit ?? q.duration ?? q.duree ?? 0;
+
+  const getAllowedCount = (q) =>
+    q.totalStudentsAllowed ?? q.allowedStudentsCount ?? q.studentCount ?? 0;
+
+  const getClassLabel = (q) => {
+    const raw =
+      q.classeName ||
+      q.className ||
+      q.nomClasse ||
+      q.groupeName ||
+      q.groupName ||
+      q.classe?.name ||
+      q.classe?.nom ||
+      q.classEntity?.name ||
+      q.classEntity?.nom ||
+      q.classe ||
+      q.class ||
+      q.groupe ||
+      q.group;
+
+    return typeof raw === "string" && raw.trim()
+      ? raw.trim()
+      : "Classe non définie";
+  };
+
+  const getClassDetails = (q) =>
+    [
+      q.classFiliere ||
+        q.classeFiliere ||
+        q.filiere ||
+        q.classe?.filiere ||
+        q.classEntity?.filiere,
+      q.classNiveau ||
+        q.classeNiveau ||
+        q.niveau ||
+        q.classe?.niveau ||
+        q.classEntity?.niveau,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+  const getSubjectLabel = (q) => {
+    const raw =
+      q.matiereName ||
+      q.matiereNom ||
+      q.subjectName ||
+      q.subject ||
+      q.matiere?.nom ||
+      q.matiere?.name ||
+      q.theme;
+
+    return typeof raw === "string" && raw.trim()
+      ? raw.trim()
+      : "Matière non définie";
+  };
 
   const isAiQuiz = (q) => {
-    const storedIds = JSON.parse(localStorage.getItem(AI_QUIZ_STORAGE_KEY) || "[]");
+    const storedIds = (() => {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(AI_QUIZ_STORAGE_KEY) || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    })();
 
     return (
       String(q.creationType || "").toUpperCase() === "AI" ||
@@ -145,6 +241,213 @@ export default function MyQuizzes() {
     creationType: "AI",
     from: "/teacher/quizzes",
   });
+
+  const groupedItems = useMemo(() => {
+    const classes = new Map();
+
+    filteredItems.forEach((quiz) => {
+      const classLabel = getClassLabel(quiz);
+      const classKey = classLabel.toLowerCase();
+      const subjectLabel = getSubjectLabel(quiz);
+      const subjectKey = subjectLabel.toLowerCase();
+
+      if (!classes.has(classKey)) {
+        classes.set(classKey, {
+          label: classLabel,
+          details: getClassDetails(quiz),
+          subjects: new Map(),
+          total: 0,
+        });
+      }
+
+      const classGroup = classes.get(classKey);
+      classGroup.total += 1;
+
+      if (!classGroup.details) {
+        classGroup.details = getClassDetails(quiz);
+      }
+
+      if (!classGroup.subjects.has(subjectKey)) {
+        classGroup.subjects.set(subjectKey, {
+          label: subjectLabel,
+          quizzes: [],
+        });
+      }
+
+      classGroup.subjects.get(subjectKey).quizzes.push(quiz);
+    });
+
+    return Array.from(classes.values())
+      .sort((a, b) => {
+        if (a.label === "Classe non définie") return 1;
+        if (b.label === "Classe non définie") return -1;
+        return a.label.localeCompare(b.label, "fr", { sensitivity: "base" });
+      })
+      .map((classGroup) => ({
+        ...classGroup,
+        subjects: Array.from(classGroup.subjects.values())
+          .sort((a, b) => {
+            if (a.label === "Matière non définie") return 1;
+            if (b.label === "Matière non définie") return -1;
+            return a.label.localeCompare(b.label, "fr", { sensitivity: "base" });
+          })
+          .map((subjectGroup) => ({
+            ...subjectGroup,
+            quizzes: subjectGroup.quizzes.sort((a, b) =>
+              (a.titre || a.title || "").localeCompare(
+                b.titre || b.title || "",
+                "fr",
+                { sensitivity: "base" }
+              )
+            ),
+          })),
+      }));
+  }, [filteredItems]);
+
+  const renderQuizCard = (q) => {
+    const status = q.status || "DRAFT";
+    const isDraft = status === "DRAFT";
+    const isPublished = status === "PUBLISHED";
+    const isExpired = status === "EXPIRED";
+    const analyticsAvailable = isAnalyticsAvailable(q);
+
+    return (
+      <article className={styles.card} key={q.id}>
+        <div className={styles.top}>
+          <span>{getSubjectLabel(q)}</span>
+
+          <b className={getStatusClass(status)}>{getStatusLabel(status)}</b>
+        </div>
+
+        <h3>{q.titre || q.title || "Quiz sans titre"}</h3>
+
+        <p>
+          {q.description ||
+            `Quiz ${isAiQuiz(q) ? "généré avec IA" : "créé manuellement"}.`}
+        </p>
+
+        <div className={styles.meta}>
+          <span className={styles.classMetaBadge}>
+            <GraduationCap size={15} />
+            {getClassLabel(q)}
+          </span>
+
+          <span>
+            <BookOpen size={15} />
+            {getQuestionCount(q)} questions
+          </span>
+
+          <span>{getDuration(q)} min</span>
+
+          <span>{getAllowedCount(q)} etudiants</span>
+        </div>
+
+        <div className={styles.actions}>
+          {isDraft && (
+            <>
+              <Link className={styles.editBtn} to={`/teacher/quizzes/create?edit=${q.id}`}>
+                <Edit size={17} />
+                Modifier
+              </Link>
+
+              <Link
+                className={styles.questionBtn}
+                to={isAiQuiz(q) ? "/teacher/ai-generator" : `/teacher/quizzes/${q.id}/questions`}
+                state={isAiQuiz(q) ? buildAiQuizState(q) : undefined}
+              >
+                <BookOpen size={17} />
+                Questions
+              </Link>
+
+              <Link
+                className={styles.assignBtn}
+                to={`/teacher/quizzes/${q.id}/assign`}
+                state={{ from: "/teacher/quizzes" }}
+              >
+                <Users size={17} />
+                Affecter
+              </Link>
+
+              <button className={styles.publishBtn} onClick={() => publish(q)}>
+                Publier
+              </button>
+
+              <button className={styles.deleteBtn} onClick={() => remove(q.id)}>
+                <Trash2 size={17} />
+              </button>
+            </>
+          )}
+
+          {cardErrors[q.id] && (
+            <div className={styles.cardError}>{cardErrors[q.id]}</div>
+          )}
+
+          {isPublished && (
+            <>
+              <Link to={`/teacher/quizzes/${q.id}`}>
+                <Eye size={17} />
+                Voir
+              </Link>
+
+              <Link to={`/teacher/quizzes/${q.id}/results`}>
+                <BarChart3 size={17} />
+                Résultats
+              </Link>
+
+              {analyticsAvailable ? (
+                <>
+                  <Link to={`/teacher/quizzes/${q.id}/ranking`}>
+                    <Trophy size={17} />
+                    Classement
+                  </Link>
+
+                  <Link to={`/teacher/quizzes/${q.id}/statistics`}>
+                    <BarChart3 size={17} />
+                    Stats
+                  </Link>
+                </>
+              ) : (
+                <span className={styles.lockedAction}>
+                  Classement et stats après {formatExpirationDate(q)}
+                </span>
+              )}
+            </>
+          )}
+
+          {isExpired && (
+            <>
+              <Link to={`/teacher/quizzes/${q.id}`}>
+                <Eye size={17} />
+                Voir
+              </Link>
+
+              <Link to={`/teacher/quizzes/${q.id}/results`}>
+                <BarChart3 size={17} />
+                Résultats
+              </Link>
+
+              <Link to={`/teacher/quizzes/${q.id}/statistics`}>
+                <BarChart3 size={17} />
+                Stats
+              </Link>
+
+              <Link to={`/teacher/quizzes/${q.id}/ranking`}>
+                <Trophy size={17} />
+                Classement
+              </Link>
+            </>
+          )}
+
+          {!isDraft && !isPublished && !isExpired && (
+            <Link to={`/teacher/quizzes/${q.id}`}>
+              <Eye size={17} />
+              Voir
+            </Link>
+          )}
+        </div>
+      </article>
+    );
+  };
 
   return (
     <div className={styles.page}>
@@ -207,151 +510,37 @@ export default function MyQuizzes() {
       ) : filteredItems.length === 0 ? (
         <div className={styles.empty}>Aucun quiz dans cette catégorie.</div>
       ) : (
-        <div className={styles.grid}>
-          {filteredItems.map((q) => {
-            const status = q.status || "DRAFT";
-            const isDraft = status === "DRAFT";
-            const isPublished = status === "PUBLISHED";
-            const isExpired = status === "EXPIRED";
-
-            return (
-              <article className={styles.card} key={q.id}>
-                <div className={styles.top}>
-                  <span>{q.theme || "Sans thème"}</span>
-
-                  <b className={getStatusClass(status)}>
-                    {getStatusLabel(status)}
-                  </b>
+        <div className={styles.classGroups}>
+          {groupedItems.map((classGroup) => (
+            <section className={styles.classGroup} key={classGroup.label}>
+              <div className={styles.classHeader}>
+                <div>
+                  <span className={styles.groupEyebrow}>Classe</span>
+                  <h2>{classGroup.label}</h2>
+                  {classGroup.details && <p>{classGroup.details}</p>}
                 </div>
 
-                <h3>{q.titre || q.title || "Quiz sans titre"}</h3>
+                <strong>{classGroup.total} quiz</strong>
+              </div>
 
-                <p>
-                  {q.description ||
-                    `Quiz ${
-                      isAiQuiz(q)
-                        ? "généré avec IA"
-                        : "créé manuellement"
-                    }.`}
-                </p>
+              {classGroup.subjects.map((subjectGroup) => (
+                <div className={styles.subjectGroup} key={subjectGroup.label}>
+                  <div className={styles.subjectHeader}>
+                    <div>
+                      <span className={styles.groupEyebrow}>Matière</span>
+                      <h3>{subjectGroup.label}</h3>
+                    </div>
 
-                <div className={styles.meta}>
-                  <span>
-                    <BookOpen size={15} />
-                    {getQuestionCount(q)} questions
-                  </span>
+                    <span>{subjectGroup.quizzes.length} quiz</span>
+                  </div>
 
-                  <span>{getDuration(q)} min</span>
-
-                  <span>{q.totalStudentsAllowed ?? 0} étudiants</span>
+                  <div className={styles.grid}>
+                    {subjectGroup.quizzes.map((q) => renderQuizCard(q))}
+                  </div>
                 </div>
-
-                <div className={styles.actions}>
-                  {isDraft && (
-                    <>
-                      <Link
-                        className={styles.editBtn}
-                        to={`/teacher/quizzes/create?edit=${q.id}`}
-                      >
-                        <Edit size={17} />
-                        Modifier
-                      </Link>
-
-                      <Link
-                        className={styles.questionBtn}
-                        to={
-                          isAiQuiz(q)
-                            ? "/teacher/ai-generator"
-                            : `/teacher/quizzes/${q.id}/questions`
-                        }
-                        state={isAiQuiz(q) ? buildAiQuizState(q) : undefined}
-                      >
-                        <BookOpen size={17} />
-                        Questions
-                      </Link>
-
-                      <Link
-                        className={styles.assignBtn}
-                        to={`/teacher/quizzes/${q.id}/assign`}
-                        state={{ from: "/teacher/quizzes" }}
-                      >
-                        <Users size={17} />
-                        Affecter
-                      </Link>
-
-                      <button
-                        className={styles.publishBtn}
-                        onClick={() => publish(q)}
-                      >
-                        Publier
-                      </button>
-
-                      <button
-                        className={styles.deleteBtn}
-                        onClick={() => remove(q.id)}
-                      >
-                        <Trash2 size={17} />
-                      </button>
-                    </>
-                  )}
-
-                  {cardErrors[q.id] && (
-                    <div className={styles.cardError}>{cardErrors[q.id]}</div>
-                  )}
-
-                  {isPublished && (
-                    <>
-                      <Link to={`/teacher/quizzes/${q.id}`}>
-                        <Eye size={17} />
-                        Voir
-                      </Link>
-
-                      <Link to={`/teacher/quizzes/${q.id}/results`}>
-                        <BarChart3 size={17} />
-                        Résultats
-                      </Link>
-
-                      <Link to={`/teacher/quizzes/${q.id}/ranking`}>
-                        <Trophy size={17} />
-                        Classement
-                      </Link>
-
-                      <Link to={`/teacher/quizzes/${q.id}/statistics`}>
-                        <BarChart3 size={17} />
-                        Stats
-                      </Link>
-                    </>
-                  )}
-
-                  {isExpired && (
-                    <>
-                      <Link to={`/teacher/quizzes/${q.id}`}>
-                        <Eye size={17} />
-                        Voir
-                      </Link>
-
-                      <Link to={`/teacher/quizzes/${q.id}/results`}>
-                        <BarChart3 size={17} />
-                        Résultats
-                      </Link>
-
-                      <Link to={`/teacher/quizzes/${q.id}/statistics`}>
-                        <BarChart3 size={17} />
-                        Stats
-                      </Link>
-                    </>
-                  )}
-
-                  {!isDraft && !isPublished && !isExpired && (
-                    <Link to={`/teacher/quizzes/${q.id}`}>
-                      <Eye size={17} />
-                      Voir
-                    </Link>
-                  )}
-                </div>
-              </article>
-            );
-          })}
+              ))}
+            </section>
+          ))}
         </div>
       )}
     </div>

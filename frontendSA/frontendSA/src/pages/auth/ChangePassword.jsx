@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, ShieldCheck } from "lucide-react";
 import { changePasswordApi } from "../../api/authApi";
+import LogoutConfirmDialog from "../../components/common/LogoutConfirmDialog";
 import useAuth from "../../hooks/useAuth";
 import styles from "./ChangePassword.module.css";
 
@@ -18,6 +19,7 @@ export default function ChangePassword() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleChange = (e) => {
     setForm({
@@ -132,10 +134,20 @@ export default function ChangePassword() {
           </button>
         </form>
 
-        <button className={styles.logoutBtn} onClick={logout}>
+        <button
+          type="button"
+          className={styles.logoutBtn}
+          onClick={() => setShowLogoutConfirm(true)}
+        >
           Se déconnecter
         </button>
       </div>
+
+      <LogoutConfirmDialog
+        open={showLogoutConfirm}
+        onCancel={() => setShowLogoutConfirm(false)}
+        onConfirm={logout}
+      />
     </div>
   );
 }

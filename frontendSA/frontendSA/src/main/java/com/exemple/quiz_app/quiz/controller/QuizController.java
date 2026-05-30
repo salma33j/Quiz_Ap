@@ -37,6 +37,11 @@ public class QuizController {
         return ResponseEntity.ok(quizService.getMyQuizzes());
     }
 
+    @GetMapping("/students")
+    public ResponseEntity<List<StudentListDto.StudentInfo>> getMyStudents() {
+        return ResponseEntity.ok(quizService.getMyStudents());
+    }
+
     @GetMapping("/quizzes/{id}")
     public ResponseEntity<QuizReponse> getQuizById(@PathVariable Long id) {
         return ResponseEntity.ok(quizService.getQuizById(id));
@@ -62,6 +67,18 @@ public class QuizController {
     public ResponseEntity<Map<String, Object>> addStudents(@PathVariable Long id, @RequestBody StudentListDto students) {
         int added = quizService.addAllowedStudents(id, students);
         return ResponseEntity.ok(Map.of("message", added + " etudiant(s) ajoute(s)", "addedCount", added));
+    }
+
+    @PostMapping("/quizzes/{id}/assign-class")
+    public ResponseEntity<Map<String, Object>> assignQuizToClass(
+            @PathVariable Long id,
+            @RequestBody Map<String, Long> request
+    ) {
+        Long classId = request.get("classId");
+        if (classId == null) {
+            throw new RuntimeException("classId obligatoire");
+        }
+        return ResponseEntity.ok(quizService.assignQuizToClass(id, classId));
     }
 
     @GetMapping("/quizzes/{id}/students")

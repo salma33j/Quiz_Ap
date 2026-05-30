@@ -11,4 +11,6 @@ public class QuizRequest {
     private LocalDateTime availableUntil;
     private Integer timeLimit;
     private String creationType;  // "MANUAL" ou "AI"
+    private Long classId;
+    private Long classeId;
 }

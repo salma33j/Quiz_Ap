@@ -25,11 +25,7 @@ export default function Login() {
   };
 
   const redirectByRole = (data) => {
-    if (data.mustChangePassword) {
-      navigate("/change-password");
-      return;
-    }
-
+    // ✅ Redirection selon rôle
     if (data.role === "ADMIN") {
       navigate("/admin/dashboard");
     } else if (data.role === "ENSEIGNANT") {
@@ -43,13 +39,19 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setError("");
     setLoading(true);
 
     try {
       const data = await login(form.email, form.password);
+
+      console.log("Utilisateur connecté :", data);
+
       redirectByRole(data);
     } catch (err) {
+      console.error(err);
+
       setError(
         err.response?.data?.message ||
           err.message ||
@@ -63,6 +65,7 @@ export default function Login() {
   return (
     <div className={styles.page}>
       <div className={styles.container}>
+        {/* LEFT */}
         <section className={styles.leftPanel}>
           <div className={styles.formBox}>
             <div className={styles.logo}>
@@ -78,8 +81,10 @@ export default function Login() {
             {error && <div className={styles.error}>{error}</div>}
 
             <form className={styles.form} onSubmit={handleSubmit}>
+              {/* EMAIL */}
               <div className={styles.inputGroup}>
                 <Mail size={18} />
+
                 <input
                   type="email"
                   name="email"
@@ -90,8 +95,10 @@ export default function Login() {
                 />
               </div>
 
+              {/* PASSWORD */}
               <div className={styles.inputGroup}>
                 <Lock size={18} />
+
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
@@ -106,11 +113,20 @@ export default function Login() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? (
+                    <EyeOff size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
                 </button>
               </div>
 
-              <button className={styles.loginButton} disabled={loading}>
+              {/* BUTTON */}
+              <button
+                type="submit"
+                className={styles.loginButton}
+                disabled={loading}
+              >
                 {loading ? "Connexion..." : "Se connecter"}
               </button>
             </form>
@@ -121,19 +137,22 @@ export default function Login() {
           </div>
         </section>
 
+        {/* RIGHT */}
         <section className={styles.rightPanel}>
           <div className={styles.textBox}>
-          <h2>
-                Boostez vos
-                 
-                    connaissances
-                   </h2>
+            <h2>
+              Boostez vos
+              <br />
+              connaissances
+            </h2>
 
-                  <p>
-                    Testez vos compétences,
-                    suivez votre progression
-                   et améliorez votre niveau.
-                     </p>
+            <p>
+              Testez vos compétences,
+              <br />
+              suivez votre progression
+              <br />
+              et améliorez votre niveau.
+            </p>
           </div>
 
           <div className={styles.illustration}>

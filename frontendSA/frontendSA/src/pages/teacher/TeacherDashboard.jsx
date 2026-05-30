@@ -1,29 +1,44 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  BookOpen,
-  Users,
+  Activity,
   BarChart3,
+  BookOpen,
   Brain,
   CheckCircle2,
   Clock,
-  Activity,
   FilePenLine,
+  MailCheck,
+  Users,
 } from "lucide-react";
 import {
-  BarChart,
   Bar,
-  LineChart,
+  BarChart,
+  CartesianGrid,
   Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
 } from "recharts";
 
 import teacherQuizApi from "../../api/teacherQuizApi";
 import styles from "./TeacherDashboard.module.css";
+
+const asArray = (value) => {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value?.data)) return value.data;
+  if (Array.isArray(value?.items)) return value.items;
+  if (Array.isArray(value?.content)) return value.content;
+  return [];
+};
+
+const getStatus = (quiz) => String(quiz?.status || "DRAFT").toUpperCase();
+const getQuestionCount = (quiz) =>
+  Number(quiz?.questionCount ?? quiz?.questionsCount ?? quiz?.nombreQuestions ?? 0);
+const getAllowedCount = (quiz) =>
+  Number(quiz?.totalStudentsAllowed ?? quiz?.allowedStudentsCount ?? quiz?.studentCount ?? 0);
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
@@ -37,13 +52,13 @@ const TeacherDashboard = () => {
     totalQuizzes: 0,
     publishedQuizzes: 0,
     draftQuizzes: 0,
+    readyToPublish: 0,
     totalStudents: 0,
     totalAttempts: 0,
     averageScore: 0,
   });
 
   const [quizzes, setQuizzes] = useState([]);
-  const [students, setStudents] = useState([]);
   const [weeklyActivity, setWeeklyActivity] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -58,19 +73,11 @@ const TeacherDashboard = () => {
 
     const normalized = String(value).toLowerCase();
 
-    if (
-      normalized.includes("facile") ||
-      normalized.includes("easy") ||
-      normalized === "1"
-    ) {
+    if (normalized.includes("facile") || normalized.includes("easy") || normalized === "1") {
       return "Facile";
     }
 
-    if (
-      normalized.includes("difficile") ||
-      normalized.includes("hard") ||
-      normalized === "3"
-    ) {
+    if (normalized.includes("difficile") || normalized.includes("hard") || normalized === "3") {
       return "Difficile";
     }
 
@@ -80,37 +87,23 @@ const TeacherDashboard = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [dashboardData, quizzesData, studentsData] = await Promise.all([
-          teacherQuizApi.getDashboard().catch(() => null),
+        const [dashboardData, quizzesData] = await Promise.all([
+          teacherQuizApi.getDashboard().catch(() => []),
           teacherQuizApi.getMyQuizzes().catch(() => []),
-          teacherQuizApi.getStudents().catch(() => []),
         ]);
 
-        const safeQuizzes = Array.isArray(quizzesData) ? quizzesData : [];
-        const safeStudents = Array.isArray(studentsData) ? studentsData : [];
+        const safeQuizzes = asArray(quizzesData);
+        const dashboardRows = asArray(dashboardData);
 
         setQuizzes(safeQuizzes);
-        setStudents(safeStudents);
 
         const resultsResponses = await Promise.all(
-          safeQuizzes.map((quiz) =>
-            teacherQuizApi.getResults(quiz.id).catch(() => [])
-          )
+          safeQuizzes.map((quiz) => teacherQuizApi.getResults(quiz.id).catch(() => []))
         );
-
-        const allResults = resultsResponses.flat();
+        const allResults = resultsResponses.flatMap(asArray);
 
         const weekDays = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
-
-        const activityMap = {
-          Lun: 0,
-          Mar: 0,
-          Mer: 0,
-          Jeu: 0,
-          Ven: 0,
-          Sam: 0,
-          Dim: 0,
-        };
+        const activityMap = Object.fromEntries(weekDays.map((day) => [day, 0]));
 
         allResults.forEach((result) => {
           const dateValue =
@@ -118,52 +111,49 @@ const TeacherDashboard = () => {
             result.submittedAt ||
             result.datePassage ||
             result.completedAt ||
+            result.completedDate ||
             result.updatedAt;
 
           if (!dateValue) return;
 
           const dayIndex = new Date(dateValue).getDay();
-
           const dayName = dayIndex === 0 ? "Dim" : weekDays[dayIndex - 1];
-
           activityMap[dayName] += 1;
         });
 
-        setWeeklyActivity(
-          weekDays.map((day) => ({
-            day,
-            attempts: activityMap[day],
-          }))
+        setWeeklyActivity(weekDays.map((day) => ({ day, attempts: activityMap[day] })));
+
+        const totalAttemptsFromStats = dashboardRows.reduce(
+          (sum, row) => sum + Number(row.totalParticipants ?? 0),
+          0
         );
+        const totalStudentsFromStats = dashboardRows.reduce(
+          (sum, row) => sum + Number(row.totalStudentsAllowed ?? 0),
+          0
+        );
+        const weightedScore = dashboardRows.reduce((sum, row) => {
+          const participants = Number(row.totalParticipants ?? 0);
+          return sum + Number(row.moyenneScore ?? 0) * participants;
+        }, 0);
+        const simpleAverage =
+          dashboardRows.length > 0
+            ? dashboardRows.reduce((sum, row) => sum + Number(row.moyenneScore ?? 0), 0) /
+              dashboardRows.length
+            : 0;
 
         setStats({
-          totalQuizzes:
-            dashboardData?.totalQuizzes ??
-            dashboardData?.quizCount ??
-            safeQuizzes.length,
-
-          publishedQuizzes:
-            dashboardData?.publishedQuizzes ??
-            safeQuizzes.filter((q) => q.status === "PUBLISHED").length,
-
-          draftQuizzes:
-            dashboardData?.draftQuizzes ??
-            safeQuizzes.filter((q) => q.status !== "PUBLISHED").length,
-
+          totalQuizzes: safeQuizzes.length || dashboardRows.length,
+          publishedQuizzes: safeQuizzes.filter((q) => getStatus(q) === "PUBLISHED").length,
+          draftQuizzes: safeQuizzes.filter((q) => getStatus(q) === "DRAFT").length,
+          readyToPublish: safeQuizzes.filter(
+            (q) => getStatus(q) === "DRAFT" && getQuestionCount(q) >= 10 && getAllowedCount(q) > 0
+          ).length,
           totalStudents:
-            dashboardData?.totalStudents ??
-            dashboardData?.studentsCount ??
-            safeStudents.length,
-
-          totalAttempts:
-            dashboardData?.totalAttempts ??
-            dashboardData?.attemptsCount ??
-            allResults.length,
-
+            totalStudentsFromStats ||
+            safeQuizzes.reduce((sum, quiz) => sum + getAllowedCount(quiz), 0),
+          totalAttempts: totalAttemptsFromStats || allResults.length,
           averageScore:
-            dashboardData?.averageScore ??
-            dashboardData?.moyenneScore ??
-            0,
+            totalAttemptsFromStats > 0 ? weightedScore / totalAttemptsFromStats : simpleAverage,
         });
       } catch (error) {
         console.error("Erreur dashboard professeur :", error);
@@ -183,8 +173,7 @@ const TeacherDashboard = () => {
     };
 
     quizzes.forEach((quiz) => {
-      const difficulty = getDifficulty(quiz);
-      result[difficulty] += 1;
+      result[getDifficulty(quiz)] += 1;
     });
 
     return [
@@ -194,35 +183,48 @@ const TeacherDashboard = () => {
     ];
   }, [quizzes]);
 
-  const recentQuizzes = quizzes.slice(0, 4);
+  const recentQuizzes = useMemo(
+    () =>
+      [...quizzes]
+        .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+        .slice(0, 4),
+    [quizzes]
+  );
 
   const cards = [
     {
-      label: "Quiz créés",
+      label: "Quiz crees",
       value: stats.totalQuizzes,
       icon: BookOpen,
       hint: "total dans votre espace",
       color: "blue",
     },
     {
-      label: "Quiz publiés",
+      label: "Quiz publies",
       value: stats.publishedQuizzes,
       icon: CheckCircle2,
-      hint: "visibles aux étudiants",
+      hint: "visibles aux etudiants",
       color: "green",
     },
     {
       label: "Brouillons",
       value: stats.draftQuizzes,
       icon: FilePenLine,
-      hint: "à compléter",
+      hint: "a completer",
       color: "orange",
+    },
+    {
+      label: "Prets a publier",
+      value: stats.readyToPublish,
+      icon: MailCheck,
+      hint: "questions et etudiants OK",
+      color: "cyan",
     },
     {
       label: "Étudiants",
       value: stats.totalStudents,
       icon: Users,
-      hint: "assignés ou inscrits",
+      hint: "assignés aux quiz",
       color: "purple",
     },
     {
@@ -245,15 +247,11 @@ const TeacherDashboard = () => {
     <div className={styles.page}>
       <section className={styles.topSection}>
         <div>
-          <p className={styles.hello}>Bonjour {teacherName} 👋</p>
+          <span className={styles.badge}>Professeur</span>
+          <h1 className={styles.hello}>Tableau de bord enseignant</h1>
           <p className={styles.subtitle}>
-            Résumé clair de vos quiz, étudiants et activités.
+            Bonjour {teacherName}, suivez vos quiz, étudiants, publications et activités.
           </p>
-        </div>
-
-        <div className={styles.todayBox}>
-          <span>Aujourd’hui</span>
-          <strong>{new Date().toLocaleDateString("fr-FR")}</strong>
         </div>
       </section>
 
@@ -281,8 +279,8 @@ const TeacherDashboard = () => {
         <div className={styles.chartCard}>
           <div className={styles.cardHeader}>
             <div>
-              <h2>Difficulté des quiz</h2>
-              <p>Répartition réelle des quiz par niveau.</p>
+              <h2>Difficulte des quiz</h2>
+              <p>Repartition reelle des quiz par niveau.</p>
             </div>
           </div>
 
@@ -302,8 +300,8 @@ const TeacherDashboard = () => {
         <div className={styles.chartCard}>
           <div className={styles.cardHeader}>
             <div>
-              <h2>Activité hebdomadaire</h2>
-              <p>Nombre réel de tentatives par jour.</p>
+              <h2>Activite hebdomadaire</h2>
+              <p>Nombre reel de tentatives par jour.</p>
             </div>
           </div>
 
@@ -330,19 +328,17 @@ const TeacherDashboard = () => {
         <div className={styles.panel}>
           <div className={styles.cardHeader}>
             <div>
-              <h2>Quiz récents</h2>
-              <p>Les derniers quiz créés dans votre espace.</p>
+              <h2>Quiz recents</h2>
+              <p>Les derniers quiz crees dans votre espace.</p>
             </div>
 
-            <button onClick={() => navigate("/teacher/quizzes")}>
-              Voir tout
-            </button>
+            <button onClick={() => navigate("/teacher/quizzes")}>Voir tout</button>
           </div>
 
           <div className={styles.quizList}>
             {recentQuizzes.length > 0 ? (
               recentQuizzes.map((quiz) => {
-                const isPublished = quiz.status === "PUBLISHED";
+                const isPublished = getStatus(quiz) === "PUBLISHED";
 
                 return (
                   <div className={styles.quizItem} key={quiz.id}>
@@ -353,24 +349,22 @@ const TeacherDashboard = () => {
                     <div>
                       <h3>{quiz.titre || quiz.title || "Quiz sans titre"}</h3>
                       <p>
-                        {quiz.theme || "Sans thème"} • {getDifficulty(quiz)} •{" "}
-                        {isPublished ? "Publié" : "Brouillon"}
+                        {quiz.theme || "Sans theme"} - {getDifficulty(quiz)} -{" "}
+                        {isPublished ? "Publie" : "Brouillon"}
                       </p>
                     </div>
 
                     {isPublished ? (
-                     <button
-  className={styles.viewBtn}
-  onClick={() => navigate(`/teacher/quizzes/${quiz.id}`)}
->
-  Voir
-</button>
+                      <button
+                        className={styles.viewBtn}
+                        onClick={() => navigate(`/teacher/quizzes/${quiz.id}`)}
+                      >
+                        Voir
+                      </button>
                     ) : (
                       <button
                         className={styles.editBtn}
-                        onClick={() =>
-                          navigate(`/teacher/quizzes/${quiz.id}/questions`)
-                        }
+                        onClick={() => navigate(`/teacher/quizzes/${quiz.id}/questions`)}
                       >
                         Modifier
                       </button>
@@ -379,9 +373,7 @@ const TeacherDashboard = () => {
                 );
               })
             ) : (
-              <div className={styles.emptyBox}>
-                Aucun quiz créé pour le moment.
-              </div>
+              <div className={styles.emptyBox}>Aucun quiz cree pour le moment.</div>
             )}
           </div>
         </div>
@@ -394,12 +386,12 @@ const TeacherDashboard = () => {
 
             <h2>Assistant IA</h2>
             <p>
-              Utilisez l’IA pour générer des questions, des remarques et des
-              feedbacks personnalisés.
+              Utilisez l'IA pour generer des questions, des remarques et des feedbacks
+              personnalises.
             </p>
 
             <button onClick={() => navigate("/teacher/ai-generator")}>
-              Générer avec IA
+              Generer avec IA
             </button>
           </div>
 
@@ -412,13 +404,18 @@ const TeacherDashboard = () => {
             </div>
 
             <div className={styles.activityItem}>
+              <MailCheck size={18} />
+              <span>{stats.readyToPublish} quiz prets a notifier</span>
+            </div>
+
+            <div className={styles.activityItem}>
               <Clock size={18} />
-              <span>{stats.draftQuizzes} quiz à finaliser</span>
+              <span>{stats.draftQuizzes} quiz a finaliser</span>
             </div>
 
             <div className={styles.activityItem}>
               <Users size={18} />
-              <span>{stats.totalStudents} étudiants concernés</span>
+              <span>{stats.totalStudents} etudiants concernes</span>
             </div>
           </div>
         </div>

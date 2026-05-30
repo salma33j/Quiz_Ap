@@ -10,8 +10,8 @@
   padding: 34px;
   border-radius: 34px;
   background:
-    radial-gradient(circle at top right, rgba(199, 230, 247, 0.8), transparent 35%),
-    linear-gradient(135deg, #ffffff, #edf8ff);
+    radial-gradient(circle at top right, rgba(255, 246, 201, 0.96) 0%, rgba(255, 250, 215, 0.64) 18%, transparent 42%),
+    linear-gradient(135deg, #ffffff 0%, #f9fdff 54%, #fff9d6 100%);
   border: 1px solid #d9e8f2;
   box-shadow: 0 28px 70px rgba(8, 16, 48, 0.1);
   display: flex;
@@ -109,6 +109,99 @@
 .activeFilter span {
   background: white !important;
   color: #080b35 !important;
+}
+
+.classGroups {
+  display: grid;
+  gap: 26px;
+}
+
+.classGroup {
+  padding: 24px;
+  border: 1px solid #d9e8f2;
+  border-radius: 30px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(239, 249, 255, 0.84));
+  box-shadow: 0 24px 55px rgba(8, 16, 48, 0.08);
+}
+
+.classHeader,
+.subjectHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.classHeader {
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #d9e8f2;
+}
+
+.classHeader h2,
+.subjectHeader h3 {
+  margin: 6px 0 0;
+  color: #07173d;
+  font-weight: 1000;
+  line-height: 1.1;
+}
+
+.classHeader h2 {
+  font-size: 30px;
+}
+
+.subjectHeader h3 {
+  font-size: 22px;
+}
+
+.classHeader p {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.classHeader strong,
+.subjectHeader > span {
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid #cfe0ed;
+  background: #eaf7fc;
+  color: #080b35;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.classHeader strong {
+  padding: 11px 16px;
+}
+
+.subjectHeader > span {
+  padding: 9px 14px;
+}
+
+.groupEyebrow {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 1000;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.subjectGroup {
+  padding: 18px;
+  border: 1px solid #dfeaf2;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.subjectGroup + .subjectGroup {
+  margin-top: 18px;
+}
+
+.subjectHeader {
+  margin-bottom: 16px;
 }
 
 .grid {
@@ -212,6 +305,13 @@
   gap: 7px;
 }
 
+.classMetaBadge {
+  flex-basis: 100%;
+  background: #eef7ff !important;
+  border-color: #cfe0ed !important;
+  color: #07173d !important;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -246,6 +346,20 @@
   gap: 7px;
   cursor: pointer;
   transition: 0.2s ease;
+}
+
+.lockedAction {
+  flex-basis: 100%;
+  min-height: 42px;
+  padding: 10px 13px;
+  border: 1px dashed #c7ddea;
+  border-radius: 14px;
+  background: #f8fcff;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
 }
 
 .actions a:hover,
@@ -293,8 +407,57 @@
     grid-template-columns: 1fr;
   }
 
+  .classGroup {
+    padding: 18px;
+  }
+
+  .classHeader,
+  .subjectHeader {
+    flex-direction: column;
+  }
+
   .primary {
     width: 100%;
     justify-content: center;
   }
+}
+
+/* Header commun final */
+.header {
+  padding: var(--page-header-padding);
+  border: var(--page-header-border);
+  border-radius: var(--page-header-radius);
+  background: var(--page-header-bg);
+  box-shadow: var(--page-header-shadow);
+  gap: var(--page-header-gap);
+}
+
+.badge {
+  padding: var(--page-header-badge-padding);
+  border: var(--page-header-badge-border);
+  background: var(--page-header-badge-bg);
+  color: var(--page-header-badge-color);
+  font-size: var(--page-header-badge-font-size);
+  font-weight: var(--page-header-badge-font-weight);
+  letter-spacing: 0;
+  box-shadow: none;
+}
+
+.header h1 {
+  margin: var(--page-header-title-margin);
+  color: var(--page-header-title-color);
+  font-family: var(--page-header-title-font);
+  font-size: var(--page-header-title-size);
+  font-weight: var(--page-header-title-weight);
+  line-height: var(--page-header-title-line-height);
+  letter-spacing: var(--page-header-title-letter-spacing);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.header p {
+  color: var(--page-header-copy-color);
+  font-size: var(--page-header-copy-size);
+  font-weight: var(--page-header-copy-weight);
+  line-height: var(--page-header-copy-line-height);
 }

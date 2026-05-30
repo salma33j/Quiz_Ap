@@ -5,6 +5,8 @@ import com.exemple.quiz_app.auth.model.Role;
 import com.exemple.quiz_app.auth.model.User;
 import com.exemple.quiz_app.auth.repository.UserRepository;
 import com.exemple.quiz_app.auth.security.JwtUtil;
+import com.exemple.quiz_app.classe.entity.Classe;
+import com.exemple.quiz_app.classe.repository.ClasseRepository;
 import com.exemple.quiz_app.quiz.repository.QuizSessionRepository;
 import com.exemple.quiz_app.quiz.repository.QuizStudentRepository;
 import com.exemple.quiz_app.reponse.repository.ReponseRepository;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,6 +48,9 @@ public class AuthService {
     @Autowired
     private ReponseRepository reponseRepository;
 
+    @Autowired
+    private ClasseRepository classeRepository;
+
     // =========================================================
     // MÉTHODE UTILITAIRE : obtenir l'utilisateur connecté
     // =========================================================
@@ -62,6 +68,54 @@ public class AuthService {
     // =========================================================
     public AuthResponse register(RegisterRequest request) {
         return AuthResponse.error("❌ L'inscription publique est désactivée. Seul l'administrateur peut créer des comptes.");
+    }
+
+    public Map<String, Object> sendAdminEmail(AdminEmailRequest request) {
+        String target = request.getTarget() != null ? request.getTarget().trim().toUpperCase() : "";
+        String subject = request.getSubject() != null ? request.getSubject().trim() : "";
+        String message = request.getMessage() != null ? request.getMessage().trim() : "";
+
+        if (subject.isBlank()) {
+            throw new IllegalArgumentException("L'objet de l'email est obligatoire.");
+        }
+
+        if (message.isBlank()) {
+            throw new IllegalArgumentException("Le message de l'email est obligatoire.");
+        }
+
+        List<User> recipients = userRepository.findAll().stream()
+                .filter(user -> user.getEmail() != null && !user.getEmail().isBlank())
+                .filter(user -> {
+                    if ("ETUDIANTS".equals(target)) {
+                        return user.getRole() == Role.ETUDIANT;
+                    }
+                    if ("ENSEIGNANTS".equals(target)) {
+                        return user.getRole() == Role.ENSEIGNANT;
+                    }
+                    if ("TOUS".equals(target)) {
+                        return true;
+                    }
+                    return false;
+                })
+                .toList();
+
+        if (recipients.isEmpty()) {
+            throw new IllegalArgumentException("Aucun destinataire trouvé pour ce groupe.");
+        }
+
+        recipients.forEach(user -> emailService.sendAdminAnnouncement(
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                subject,
+                message
+        ));
+
+        return Map.of(
+                "success", true,
+                "message", "Email envoye avec succes.",
+                "sentCount", recipients.size()
+        );
     }
 
     // =========================================================
@@ -108,6 +162,9 @@ public class AuthService {
                 Role.ETUDIANT
         );
         user.setMustChangePassword(true);
+        user.setCne(request.getCne());
+        user.setCodeApoge(request.getCodeApoge());
+        user.setClasse(findRequestedClasse(request));
         user = userRepository.save(user);
 
         emailService.sendEtudiantCredentials(
@@ -281,6 +338,11 @@ public class AuthService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
+        if (requester.getRole() == Role.ADMIN) {
+            user.setCne(request.getCne());
+            user.setCodeApoge(request.getCodeApoge());
+            user.setClasse(findRequestedClasse(request));
+        }
         userRepository.save(user);
 
         AuthResponse response = new AuthResponse();
@@ -312,6 +374,15 @@ public class AuthService {
         return AuthResponse.success("Mot de passe modifie avec succes");
     }
 
+    private Classe findRequestedClasse(RegisterRequest request) {
+        Long classId = request.getClassId() != null ? request.getClassId() : request.getClasseId();
+        if (classId == null) {
+            return null;
+        }
+        return classeRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Classe introuvable"));
+    }
+
     // =========================================================
     // MÉTHODE UTILITAIRE : générer un mot de passe provisoire
     // =========================================================
@@ -332,6 +403,14 @@ public class AuthService {
         dto.setLastName(user.getLastName());
         dto.setEmail(user.getEmail());
         dto.setRole(user.getRole().name());
+        dto.setCne(user.getCne());
+        dto.setCodeApoge(user.getCodeApoge());
+        if (user.getClasse() != null) {
+            dto.setClassId(user.getClasse().getId());
+            dto.setClasseId(user.getClasse().getId());
+            dto.setClassName(user.getClasse().getName());
+            dto.setClasseName(user.getClasse().getName());
+        }
         dto.setCreatedAt(user.getCreatedAt());
         dto.setUpdatedAt(user.getUpdatedAt());
         return dto;

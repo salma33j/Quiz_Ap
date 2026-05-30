@@ -21,6 +21,10 @@ public class RegisterRequest {
     private String password;
 
     private String role;
+    private String cne;
+    private String codeApoge;
+    private Long classId;
+    private Long classeId;
 
     public RegisterRequest() {}
 
@@ -45,4 +49,16 @@ public class RegisterRequest {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public String getCne() { return cne; }
+    public void setCne(String cne) { this.cne = cne; }
+
+    public String getCodeApoge() { return codeApoge; }
+    public void setCodeApoge(String codeApoge) { this.codeApoge = codeApoge; }
+
+    public Long getClassId() { return classId; }
+    public void setClassId(Long classId) { this.classId = classId; }
+
+    public Long getClasseId() { return classeId; }
+    public void setClasseId(Long classeId) { this.classeId = classeId; }
 }

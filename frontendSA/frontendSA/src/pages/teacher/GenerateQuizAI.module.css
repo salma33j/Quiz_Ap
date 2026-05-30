@@ -23,9 +23,8 @@
   border-radius: 34px;
 
   background:
-    radial-gradient(circle at top right, rgba(120, 196, 255, 0.22), transparent 30%),
-    radial-gradient(circle at bottom left, rgba(17, 40, 125, 0.1), transparent 35%),
-    linear-gradient(135deg, #f9fcff 0%, #eef7ff 45%, #f7fbff 100%);
+    radial-gradient(circle at top right, rgba(255, 246, 201, 0.96) 0%, rgba(255, 250, 215, 0.64) 18%, transparent 42%),
+    linear-gradient(135deg, #ffffff 0%, #f9fdff 54%, #fff9d6 100%);
 
   border: 1px solid #dce8f5;
 
@@ -35,39 +34,11 @@
 }
 
 .header::before {
-  content: "";
-
-  position: absolute;
-  top: -90px;
-  right: -90px;
-
-  width: 260px;
-  height: 260px;
-
-  border-radius: 50%;
-
-  background:
-    radial-gradient(circle,
-    rgba(89, 160, 255, 0.18),
-    transparent 70%);
+  display: none;
 }
 
 .header::after {
-  content: "";
-
-  position: absolute;
-  bottom: -90px;
-  left: -80px;
-
-  width: 250px;
-  height: 250px;
-
-  border-radius: 50%;
-
-  background:
-    radial-gradient(circle,
-    rgba(10, 27, 88, 0.08),
-    transparent 70%);
+  display: none;
 }
 
 .backBtn {
@@ -831,3 +802,44 @@
   background: linear-gradient(135deg, #11165a, #27328c);
   box-shadow: 0 24px 45px rgba(7, 10, 53, 0.34);
 }
+
+/* Header commun final */
+.header {
+  padding: var(--page-header-padding);
+  border: var(--page-header-border);
+  border-radius: var(--page-header-radius);
+  background: var(--page-header-bg);
+  box-shadow: var(--page-header-shadow);
+  gap: var(--page-header-gap);
+}
+
+.badge {
+  padding: var(--page-header-badge-padding);
+  border: var(--page-header-badge-border);
+  background: var(--page-header-badge-bg);
+  color: var(--page-header-badge-color);
+  font-size: var(--page-header-badge-font-size);
+  font-weight: var(--page-header-badge-font-weight);
+  letter-spacing: 0;
+  box-shadow: none;
+}
+
+.header h1 {
+  margin: var(--page-header-title-margin);
+  color: var(--page-header-title-color);
+  font-family: var(--page-header-title-font);
+  font-size: var(--page-header-title-size);
+  font-weight: var(--page-header-title-weight);
+  line-height: var(--page-header-title-line-height);
+  letter-spacing: var(--page-header-title-letter-spacing);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.header p {
+  color: var(--page-header-copy-color);
+  font-size: var(--page-header-copy-size);
+  font-weight: var(--page-header-copy-weight);
+  line-height: var(--page-header-copy-line-height);
+}
+

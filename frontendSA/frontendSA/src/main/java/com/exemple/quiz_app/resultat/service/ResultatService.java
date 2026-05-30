@@ -355,18 +355,41 @@ public class ResultatService {
      */
     public List<RankingDto> getRanking(Quiz quiz) {
 
-        List<Object[]> results = resultatRepository.getRankingByQuizId(quiz.getId());
+        List<Resultat> results = resultatRepository.findByQuizIdOrderByScorePercentageDesc(quiz.getId());
         List<RankingDto> ranking = new ArrayList<>();
         int rank = 1;
 
-        for (Object[] row : results) {
+        for (Resultat resultat : results) {
+            User student = resultat.getStudent();
+            String className = null;
+            Long classId = null;
+
+            if (student != null && student.getClasse() != null) {
+                classId = student.getClasse().getId();
+                className = student.getClasse().getName();
+            } else if (quiz.getClasse() != null) {
+                classId = quiz.getClasse().getId();
+                className = quiz.getClasse().getName();
+            }
+
             RankingDto dto = RankingDto.builder()
                     .rank(rank++)
-                    .studentId((Long) row[0])
-                    .studentName(row[1] + " " + row[2])
-                    .scorePercentage((Double) row[3])
-                    .earnedPoints((Integer) row[4])
-                    .totalPoints((Integer) row[5])
+                    .studentId(student != null ? student.getId() : null)
+                    .studentName(student != null ? student.getFullName() : "")
+                    .studentFirstName(student != null ? student.getFirstName() : null)
+                    .studentLastName(student != null ? student.getLastName() : null)
+                    .studentEmail(student != null ? student.getEmail() : null)
+                    .cne(student != null ? student.getCne() : null)
+                    .codeApoge(student != null ? student.getCodeApoge() : null)
+                    .classId(classId)
+                    .classeId(classId)
+                    .className(className)
+                    .classeName(className)
+                    .subjectName(quiz.getTheme())
+                    .matiereName(quiz.getTheme())
+                    .scorePercentage(resultat.getScorePercentage())
+                    .earnedPoints(resultat.getEarnedPoints())
+                    .totalPoints(resultat.getTotalPoints())
                     .build();
 
             ranking.add(dto);
@@ -398,6 +421,17 @@ public class ResultatService {
         private Integer rank;
         private Long studentId;
         private String studentName;
+        private String studentFirstName;
+        private String studentLastName;
+        private String studentEmail;
+        private String cne;
+        private String codeApoge;
+        private Long classId;
+        private Long classeId;
+        private String className;
+        private String classeName;
+        private String subjectName;
+        private String matiereName;
         private Double scorePercentage;
         private Integer earnedPoints;
         private Integer totalPoints;

@@ -12,6 +12,8 @@ public class StudentListDto {
         private String nom;
         private String prenom;
         private String email;
+        private String cne;
+        private String codeApoge;
         private String classe;
         private String filiere;
     }

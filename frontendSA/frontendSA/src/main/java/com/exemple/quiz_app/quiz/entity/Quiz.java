@@ -1,6 +1,7 @@
 package com.exemple.quiz_app.quiz.entity;
 
 import com.exemple.quiz_app.auth.model.User;
+import com.exemple.quiz_app.classe.entity.Classe;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -48,6 +49,10 @@ public class Quiz {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_enseignant", nullable = false)
     private User enseignant;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "classe_id")
+    private Classe classe;
 
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuizStudent> allowedStudents = new ArrayList<>();

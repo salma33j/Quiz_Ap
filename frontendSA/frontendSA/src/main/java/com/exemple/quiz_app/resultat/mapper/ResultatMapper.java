@@ -33,6 +33,26 @@ public class ResultatMapper {
         return resultat.getStudent().getFirstName() + " " + resultat.getStudent().getLastName();
     }
 
+    private String getClassName(Resultat resultat) {
+        if (resultat.getStudent() != null && resultat.getStudent().getClasse() != null) {
+            return resultat.getStudent().getClasse().getName();
+        }
+        if (resultat.getQuiz() != null && resultat.getQuiz().getClasse() != null) {
+            return resultat.getQuiz().getClasse().getName();
+        }
+        return null;
+    }
+
+    private Long getClassId(Resultat resultat) {
+        if (resultat.getStudent() != null && resultat.getStudent().getClasse() != null) {
+            return resultat.getStudent().getClasse().getId();
+        }
+        if (resultat.getQuiz() != null && resultat.getQuiz().getClasse() != null) {
+            return resultat.getQuiz().getClasse().getId();
+        }
+        return null;
+    }
+
     // ========== ENTITY VERS DTO ==========
 
     /**
@@ -50,6 +70,17 @@ public class ResultatMapper {
                 .quizTheme(getQuizTheme(resultat))
                 .studentId(getStudentId(resultat))
                 .studentName(getStudentName(resultat))
+                .studentFirstName(resultat.getStudent() != null ? resultat.getStudent().getFirstName() : null)
+                .studentLastName(resultat.getStudent() != null ? resultat.getStudent().getLastName() : null)
+                .studentEmail(resultat.getStudent() != null ? resultat.getStudent().getEmail() : null)
+                .cne(resultat.getStudent() != null ? resultat.getStudent().getCne() : null)
+                .codeApoge(resultat.getStudent() != null ? resultat.getStudent().getCodeApoge() : null)
+                .classId(getClassId(resultat))
+                .classeId(getClassId(resultat))
+                .className(getClassName(resultat))
+                .classeName(getClassName(resultat))
+                .subjectName(getQuizTheme(resultat))
+                .matiereName(getQuizTheme(resultat))
                 .score(resultat.getScore())
                 .totalPoints(resultat.getTotalPoints())
                 .earnedPoints(resultat.getEarnedPoints())

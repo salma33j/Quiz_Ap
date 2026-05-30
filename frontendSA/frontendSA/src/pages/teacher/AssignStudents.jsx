@@ -1,34 +1,27 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import {
-  ArrowLeft,
-  BookOpen,
-  FileSpreadsheet,
-  Plus,
-  Trash2,
-  Upload,
-  Users,
-} from "lucide-react";
+import { ArrowLeft, BookOpen, Search, Users } from "lucide-react";
 import teacherQuizApi from "../../api/teacherQuizApi";
 import styles from "./AssignStudents.module.css";
 
-const emptyStudent = {
-  firstName: "",
-  lastName: "",
-  email: "",
-  cne: "",
-};
-
-const emptyClass = {
-  name: "",
-  filiere: "",
-  niveau: "",
-};
-
 const getClassId = (classe) => classe?.id ?? classe?._id;
-const getStudentId = (student) => student?.id ?? student?._id;
+const getStudentId = (student) => student?.id ?? student?._id ?? student?.email;
 const getStudentEmail = (student) => String(student?.email || "").trim().toLowerCase();
 const getQuizTitle = (quiz) => quiz?.titre || quiz?.title || "Quiz sans titre";
+const getQuizClassId = (quiz) =>
+  quiz?.classId ??
+  quiz?.classeId ??
+  quiz?.classe?.id ??
+  quiz?.classe?._id ??
+  quiz?.classEntity?.id ??
+  quiz?.classEntity?._id;
+const getStudentFullName = (student) =>
+  [student?.firstName || student?.prenom, student?.lastName || student?.nom]
+    .filter(Boolean)
+    .join(" ") || "Étudiant";
+const getStudentCne = (student) => student?.cne || student?.codeEtudiant || "-";
+const getStudentCodeApogee = (student) =>
+  student?.codeApoge || student?.codeApogee || student?.studentCodeApogee || "-";
 
 export default function AssignStudents() {
   const { id: quizId } = useParams();
@@ -38,15 +31,9 @@ export default function AssignStudents() {
   const [classes, setClasses] = useState([]);
   const [students, setStudents] = useState([]);
   const [quizzes, setQuizzes] = useState([]);
-
   const [selectedClassId, setSelectedClassId] = useState("");
   const [selectedQuizId, setSelectedQuizId] = useState(quizId || "");
-  const [mode, setMode] = useState("manual");
-
-  const [classForm, setClassForm] = useState(emptyClass);
-  const [studentForm, setStudentForm] = useState(emptyStudent);
-  const [file, setFile] = useState(null);
-
+  const [studentQuery, setStudentQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState("");
   const [message, setMessage] = useState("");
@@ -60,34 +47,30 @@ export default function AssignStudents() {
   );
 
   const totalStudents = useMemo(
-    () =>
-      classes.reduce((total, classe) => total + Number(classe.studentCount ?? 0), 0),
+    () => classes.reduce((total, classe) => total + Number(classe.studentCount ?? 0), 0),
     [classes]
   );
 
   const canUseClassActions = Boolean(selectedClassId);
 
-  useEffect(() => {
-    loadInitialData();
-  }, []);
+  const filteredStudents = useMemo(() => {
+    const value = studentQuery.trim().toLowerCase();
+    if (!value) return students;
 
-  useEffect(() => {
-    if (!selectedClassId) {
-      setStudents([]);
-      setAssignedQuizzes([]);
-      return;
-    }
+    return students.filter((student) =>
+      [
+        getStudentFullName(student),
+        student.email,
+        getStudentCne(student),
+        getStudentCodeApogee(student),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(value)
+    );
+  }, [students, studentQuery]);
 
-    setStudents([]);
-    setAssignedQuizzes([]);
-    loadStudents(selectedClassId);
-  }, [selectedClassId]);
-
-  useEffect(() => {
-    loadAssignedQuizzes();
-  }, [selectedClassId, students, quizzes]);
-
-  async function loadInitialData(preferredClassId = selectedClassId) {
+  const loadInitialData = useCallback(async (preferredClassId = "") => {
     try {
       setLoading(true);
       setError("");
@@ -114,9 +97,9 @@ export default function AssignStudents() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  async function loadStudents(classId) {
+  const loadStudents = useCallback(async (classId) => {
     try {
       setError("");
       const data = await teacherQuizApi.getClassStudents(classId);
@@ -128,9 +111,9 @@ export default function AssignStudents() {
           "Impossible de charger les étudiants de cette classe."
       );
     }
-  }
+  }, []);
 
-  async function loadAssignedQuizzes() {
+  const loadAssignedQuizzes = useCallback(async () => {
     if (!selectedClassId || students.length === 0 || quizzes.length === 0) {
       setAssignedQuizzes([]);
       return;
@@ -140,183 +123,126 @@ export default function AssignStudents() {
       setLoadingAssignedQuizzes(true);
 
       const classEmails = students.map(getStudentEmail).filter(Boolean);
-      if (classEmails.length === 0) {
-        setAssignedQuizzes([]);
-        return;
+      const nextAssignedById = new Map();
+
+      quizzes.forEach((quiz) => {
+        if (String(getQuizClassId(quiz) || "") === String(selectedClassId)) {
+          nextAssignedById.set(String(quiz.id), quiz);
+        }
+      });
+
+      const quizzesToVerify = quizzes.filter((quiz) => {
+        if (nextAssignedById.has(String(quiz.id))) return false;
+        return getQuizClassId(quiz) == null;
+      });
+
+      if (classEmails.length > 0 && quizzesToVerify.length > 0) {
+        await Promise.all(
+          quizzesToVerify.map(async (quiz) => {
+            try {
+              const quizStudents = await teacherQuizApi.getQuizStudents(quiz.id);
+              const allowedEmails = new Set(
+                (Array.isArray(quizStudents) ? quizStudents : [])
+                  .map(getStudentEmail)
+                  .filter(Boolean)
+              );
+
+              if (classEmails.every((email) => allowedEmails.has(email))) {
+                nextAssignedById.set(String(quiz.id), quiz);
+              }
+            } catch {
+              // La page reste utilisable même si un quiz isolé ne renvoie pas ses étudiants.
+            }
+          })
+        );
       }
 
-      const nextAssigned = [];
-
-      await Promise.all(
-        quizzes.map(async (quiz) => {
-          try {
-            const quizStudents = await teacherQuizApi.getQuizStudents(quiz.id);
-            const allowedEmails = new Set(
-              (Array.isArray(quizStudents) ? quizStudents : [])
-                .map(getStudentEmail)
-                .filter(Boolean)
-            );
-
-            if (classEmails.every((email) => allowedEmails.has(email))) {
-              nextAssigned.push(quiz);
-            }
-          } catch {
-            // Keep the page usable if one quiz lookup fails.
-          }
-        })
+      const nextAssigned = Array.from(nextAssignedById.values()).sort((a, b) =>
+        getQuizTitle(a).localeCompare(getQuizTitle(b), "fr", { sensitivity: "base" })
       );
 
-      nextAssigned.sort((a, b) => getQuizTitle(a).localeCompare(getQuizTitle(b)));
       setAssignedQuizzes(nextAssigned);
     } finally {
       setLoadingAssignedQuizzes(false);
     }
-  }
+  }, [selectedClassId, students, quizzes]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      await Promise.resolve();
+      if (!cancelled) {
+        await loadInitialData();
+      }
+    }
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadInitialData]);
+
+  useEffect(() => {
+    if (!selectedClassId) return;
+    let cancelled = false;
+
+    async function run() {
+      await Promise.resolve();
+      if (!cancelled) {
+        await loadStudents(selectedClassId);
+      }
+    }
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedClassId, loadStudents]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      await Promise.resolve();
+      if (!cancelled) {
+        await loadAssignedQuizzes();
+      }
+    }
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadAssignedQuizzes]);
 
   function resetNotice() {
     setError("");
     setMessage("");
   }
 
+  function selectClass(classId) {
+    resetNotice();
+    setStudentQuery("");
+    setStudents([]);
+    setAssignedQuizzes([]);
+    setSelectedClassId(String(classId));
+  }
+
   function requireClass() {
     if (selectedClassId) return true;
-    setError("Créez ou sélectionnez une classe avant de continuer.");
+    setError("Sélectionnez une classe avant de continuer.");
     return false;
-  }
-
-  function updateStudentField(e) {
-    const { name, value } = e.target;
-    setStudentForm((prev) => ({ ...prev, [name]: value }));
-  }
-
-  function updateClassField(e) {
-    const { name, value } = e.target;
-    setClassForm((prev) => ({ ...prev, [name]: value }));
-  }
-
-  async function createClass(event) {
-    event.preventDefault();
-
-    const name = classForm.name.trim();
-    if (!name) {
-      setError("Veuillez saisir le nom de la classe.");
-      return;
-    }
-
-    try {
-      resetNotice();
-      setWorking("class");
-
-      const created = await teacherQuizApi.createClass({
-        name,
-        filiere: classForm.filiere.trim(),
-        niveau: classForm.niveau.trim(),
-      });
-
-      setClassForm(emptyClass);
-      await loadInitialData(created?.id);
-      setMessage("Classe créée avec succès.");
-    } catch (e) {
-      setError(e?.response?.data?.message || "Impossible de créer la classe.");
-    } finally {
-      setWorking("");
-    }
-  }
-
-  async function deleteClass(classId) {
-    const classe = classes.find((item) => String(getClassId(item)) === String(classId));
-    const ok = window.confirm(`Supprimer la classe "${classe?.name || ""}" ?`);
-    if (!ok) return;
-
-    try {
-      resetNotice();
-      setWorking(`delete-class-${classId}`);
-      await teacherQuizApi.deleteClass(classId);
-      await loadInitialData("");
-      setMessage("Classe supprimée avec succès.");
-    } catch (e) {
-      setError(e?.response?.data?.message || "Impossible de supprimer la classe.");
-    } finally {
-      setWorking("");
-    }
-  }
-
-  async function addStudent(event) {
-    event.preventDefault();
-    if (!requireClass()) return;
-
-    const payload = {
-      firstName: studentForm.firstName.trim(),
-      lastName: studentForm.lastName.trim(),
-      email: studentForm.email.trim(),
-      cne: studentForm.cne.trim(),
-    };
-
-    if (!payload.firstName || !payload.lastName || !payload.email || !payload.cne) {
-      setError("Veuillez remplir le prénom, le nom, l'email et le CNE.");
-      return;
-    }
-
-    try {
-      resetNotice();
-      setWorking("student");
-      await teacherQuizApi.addStudentToClass(selectedClassId, payload);
-      setStudentForm(emptyStudent);
-      await loadStudents(selectedClassId);
-      await loadInitialData(selectedClassId);
-      setMessage("Étudiant ajouté avec succès.");
-    } catch (e) {
-      setError(e?.response?.data?.message || "Impossible d'ajouter l'étudiant.");
-    } finally {
-      setWorking("");
-    }
-  }
-
-  async function deleteStudent(studentId) {
-    if (!requireClass()) return;
-
-    try {
-      resetNotice();
-      setWorking(`delete-student-${studentId}`);
-      await teacherQuizApi.deleteStudentFromClass(selectedClassId, studentId);
-      await loadStudents(selectedClassId);
-      await loadInitialData(selectedClassId);
-      setMessage("Étudiant supprimé de la classe.");
-    } catch (e) {
-      setError(e?.response?.data?.message || "Impossible de supprimer l'étudiant.");
-    } finally {
-      setWorking("");
-    }
-  }
-
-  async function importExcel() {
-    if (!requireClass()) return;
-
-    if (!file) {
-      setError("Veuillez choisir un fichier Excel.");
-      return;
-    }
-
-    try {
-      resetNotice();
-      setWorking("import");
-      await teacherQuizApi.importStudentsToClass(selectedClassId, file);
-      setFile(null);
-      await loadStudents(selectedClassId);
-      await loadInitialData(selectedClassId);
-      setMessage("Étudiants importés avec succès.");
-    } catch (e) {
-      setError(e?.response?.data?.message || "Erreur lors de l'import Excel.");
-    } finally {
-      setWorking("");
-    }
   }
 
   async function assignQuizToClass() {
     if (!requireClass()) return;
 
     if (!selectedQuizId) {
-      setError("Veuillez selectionner un quiz.");
+      setError("Veuillez sélectionner un quiz.");
       return;
     }
 
@@ -324,7 +250,9 @@ export default function AssignStudents() {
       resetNotice();
       setWorking("assign");
       await teacherQuizApi.assignQuizToClass(selectedQuizId, selectedClassId);
-      await loadAssignedQuizzes();
+
+      const refreshedQuizzes = await teacherQuizApi.getMyQuizzes().catch(() => quizzes);
+      setQuizzes(Array.isArray(refreshedQuizzes) ? refreshedQuizzes : quizzes);
       setMessage("Quiz affecté à toute la classe avec succès.");
     } catch (e) {
       setError(e?.response?.data?.message || "Impossible d'affecter le quiz à la classe.");
@@ -353,13 +281,13 @@ export default function AssignStudents() {
 
         <span className={styles.badge}>
           <Users size={16} />
-          Classes & Étudiants
+          Classes & étudiants
         </span>
 
-        <h1>Gestion des classes</h1>
+        <h1>Gestion des étudiants</h1>
         <p>
-          Créez vos classes, ajoutez les étudiants et affectez un quiz à tout un
-          groupe depuis un seul espace.
+          Consultez les classes créées par l'administration, vérifiez les étudiants et
+          affectez vos quiz aux groupes disponibles.
         </p>
       </section>
 
@@ -394,33 +322,11 @@ export default function AssignStudents() {
             </div>
           </div>
 
-          <form className={styles.createClassBox} onSubmit={createClass}>
-            <input
-              name="name"
-              value={classForm.name}
-              onChange={updateClassField}
-              placeholder="Ex : L3 Informatique"
-            />
-            <input
-              name="filiere"
-              value={classForm.filiere}
-              onChange={updateClassField}
-              placeholder="Filière"
-            />
-            <input
-              name="niveau"
-              value={classForm.niveau}
-              onChange={updateClassField}
-              placeholder="Niveau"
-            />
-            <button type="submit" disabled={working === "class"} aria-label="Créer la classe">
-              <Plus size={18} />
-            </button>
-          </form>
-
           <div className={styles.classList}>
             {classes.length === 0 ? (
-              <div className={styles.emptySmall}>Aucune classe créée.</div>
+              <div className={styles.emptySmall}>
+                Aucune classe disponible. Les classes sont créées par l'admin.
+              </div>
             ) : (
               classes.map((classe) => {
                 const classId = getClassId(classe);
@@ -434,10 +340,7 @@ export default function AssignStudents() {
                     <button
                       type="button"
                       className={styles.classSelect}
-                      onClick={() => {
-                        resetNotice();
-                        setSelectedClassId(String(classId));
-                      }}
+                      onClick={() => selectClass(classId)}
                     >
                       <strong>{classe.name}</strong>
                       {(classe.filiere || classe.niveau) && (
@@ -448,16 +351,6 @@ export default function AssignStudents() {
                       )}
                       <span>{classe.studentCount ?? 0} étudiants</span>
                     </button>
-
-                    <button
-                      type="button"
-                      className={styles.classDelete}
-                      onClick={() => deleteClass(classId)}
-                      disabled={working === `delete-class-${classId}`}
-                      aria-label={`Supprimer ${classe.name}`}
-                    >
-                      <Trash2 size={16} />
-                    </button>
                   </div>
                 );
               })
@@ -466,108 +359,6 @@ export default function AssignStudents() {
         </aside>
 
         <main className={styles.content}>
-          <section className={styles.card}>
-            <div className={styles.cardHeader}>
-              <div>
-                <h2>Ajouter des étudiants</h2>
-                <p>
-                  {selectedClass
-                    ? `Classe sélectionnée : ${selectedClass.name}`
-                    : "Créez une classe pour activer l'ajout d'étudiants."}
-                </p>
-              </div>
-            </div>
-
-            <div className={styles.modeGrid}>
-              <button
-                type="button"
-                className={`${styles.modeCard} ${mode === "manual" ? styles.modeActive : ""}`}
-                onClick={() => setMode("manual")}
-                disabled={!canUseClassActions}
-              >
-                <Users size={22} />
-                <strong>Ajout manuel</strong>
-                <span>Ajouter un étudiant à la fois.</span>
-              </button>
-
-              <button
-                type="button"
-                className={`${styles.modeCard} ${mode === "excel" ? styles.modeActive : ""}`}
-                onClick={() => setMode("excel")}
-                disabled={!canUseClassActions}
-              >
-                <FileSpreadsheet size={22} />
-                <strong>Import Excel</strong>
-                <span>Importer plusieurs étudiants.</span>
-              </button>
-            </div>
-
-            {mode === "manual" ? (
-              <form className={styles.manualForm} onSubmit={addStudent}>
-                <input
-                  name="firstName"
-                  value={studentForm.firstName}
-                  onChange={updateStudentField}
-                  placeholder="Prénom"
-                  disabled={!canUseClassActions}
-                />
-                <input
-                  name="lastName"
-                  value={studentForm.lastName}
-                  onChange={updateStudentField}
-                  placeholder="Nom"
-                  disabled={!canUseClassActions}
-                />
-                <input
-                  name="email"
-                  type="email"
-                  value={studentForm.email}
-                  onChange={updateStudentField}
-                  placeholder="Email"
-                  disabled={!canUseClassActions}
-                />
-                <input
-                  name="cne"
-                  value={studentForm.cne}
-                  onChange={updateStudentField}
-                  placeholder="CNE / Code étudiant"
-                  disabled={!canUseClassActions}
-                />
-
-                <button
-                  type="submit"
-                  disabled={!canUseClassActions || working === "student"}
-                >
-                  <Plus size={18} />
-                  Ajouter étudiant
-                </button>
-              </form>
-            ) : (
-              <div className={styles.importBox}>
-                <label className={styles.uploadArea}>
-                  <Upload size={28} />
-                  <strong>Importer un fichier Excel</strong>
-                  <span>Format accepté : .xlsx ou .xls</span>
-                  <input
-                    type="file"
-                    accept=".xlsx,.xls"
-                    onChange={(e) => setFile(e.target.files?.[0] || null)}
-                    disabled={!canUseClassActions}
-                  />
-                  {file && <p>{file.name}</p>}
-                </label>
-
-                <button
-                  type="button"
-                  onClick={importExcel}
-                  disabled={!canUseClassActions || working === "import"}
-                >
-                  Importer les étudiants
-                </button>
-              </div>
-            )}
-          </section>
-
           <section className={styles.card}>
             <div className={styles.cardHeader}>
               <div>
@@ -585,7 +376,7 @@ export default function AssignStudents() {
                 <option value="">Choisir un quiz</option>
                 {quizzes.map((quiz) => (
                   <option key={quiz.id} value={quiz.id}>
-                    {quiz.titre || quiz.title || "Quiz sans titre"}
+                    {getQuizTitle(quiz)}
                   </option>
                 ))}
               </select>
@@ -596,7 +387,7 @@ export default function AssignStudents() {
                 disabled={!canUseClassActions || !selectedQuizId || working === "assign"}
               >
                 <BookOpen size={18} />
-                Affecter à la classe
+                {working === "assign" ? "Affectation..." : "Affecter à la classe"}
               </button>
             </div>
           </section>
@@ -635,8 +426,17 @@ export default function AssignStudents() {
             <div className={styles.cardHeader}>
               <div>
                 <h2>Étudiants de {selectedClass?.name || "la classe sélectionnée"}</h2>
-                <p>Consultez et nettoyez la liste de la classe active.</p>
+                <p>Liste en consultation seulement. La création des comptes est réservée à l'admin.</p>
               </div>
+            </div>
+
+            <div className={styles.searchBox}>
+              <Search size={18} />
+              <input
+                value={studentQuery}
+                onChange={(event) => setStudentQuery(event.target.value)}
+                placeholder="Rechercher par nom, email, CNE ou Code Apogée..."
+              />
             </div>
 
             {students.length === 0 ? (
@@ -645,41 +445,27 @@ export default function AssignStudents() {
                   ? "Aucun étudiant dans cette classe."
                   : "Sélectionnez une classe pour afficher ses étudiants."}
               </div>
+            ) : filteredStudents.length === 0 ? (
+              <div className={styles.empty}>Aucun étudiant ne correspond à cette recherche.</div>
             ) : (
               <div className={styles.table}>
                 <div className={styles.tableHead}>
                   <span>Nom</span>
                   <span>Email</span>
                   <span>CNE</span>
-                  <span>Action</span>
+                  <span>Code Apogée</span>
                 </div>
 
-                {students.map((student) => {
-                  const studentId = getStudentId(student);
-
-                  return (
-                    <div className={styles.tableRow} key={studentId}>
-                      <span>
-                        <strong>
-                          {student.firstName} {student.lastName}
-                        </strong>
-                      </span>
-                      <span>{student.email}</span>
-                      <span>{student.cne || student.codeEtudiant || "-"}</span>
-                      <span>
-                        <button
-                          type="button"
-                          className={styles.deleteBtn}
-                          onClick={() => deleteStudent(studentId)}
-                          disabled={working === `delete-student-${studentId}`}
-                        >
-                          <Trash2 size={16} />
-                          Supprimer
-                        </button>
-                      </span>
-                    </div>
-                  );
-                })}
+                {filteredStudents.map((student) => (
+                  <div className={styles.tableRow} key={getStudentId(student)}>
+                    <span>
+                      <strong>{getStudentFullName(student)}</strong>
+                    </span>
+                    <span>{student.email}</span>
+                    <span>{getStudentCne(student)}</span>
+                    <span>{getStudentCodeApogee(student)}</span>
+                  </div>
+                ))}
               </div>
             )}
           </section>

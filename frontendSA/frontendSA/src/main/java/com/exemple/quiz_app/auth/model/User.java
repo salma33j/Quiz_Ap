@@ -1,5 +1,6 @@
 package com.exemple.quiz_app.auth.model;
 
+import com.exemple.quiz_app.classe.entity.Classe;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -39,6 +40,16 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Role role;
+
+    @Column(length = 40)
+    private String cne;
+
+    @Column(length = 40)
+    private String codeApoge;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "classe_id")
+    private Classe classe;
 
     // ✅ NOUVEAU : forcer le changement de mot de passe à la première connexion
     @Column(nullable = false)
@@ -92,6 +103,9 @@ public class User {
     public String getEmail() { return email; }
     public String getPassword() { return password; }
     public Role getRole() { return role; }
+    public String getCne() { return cne; }
+    public String getCodeApoge() { return codeApoge; }
+    public Classe getClasse() { return classe; }
     public boolean isMustChangePassword() { return mustChangePassword; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
@@ -104,6 +118,9 @@ public class User {
     public void setEmail(String email) { this.email = email; }
     public void setPassword(String password) { this.password = password; }
     public void setRole(Role role) { this.role = role; }
+    public void setCne(String cne) { this.cne = cne; }
+    public void setCodeApoge(String codeApoge) { this.codeApoge = codeApoge; }
+    public void setClasse(Classe classe) { this.classe = classe; }
     public void setMustChangePassword(boolean mustChangePassword) { this.mustChangePassword = mustChangePassword; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
