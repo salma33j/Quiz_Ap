@@ -6,7 +6,6 @@
 .main {
   min-height: 100vh;
   margin-left: 290px;
-  padding: 34px;
   overflow-x: hidden;
   transition: margin-left 0.28s ease;
 }
@@ -19,6 +18,5 @@
   .main,
   .mainCollapsed {
     margin-left: 0;
-    padding: 20px;
   }
 }

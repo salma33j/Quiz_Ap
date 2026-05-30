@@ -4,13 +4,12 @@
 
 .page {
   width: 100%;
-  max-width: 1240px;
-  margin: 0 auto;
-  padding-top: 40px;
+  padding: 28px 28px 40px 28px;
+  box-sizing: border-box;
 }
 
 /* ==================== */
-/* TOP SECTION (CARTE BONJOUR) */
+/* TOP SECTION */
 /* ==================== */
 
 .topSection {
@@ -19,9 +18,12 @@
   border-radius: 32px;
   background:
     radial-gradient(circle at right, rgba(199, 230, 247, 0.9), transparent 35%),
-    rgba(255, 255, 255, 0.9);
+    rgba(255, 255, 255, 0.92);
+
   border: 1px solid rgba(214, 231, 241, 0.9);
-  box-shadow: 0 24px 60px rgba(8, 16, 48, 0.08);
+
+  box-shadow: 0 20px 45px rgba(8, 16, 48, 0.06);
+
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -30,25 +32,23 @@
 
 .hello {
   margin: 0;
-  font-size: 26px;
-  font-weight: 950;
+  font-size: 28px;
+  font-weight: 900;
   color: #07173d;
-  letter-spacing: -0.5px;
 }
 
 .subtitle {
-  margin: 8px 0 0;
+  margin-top: 8px;
   color: #6d7c94;
   font-size: 15px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .todayBox {
-  padding: 14px 18px;
+  padding: 16px 20px;
   border-radius: 18px;
-  background: linear-gradient(135deg, #eaf7fc, #ffffff);
+  background: linear-gradient(135deg, #eef8fd, #ffffff);
   border: 1px solid #d9e8f2;
-  color: #07173d;
   min-width: 150px;
   text-align: center;
 }
@@ -57,49 +57,57 @@
   display: block;
   font-size: 12px;
   color: #6d7c94;
-  font-weight: 800;
   margin-bottom: 4px;
+  font-weight: 700;
 }
 
 .todayBox strong {
+  color: #07173d;
   font-size: 16px;
-  font-weight: 950;
+  font-weight: 900;
 }
 
 /* ==================== */
-/* STATS GRID (CARTES) */
+/* STATS GRID */
 /* ==================== */
 
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
+  grid-template-columns: repeat(3, minmax(240px, 1fr));
+  gap: 20px;
   margin-bottom: 24px;
 }
 
 .statCard {
-  padding: 22px;
-  border-radius: 28px;
+  padding: 18px;
+  border-radius: 24px;
   background: rgba(255, 255, 255, 0.92);
+
   border: 1px solid #d9e8f2;
-  box-shadow: 0 20px 45px rgba(8, 16, 48, 0.07);
+
+  box-shadow: 0 18px 40px rgba(8, 16, 48, 0.06);
+
   display: flex;
-  gap: 15px;
   align-items: center;
-  transition: 0.2s ease;
+  gap: 14px;
+
+  transition: all 0.25s ease;
 }
 
 .statCard:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 24px 55px rgba(8, 16, 48, 0.11);
+  transform: translateY(-4px);
+
+  box-shadow: 0 24px 50px rgba(8, 16, 48, 0.1);
 }
 
 .statIcon {
-  width: 56px;
-  height: 56px;
-  border-radius: 20px;
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+
   display: grid;
   place-items: center;
+
   color: #080b35;
 }
 
@@ -131,43 +139,52 @@
   display: block;
   color: #6d7c94;
   font-size: 13px;
-  font-weight: 850;
+  font-weight: 700;
   margin-bottom: 5px;
 }
 
 .statCard strong {
   display: block;
   color: #07173d;
-  font-size: 30px;
-  font-weight: 950;
-  line-height: 1;
+  font-size: 26px;
+  font-weight: 900;
 }
 
 .statCard p {
-  margin: 6px 0 0;
+  margin-top: 5px;
   color: #8a97aa;
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 /* ==================== */
-/* ANALYTICS GRID (GRAPHIQUES) */
+/* ANALYTICS GRID */
 /* ==================== */
 
 .analyticsGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
   gap: 22px;
   margin-bottom: 24px;
 }
+
+/* ==================== */
+/* CARDS COMMUNES */
+/* ==================== */
 
 .chartCard,
 .panel,
 .aiCard,
 .activityCard {
+  width: 100%;
+  box-sizing: border-box;
+
   border-radius: 32px;
+
   background: rgba(255, 255, 255, 0.92);
+
   border: 1px solid #d9e8f2;
+
   box-shadow: 0 24px 55px rgba(8, 16, 48, 0.08);
 }
 
@@ -180,6 +197,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 18px;
+
   margin-bottom: 20px;
 }
 
@@ -189,41 +207,41 @@
   margin: 0;
   color: #07173d;
   font-size: 22px;
-  font-weight: 950;
-  letter-spacing: -0.3px;
+  font-weight: 900;
 }
 
 .cardHeader p,
 .aiCard p {
-  margin: 7px 0 0;
+  margin-top: 6px;
   color: #6d7c94;
   font-size: 14px;
   line-height: 1.6;
-  font-weight: 650;
 }
 
 .cardHeader button {
   border: none;
-  background: #eaf7fc;
-  color: #080b35;
+  background: #eef8fd;
+  color: #07173d;
+
   border-radius: 14px;
+
   padding: 11px 14px;
-  font-weight: 900;
-  display: flex;
-  align-items: center;
-  gap: 7px;
+
+  font-weight: 800;
+
   cursor: pointer;
-  transition: transform 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
+
+  transition: all 0.2s ease;
 }
 
 .cardHeader button:hover {
-  transform: translateY(-2px);
   background: #dff2ff;
-  box-shadow: 0 14px 28px rgba(8, 16, 48, 0.08);
+
+  transform: translateY(-2px);
 }
 
 /* ==================== */
-/* STYLES POUR LES GRAPHIQUES */
+/* CHART */
 /* ==================== */
 
 .chartBox {
@@ -231,316 +249,20 @@
   height: 280px;
 }
 
-/* Conteneur du graphique */
-.recharts-wrapper {
-  background: transparent !important;
-}
-
-.recharts-surface {
-  background: transparent !important;
-}
-
-/* Styles pour les axes */
-.recharts-cartesian-axis-tick-value {
-  font-size: 12px;
-  font-weight: 500;
-  fill: #6b7280;
-}
-
-.recharts-cartesian-axis-line {
-  stroke: #e5e7eb;
-  stroke-width: 1;
-}
-
-.recharts-cartesian-axis-tick-line {
-  stroke: #e5e7eb;
-  stroke-width: 1;
-}
-
-/* Styles pour la grille (traits en pointillés) */
-.recharts-cartesian-grid-horizontal line,
-.recharts-cartesian-grid-vertical line {
-  stroke: #d1d5db;
-  stroke-dasharray: 5 5;
-  stroke-width: 1;
-  opacity: 0.7;
-}
-
-/* Styles pour les barres du graphique à barres */
-.recharts-bar-rectangle {
-  transition: all 0.3s ease;
-}
-
-.recharts-bar-rectangle:hover {
-  opacity: 0.8;
-  cursor: pointer;
-}
-
-/* Styles pour la ligne du graphique */
-.recharts-line-curve {
-  stroke-width: 3;
-  stroke: #4F46E5;
-  filter: drop-shadow(0 2px 4px rgba(79, 70, 229, 0.2));
-}
-
-/* Styles pour les points (dots) du graphique */
-.recharts-line-dot {
-  r: 6;
-  fill: #4F46E5;
-  stroke: white;
-  stroke-width: 2;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
-}
-
-.recharts-line-dot:hover {
-  r: 9;
-  fill: #4338ca;
-  stroke-width: 2.5;
-}
-
-/* Style pour le point actif au survol */
-.recharts-line-active-dot {
-  r: 8;
-  fill: #4338ca;
-  stroke: white;
-  stroke-width: 2.5;
-}
-
-/* Styles pour le tooltip personnalisé */
-.custom-tooltip {
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  padding: 10px 16px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-}
-
-.custom-tooltip-label {
-  color: #07173d;
-  font-weight: 700;
-  font-size: 13px;
-  margin-bottom: 6px;
-  border-bottom: 1px solid #f0f0f0;
-  padding-bottom: 4px;
-}
-
-.custom-tooltip-value {
-  color: #4F46E5;
-  font-weight: 800;
-  font-size: 18px;
-}
-
-.custom-tooltip-unit {
-  color: #6b7280;
-  font-size: 11px;
-  font-weight: 500;
-  margin-left: 4px;
-}
-
-/* Styles pour le tooltip par défaut de Recharts */
-.recharts-tooltip-wrapper {
-  outline: none;
-  z-index: 100;
-}
-
-.recharts-default-tooltip {
-  background-color: white !important;
-  border-radius: 12px !important;
-  border: 1px solid #e5e7eb !important;
-  padding: 10px 16px !important;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
-}
-
-.recharts-tooltip-label {
-  color: #07173d !important;
-  font-weight: 700 !important;
-  font-size: 13px !important;
-  margin-bottom: 4px !important;
-}
-
-.recharts-tooltip-item {
-  color: #4F46E5 !important;
-  font-weight: 800 !important;
-  font-size: 18px !important;
-  padding: 0 !important;
-}
-
-.recharts-tooltip-item-name {
-  color: #6b7280 !important;
-  font-weight: 500 !important;
-  font-size: 11px !important;
-}
-
-/* Style spécifique pour l'axe Y */
-.recharts-yAxis .recharts-cartesian-axis-tick text {
-  fill: #6b7280;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.recharts-yAxis .recharts-cartesian-axis-tick:first-child text {
-  fill: #9ca3af;
-}
-
-.recharts-yAxis .recharts-cartesian-axis-tick:last-child text {
-  fill: #4F46E5;
-  font-weight: 700;
-}
-
-/* Style pour l'axe X */
-.recharts-xAxis .recharts-cartesian-axis-tick text {
-  fill: #6b7280;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-/* Animation au survol de la ligne */
-.recharts-line-curve {
-  transition: stroke-width 0.2s ease, filter 0.2s ease;
-}
-
-.recharts-line-curve:hover {
-  stroke-width: 4;
-  filter: drop-shadow(0 2px 6px rgba(79, 70, 229, 0.3));
-}
-
-/* Style pour le conteneur du graphique */
-.recharts-wrapper {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-.recharts-surface {
-  width: 100%;
-  height: 100%;
-}
-
-/* Graphique vide */
-.emptyChart {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  min-height: 260px;
-  color: #9ca3af;
-  font-size: 14px;
-  font-weight: 500;
-  background: #f9fafb;
-  border-radius: 16px;
-  gap: 8px;
-}
-
-.emptyChart::before {
-  content: "📊";
-  font-size: 32px;
-  opacity: 0.5;
-}
-
-/* Légende du graphique */
-.recharts-legend-wrapper {
-  font-size: 12px;
-}
-
-.recharts-legend-item-text {
-  color: #6b7280 !important;
-  font-weight: 500;
-}
-
 /* ==================== */
-/* BOTTOM GRID (QUIZ RECENTS ET SIDEBAR) */
+/* BOTTOM GRID */
 /* ==================== */
 
 .bottomGrid {
   display: grid;
-  grid-template-columns: 1.45fr 0.75fr;
+  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.8fr);
   gap: 22px;
+
   margin-bottom: 24px;
 }
 
 .panel {
   padding: 26px;
-}
-
-.quizList {
-  display: grid;
-  gap: 14px;
-}
-
-.quizItem {
-  padding: 16px;
-  border-radius: 22px;
-  background: #f9fcff;
-  border: 1px solid #dfeaf2;
-  display: grid;
-  grid-template-columns: 52px 1fr auto;
-  align-items: center;
-  gap: 14px;
-  transition: 0.2s ease;
-}
-
-.quizItem:hover {
-  transform: translateY(-2px);
-  border-color: #c7e6f7;
-  box-shadow: 0 16px 35px rgba(8, 16, 48, 0.08);
-}
-
-.quizIcon {
-  width: 52px;
-  height: 52px;
-  border-radius: 18px;
-  background: #eaf7fc;
-  color: #080b35;
-  display: grid;
-  place-items: center;
-}
-
-.quizItem h3 {
-  margin: 0;
-  color: #07173d;
-  font-size: 16px;
-  font-weight: 950;
-}
-
-.quizItem p {
-  margin: 5px 0 0;
-  color: #6d7c94;
-  font-size: 13px;
-  font-weight: 650;
-}
-
-.editBtn {
-  border: none;
-  padding: 11px 15px;
-  border-radius: 14px;
-  background: #080b35;
-  color: white;
-  font-weight: 900;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.editBtn:hover {
-  background: #1f2a6b;
-  transform: translateY(-1px);
-}
-
-.viewBtn {
-  border: none;
-  padding: 11px 16px;
-  border-radius: 14px;
-  background: #e8f7ef;
-  color: #147a4d;
-  font-weight: 950;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.viewBtn:hover {
-  background: #d1f0e3;
-  transform: translateY(-1px);
 }
 
 .sideColumn {
@@ -549,11 +271,117 @@
 }
 
 /* ==================== */
-/* CARTE ASSISTANT IA */
+/* QUIZ LIST */
+/* ==================== */
+
+.quizList {
+  display: grid;
+  gap: 14px;
+}
+
+.quizItem {
+  padding: 16px;
+
+  border-radius: 22px;
+
+  background: #f9fcff;
+
+  border: 1px solid #dfeaf2;
+
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+
+  align-items: center;
+
+  gap: 14px;
+
+  transition: 0.2s ease;
+}
+
+.quizItem:hover {
+  transform: translateY(-2px);
+
+  border-color: #c7e6f7;
+
+  box-shadow: 0 16px 35px rgba(8, 16, 48, 0.08);
+}
+
+.quizIcon {
+  width: 52px;
+  height: 52px;
+
+  border-radius: 18px;
+
+  background: #eaf7fc;
+
+  color: #080b35;
+
+  display: grid;
+  place-items: center;
+}
+
+.quizItem h3 {
+  margin: 0;
+  color: #07173d;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.quizItem p {
+  margin-top: 5px;
+  color: #6d7c94;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ==================== */
+/* BUTTONS */
+/* ==================== */
+
+.editBtn,
+.viewBtn {
+  border: none;
+
+  padding: 11px 16px;
+
+  border-radius: 14px;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.editBtn {
+  background: #080b35;
+  color: white;
+}
+
+.editBtn:hover {
+  background: #1d2560;
+
+  transform: translateY(-1px);
+}
+
+.viewBtn {
+  background: #e8f7ef;
+  color: #147a4d;
+}
+
+.viewBtn:hover {
+  background: #d4f3e2;
+
+  transform: translateY(-1px);
+}
+
+/* ==================== */
+/* AI CARD */
 /* ==================== */
 
 .aiCard {
   padding: 28px;
+
   background:
     radial-gradient(circle at top right, rgba(199, 230, 247, 0.95), transparent 42%),
     linear-gradient(135deg, #ffffff, #eef9fd);
@@ -562,35 +390,48 @@
 .aiIcon {
   width: 58px;
   height: 58px;
+
   border-radius: 20px;
+
   background: #080b35;
+
   color: white;
+
   display: grid;
   place-items: center;
+
   margin-bottom: 18px;
 }
 
 .aiCard button {
   width: 100%;
-  margin-top: 20px;
   height: 50px;
+
+  margin-top: 20px;
+
   border: none;
+
   border-radius: 17px;
+
   background: linear-gradient(135deg, #070a35, #18206f);
+
   color: white;
-  font-weight: 950;
+
+  font-weight: 900;
+
   cursor: pointer;
-  transition: transform 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
+
+  transition: all 0.2s ease;
 }
 
 .aiCard button:hover {
   transform: translateY(-2px);
+
   background: linear-gradient(135deg, #11165a, #27328c);
-  box-shadow: 0 22px 42px rgba(7, 10, 53, 0.3);
 }
 
 /* ==================== */
-/* CARTE INDICATEURS UTILES */
+/* ACTIVITY CARD */
 /* ==================== */
 
 .activityCard {
@@ -599,21 +440,31 @@
 
 .activityItem {
   margin-top: 16px;
+
   padding: 14px;
+
   border-radius: 18px;
+
   background: #f8fcff;
+
   border: 1px solid #dfeaf2;
-  color: #07173d;
+
   display: flex;
   align-items: center;
   gap: 12px;
-  font-weight: 800;
+
+  color: #07173d;
+
+  font-weight: 700;
+
   transition: all 0.2s ease;
 }
 
 .activityItem:hover {
   transform: translateX(4px);
+
   border-color: #c7e6f7;
+
   background: #eef7fd;
 }
 
@@ -623,12 +474,18 @@
 
 .emptyBox {
   padding: 24px;
+
   border-radius: 22px;
+
   background: #f8fcff;
+
   border: 1px dashed #c7ddea;
+
   color: #6d7c94;
-  font-weight: 800;
+
   text-align: center;
+
+  font-weight: 700;
 }
 
 /* ==================== */
@@ -639,70 +496,17 @@
   display: flex;
   justify-content: center;
   align-items: center;
+
   min-height: 100vh;
-  font-size: 18px;
-  font-weight: 950;
+
   color: #07173d;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  font-size: 18px;
+  font-weight: 900;
 }
 
 /* ==================== */
-/* ANIMATIONS */
-/* ==================== */
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.chartCard .chartBox {
-  animation: fadeInUp 0.5s ease-out;
-}
-
-.statCard {
-  animation: fadeInUp 0.4s ease-out;
-}
-
-.statCard:nth-child(2) {
-  animation-delay: 0.1s;
-}
-
-.statCard:nth-child(3) {
-  animation-delay: 0.2s;
-}
-
-.statCard:nth-child(4) {
-  animation-delay: 0.3s;
-}
-
-.statCard:nth-child(5) {
-  animation-delay: 0.4s;
-}
-
-.statCard:nth-child(6) {
-  animation-delay: 0.5s;
-}
-
-/* ==================== */
-/* MEDIA QUERIES (RESPONSIVE) */
+/* RESPONSIVE */
 /* ==================== */
 
 @media (max-width: 1100px) {
@@ -718,9 +522,9 @@
 
 @media (max-width: 700px) {
   .page {
-    padding-top: 20px;
+    padding: 20px 16px 30px;
   }
-  
+
   .topSection {
     flex-direction: column;
     align-items: flex-start;
@@ -734,7 +538,7 @@
     grid-template-columns: 1fr;
     text-align: center;
   }
-  
+
   .quizIcon {
     margin: 0 auto;
   }
@@ -742,23 +546,7 @@
   .todayBox {
     width: 100%;
   }
-  
-  .chartBox {
-    height: 240px;
-  }
-  
-  .recharts-line-dot {
-    r: 4;
-  }
-  
-  .recharts-line-dot:hover {
-    r: 6;
-  }
-  
-  .recharts-cartesian-axis-tick-value {
-    font-size: 10px;
-  }
-  
+
   .cardHeader {
     flex-direction: column;
     align-items: flex-start;
