@@ -3,6 +3,7 @@ package com.exemple.quiz_app.quiz.service;
 import com.exemple.quiz_app.auth.model.Role;
 import com.exemple.quiz_app.auth.model.User;
 import com.exemple.quiz_app.auth.service.AuthService;
+import com.exemple.quiz_app.quiz.dto.QuizReponse;
 import com.exemple.quiz_app.quiz.entity.Quiz;
 import com.exemple.quiz_app.quiz.repository.QuizRepository;
 import com.exemple.quiz_app.resultat.repository.ResultatRepository;
@@ -32,6 +33,12 @@ public class QuizAdminService {
 
     @Autowired
     private AuthService authService;
+
+    public List<QuizReponse> getAllQuizzes() {
+        User admin = authService.getCurrentUser();
+        if (admin.getRole() != Role.ADMIN) throw new RuntimeException("Acces refuse");
+        return quizRepository.findAll().stream().map(this::mapToResponse).toList();
+    }
 
     public List<Quiz> getAllExpiredQuizzes() {
         User admin = authService.getCurrentUser();
@@ -147,5 +154,24 @@ public class QuizAdminService {
         stats.put("deletedQuizzes", quizRepository.countByStatus(Quiz.QuizStatus.DELETED));
         stats.put("draftQuizzes", quizRepository.countByStatus(Quiz.QuizStatus.DRAFT));
         return stats;
+    }
+
+    private QuizReponse mapToResponse(Quiz quiz) {
+        QuizReponse response = new QuizReponse();
+        response.setId(quiz.getId());
+        response.setTitre(quiz.getTitre());
+        response.setTheme(quiz.getTheme());
+        response.setQuestionCount(quiz.getQuestionCount());
+        response.setAvailableFrom(quiz.getAvailableFrom());
+        response.setAvailableUntil(quiz.getAvailableUntil());
+        response.setTimeLimit(quiz.getTimeLimit());
+        response.setStatus(quiz.getStatus().name());
+        response.setCreationType(quiz.getCreationType().name());
+        if (quiz.getEnseignant() != null) {
+            response.setEnseignantNom(quiz.getEnseignant().getFirstName() + " " + quiz.getEnseignant().getLastName());
+        }
+        response.setTotalStudentsAllowed(quizRepository.countAllowedStudents(quiz.getId()));
+        response.setCreatedAt(quiz.getCreatedAt());
+        return response;
     }
 }

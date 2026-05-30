@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigInteger;
+
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -102,6 +102,9 @@ public class QuizService {
         quiz.setAvailableFrom(request.getAvailableFrom());
         quiz.setAvailableUntil(request.getAvailableUntil());
         quiz.setTimeLimit(request.getTimeLimit());
+        quiz.setCreationType("AI".equals(request.getCreationType())
+                ? Quiz.CreationType.AI
+                : Quiz.CreationType.MANUAL);
 
         return mapToResponse(quizRepository.save(quiz));
     }
@@ -137,8 +140,8 @@ public class QuizService {
         if (quiz.getStatus() != Quiz.QuizStatus.DRAFT) {
             throw new RuntimeException("Quiz deja publie");
         }
-        if (quiz.getQuestionCount() == null || quiz.getQuestionCount() == 0) {
-            throw new RuntimeException("Ajoutez des questions avant de publier");
+        if (quiz.getQuestionCount() == null || quiz.getQuestionCount() < 10) {
+            throw new RuntimeException("Ajoutez au moins 10 questions avant de publier");
         }
         if (quizRepository.countAllowedStudents(id) == 0) {
             throw new RuntimeException("Ajoutez au moins un etudiant avant de publier");
@@ -198,17 +201,23 @@ public class QuizService {
             throw new RuntimeException("Quiz expire, plus d'ajout possible");
         }
 
+        if (studentList.getStudents() == null || studentList.getStudents().isEmpty()) {
+            throw new RuntimeException("La liste students est vide ou absente");
+        }
+
         int added = 0;
         for (StudentListDto.StudentInfo info : studentList.getStudents()) {
-            User student = userRepository.findByEmail(info.getEmail()).orElse(null);
-            if (student == null) {
-                // 🔥 CORRECTION : Utiliser firstName et lastName
-                student = new User();
-                student.setFirstName(info.getNom());
-                student.setLastName(info.getPrenom());
-                student.setEmail(info.getEmail());
-                student.setRole(Role.ETUDIANT);
-                student = userRepository.save(student);
+            if (info == null || info.getEmail() == null || info.getEmail().isBlank()) {
+                throw new RuntimeException("Chaque etudiant doit avoir un email");
+            }
+            String email = info.getEmail().trim();
+            User student = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException(
+                            "Aucun compte pour l'email \"" + email
+                                    + "\". L'etudiant doit d'abord s'inscrire (POST /api/auth/register avec role ETUDIANT)."));
+
+            if (student.getRole() != Role.ETUDIANT && student.getRole() != Role.ADMIN) {
+                throw new RuntimeException("L'email \"" + email + "\" n'est pas un compte etudiant");
             }
 
             if (!quizStudentRepository.existsByQuizAndStudent(quiz, student)) {
@@ -254,7 +263,7 @@ public class QuizService {
             throw new RuntimeException("Vous n'etes pas le proprietaire");
         }
 
-        User student = userRepository.findById(BigInteger.valueOf(studentId))
+        User student = userRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Etudiant non trouve"));
 
         QuizStudent qs = quizStudentRepository.findByQuizAndStudent(quiz, student)

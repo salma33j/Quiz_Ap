@@ -7,9 +7,8 @@ import jakarta.validation.constraints.Size;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.math.BigInteger;
 import java.time.LocalDateTime;
+import com.exemple.quiz_app.classe.entity.Classe;
 
 @Entity
 @Table(name = "users")
@@ -18,7 +17,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private BigInteger id;
+    private Long id;
 
     @NotBlank(message = "Le nom est obligatoire")
     @Column(nullable = false)
@@ -42,12 +41,28 @@ public class User {
     @Column(nullable = false, length = 20)
     private Role role;
 
+    // ✅ NOUVEAU : forcer le changement de mot de passe à la première connexion
+    @Column(nullable = false)
+    private boolean mustChangePassword = false;
+
+    @Column(nullable = false)
+    private boolean blocked = false;
+
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
+    @Column(unique = true)
+    private String cne;
+
+    @Column(unique = true)
+    private String codeApoge;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "classe_id")
+    private Classe classe;
 
     // ========== CONSTRUCTEURS ==========
 
@@ -59,6 +74,7 @@ public class User {
         this.email = email;
         this.password = password;
         this.role = role;
+        this.mustChangePassword = false;
     }
 
     public User(String fullName, String email, String password, Role role) {
@@ -68,48 +84,49 @@ public class User {
         this.email = email;
         this.password = password;
         this.role = role;
+        this.mustChangePassword = false;
     }
 
-    public User(BigInteger id, String firstName, String lastName, String email, String password, Role role) {
+    public User(Long id, String firstName, String lastName, String email, String password, Role role) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.password = password;
         this.role = role;
+        this.mustChangePassword = false;
     }
 
     // ========== GETTERS ==========
 
-    public BigInteger getId() { return id; }
+    public Long getId() { return id; }
     public String getFirstName() { return firstName; }
     public String getLastName() { return lastName; }
     public String getEmail() { return email; }
     public String getPassword() { return password; }
     public Role getRole() { return role; }
+    public boolean isMustChangePassword() { return mustChangePassword; }
+    public boolean isBlocked() { return blocked; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 
     // ========== SETTERS ==========
 
-    public void setId(BigInteger id) { this.id = id; }
+    public void setId(Long id) { this.id = id; }
     public void setFirstName(String firstName) { this.firstName = firstName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
     public void setEmail(String email) { this.email = email; }
     public void setPassword(String password) { this.password = password; }
     public void setRole(Role role) { this.role = role; }
+    public void setMustChangePassword(boolean mustChangePassword) { this.mustChangePassword = mustChangePassword; }
+    public void setBlocked(boolean blocked) { this.blocked = blocked; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
     // ========== MÉTHODES UTILITAIRES ==========
 
-    public String getNom() {
-        return firstName + " " + lastName;
-    }
-
-    public String getFullName() {
-        return firstName + " " + lastName;
-    }
+    public String getNom() { return firstName + " " + lastName; }
+    public String getFullName() { return firstName + " " + lastName; }
 
     @Override
     public String toString() {
@@ -119,6 +136,31 @@ public class User {
                 ", lastName='" + lastName + '\'' +
                 ", email='" + email + '\'' +
                 ", role=" + role +
+                ", mustChangePassword=" + mustChangePassword +
+                ", blocked=" + blocked +
                 '}';
+    }
+    public String getCne() {
+        return cne;
+    }
+
+    public void setCne(String cne) {
+        this.cne = cne;
+    }
+
+    public String getCodeApoge() {
+        return codeApoge;
+    }
+
+    public void setCodeApoge(String codeApoge) {
+        this.codeApoge = codeApoge;
+    }
+
+    public Classe getClasse() {
+        return classe;
+    }
+
+    public void setClasse(Classe classe) {
+        this.classe = classe;
     }
 }

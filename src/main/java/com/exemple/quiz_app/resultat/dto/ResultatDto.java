@@ -27,8 +27,15 @@ public class ResultatDto {
     private String recommendations;
     private String suggestedQuiz;
     private String grade;
+    private String cne;
+    private String codeApogee;
+    private String className;
+    private String studentLastName;
+    private String subjectName;
     private LocalDateTime startedAt;
     private LocalDateTime completedDate;
+    private Double noteSur20;
+    private String mention;
     // Méthodes utilitaires
     public String getFormattedScore() {
         return String.format("%.1f%%", scorePercentage);
