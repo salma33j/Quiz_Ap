@@ -17,4 +17,11 @@ public class QuizReponse {
     private String enseignantNom;
     private Integer totalStudentsAllowed;
     private LocalDateTime createdAt;
+    private Long classeId;
+    private String classeName;
+    private String classFiliere;
+    private String classNiveau;
+
+    private Long matiereId;
+    private String matiereName;
 }

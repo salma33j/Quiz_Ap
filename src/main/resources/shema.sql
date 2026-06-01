@@ -1,40 +1,69 @@
--- =========================================================
--- Quiz App - Schema MySQL 8+ 
--- Spring Boot 3.x / JPA
--- =========================================================
-
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS reponses;
 DROP TABLE IF EXISTS resultats;
+DROP TABLE IF EXISTS quiz_session;
 DROP TABLE IF EXISTS quiz_students;
 DROP TABLE IF EXISTS question;
 DROP TABLE IF EXISTS quiz;
+DROP TABLE IF EXISTS matieres;
+DROP TABLE IF EXISTS classe_enseignants;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS classes;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
--- =========================================================
--- 1) USERS (Table principale des utilisateurs)
--- =========================================================
-CREATE TABLE users (
-                       id BIGINT NOT NULL AUTO_INCREMENT,
-                       first_name VARCHAR(100) NOT NULL,
-                       last_name VARCHAR(100) NOT NULL,
-                       email VARCHAR(190) NOT NULL,
-                       password VARCHAR(255) NOT NULL,
-                       role VARCHAR(20) NOT NULL,
-                       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                       PRIMARY KEY (id),
-                       CONSTRAINT uk_users_email UNIQUE (email)
+CREATE TABLE classes (
+                         id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                         name VARCHAR(100) NOT NULL,
+                         filiere VARCHAR(150),
+                         niveau VARCHAR(100),
+                         enseignant_id BIGINT NOT NULL,
+                         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
--- =========================================================
--- 2) QUIZ (Table des quiz créés par les enseignants)
--- =========================================================
+CREATE TABLE users (
+                       id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                       first_name VARCHAR(100) NOT NULL,
+                       last_name VARCHAR(100) NOT NULL,
+                       email VARCHAR(190) NOT NULL UNIQUE,
+                       password VARCHAR(255) NOT NULL,
+                       role VARCHAR(20) NOT NULL,
+                       must_change_password BOOLEAN NOT NULL DEFAULT FALSE,
+                       blocked BOOLEAN NOT NULL DEFAULT FALSE,
+                       cne VARCHAR(100) UNIQUE,
+                       code_apoge VARCHAR(100) UNIQUE,
+                       classe_id BIGINT NULL,
+                       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                       CONSTRAINT fk_user_classe FOREIGN KEY (classe_id) REFERENCES classes(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+ALTER TABLE classes
+    ADD CONSTRAINT fk_classes_enseignant
+        FOREIGN KEY (enseignant_id) REFERENCES users(id) ON DELETE RESTRICT;
+
+CREATE TABLE classe_enseignants (
+                                    classe_id BIGINT NOT NULL,
+                                    enseignant_id BIGINT NOT NULL,
+                                    PRIMARY KEY (classe_id, enseignant_id),
+                                    CONSTRAINT fk_classe_enseignants_classe FOREIGN KEY (classe_id) REFERENCES classes(id) ON DELETE CASCADE,
+                                    CONSTRAINT fk_classe_enseignants_enseignant FOREIGN KEY (enseignant_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE matieres (
+                          id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                          nom VARCHAR(150) NOT NULL,
+                          description VARCHAR(800),
+                          classe_id BIGINT NOT NULL,
+                          enseignant_id BIGINT NOT NULL,
+                          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                          CONSTRAINT fk_matieres_classe FOREIGN KEY (classe_id) REFERENCES classes(id) ON DELETE CASCADE,
+                          CONSTRAINT fk_matieres_enseignant FOREIGN KEY (enseignant_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE quiz (
-                      id BIGINT NOT NULL AUTO_INCREMENT,
+                      id BIGINT AUTO_INCREMENT PRIMARY KEY,
                       titre VARCHAR(100) NOT NULL,
                       theme VARCHAR(100),
                       question_count INT DEFAULT 0,
@@ -44,99 +73,90 @@ CREATE TABLE quiz (
                       status VARCHAR(20) DEFAULT 'DRAFT',
                       creation_type VARCHAR(20) DEFAULT 'MANUAL',
                       id_enseignant BIGINT NOT NULL,
-                      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                      deleted_at TIMESTAMP NULL,
+                      classe_id BIGINT NULL,
+                      matiere_id BIGINT NULL,
+                      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                      deleted_at DATETIME NULL,
                       deleted_by BIGINT NULL,
-                      PRIMARY KEY (id),
-                      KEY idx_quiz_enseignant (id_enseignant),
-                      KEY idx_quiz_status (status),
-                      CONSTRAINT fk_quiz_enseignant FOREIGN KEY (id_enseignant) REFERENCES users(id) ON DELETE CASCADE
+                      CONSTRAINT fk_quiz_enseignant FOREIGN KEY (id_enseignant) REFERENCES users(id) ON DELETE CASCADE,
+                      CONSTRAINT fk_quiz_classe FOREIGN KEY (classe_id) REFERENCES classes(id) ON DELETE SET NULL,
+                      CONSTRAINT fk_quiz_matiere FOREIGN KEY (matiere_id) REFERENCES matieres(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
--- =========================================================
--- 3) QUESTION (Table des questions)
--- =========================================================
 CREATE TABLE question (
-                          id_question BIGINT NOT NULL AUTO_INCREMENT,
+                          id BIGINT AUTO_INCREMENT PRIMARY KEY,
                           enonce TEXT NOT NULL,
-                          choixA VARCHAR(100),
-                          choixB VARCHAR(100),
-                          choixC VARCHAR(100),
-                          choixD VARCHAR(100),
-                          reponse_correcte TEXT NOT NULL,
+                          choixa VARCHAR(100),
+                          choixb VARCHAR(100),
+                          choixc VARCHAR(100),
+                          choixd VARCHAR(100),
+                          reponse_correcte VARCHAR(200),
                           points INT DEFAULT 1,
                           type VARCHAR(20) DEFAULT 'MCQ',
                           id_quiz BIGINT NOT NULL,
-                          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                          PRIMARY KEY (id_question),
-                          KEY idx_question_quiz (id_quiz),
+                          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                           CONSTRAINT fk_question_quiz FOREIGN KEY (id_quiz) REFERENCES quiz(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- =========================================================
--- 4) QUIZ_STUDENTS (Table des étudiants autorisés par quiz)
--- =========================================================
 CREATE TABLE quiz_students (
-                               id BIGINT NOT NULL AUTO_INCREMENT,
+                               id BIGINT AUTO_INCREMENT PRIMARY KEY,
                                quiz_id BIGINT NOT NULL,
                                student_id BIGINT NOT NULL,
-                               added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                               PRIMARY KEY (id),
+                               added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                                UNIQUE KEY uk_quiz_student (quiz_id, student_id),
-                               KEY idx_quiz_students_quiz (quiz_id),
-                               KEY idx_quiz_students_student (student_id),
                                CONSTRAINT fk_quiz_students_quiz FOREIGN KEY (quiz_id) REFERENCES quiz(id) ON DELETE CASCADE,
                                CONSTRAINT fk_quiz_students_student FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- =========================================================
--- 5) RESULTATS (Table des résultats des quiz)
--- =========================================================
+CREATE TABLE quiz_session (
+                              id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                              quiz_id BIGINT NOT NULL,
+                              student_id BIGINT NOT NULL,
+                              start_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+                              last_activity DATETIME,
+                              status VARCHAR(20) DEFAULT 'ACTIVE',
+                              UNIQUE KEY uk_session_student_quiz (student_id, quiz_id),
+                              CONSTRAINT fk_session_quiz FOREIGN KEY (quiz_id) REFERENCES quiz(id) ON DELETE CASCADE,
+                              CONSTRAINT fk_session_student FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE resultats (
-                           id BIGINT NOT NULL AUTO_INCREMENT,
-                           student_id BIGINT NOT NULL,
+                           id BIGINT AUTO_INCREMENT PRIMARY KEY,
                            quiz_id BIGINT NOT NULL,
+                           student_id BIGINT NOT NULL,
+                           score DOUBLE,
                            total_points INT,
                            earned_points INT,
                            score_percentage DOUBLE,
-                           score DOUBLE,
                            is_completed BOOLEAN DEFAULT FALSE,
                            feedback_ia TEXT,
                            strengths TEXT,
                            weaknesses TEXT,
                            recommendations TEXT,
-                           suggested_quiz VARCHAR(100),
-                           grade VARCHAR(5),
-                           started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                           completed_date TIMESTAMP NULL,
+                           suggested_quiz VARCHAR(255),
+                           grade VARCHAR(20),
+                           started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                           completed_date DATETIME,
                            status VARCHAR(20) DEFAULT 'IN_PROGRESS',
-                           PRIMARY KEY (id),
-                           UNIQUE KEY uk_student_quiz (student_id, quiz_id),
-                           KEY idx_resultats_student (student_id),
-                           KEY idx_resultats_quiz (quiz_id),
-                           KEY idx_resultats_status (status),
-                           CONSTRAINT fk_resultats_student FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
-                           CONSTRAINT fk_resultats_quiz FOREIGN KEY (quiz_id) REFERENCES quiz(id) ON DELETE CASCADE
+                           UNIQUE KEY uk_resultat_student_quiz (student_id, quiz_id),
+                           CONSTRAINT fk_resultats_quiz FOREIGN KEY (quiz_id) REFERENCES quiz(id) ON DELETE CASCADE,
+                           CONSTRAINT fk_resultats_student FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- =========================================================
--- 6) REPONSES (Table des réponses des étudiants)
--- =========================================================
 CREATE TABLE reponses (
-                          id BIGINT NOT NULL AUTO_INCREMENT,
-                          student_id BIGINT NOT NULL,
+                          id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                          quiz_id BIGINT NOT NULL,
                           question_id BIGINT NOT NULL,
+                          student_id BIGINT NOT NULL,
                           student_answer TEXT,
                           is_correct BOOLEAN,
                           points_earned INT,
-                          answered_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                          PRIMARY KEY (id),
-                          UNIQUE KEY uk_student_question (student_id, question_id),
-                          KEY idx_reponses_student (student_id),
-                          KEY idx_reponses_question (question_id),
-                          CONSTRAINT fk_reponses_student FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
-                          CONSTRAINT fk_reponses_question FOREIGN KEY (question_id) REFERENCES question(id_question) ON DELETE CASCADE
+                          answered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                          UNIQUE KEY uk_reponse_student_question_quiz (student_id, question_id, quiz_id),
+                          CONSTRAINT fk_reponses_quiz FOREIGN KEY (quiz_id) REFERENCES quiz(id) ON DELETE CASCADE,
+                          CONSTRAINT fk_reponses_question FOREIGN KEY (question_id) REFERENCES question(id) ON DELETE CASCADE,
+                          CONSTRAINT fk_reponses_student FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- =========================================================

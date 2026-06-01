@@ -8,7 +8,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
+import com.exemple.quiz_app.classe.entity.Classe;
+import com.exemple.quiz_app.matiere.entity.Matiere;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +49,14 @@ public class Quiz {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_enseignant", nullable = false)
     private User enseignant;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "classe_id")
+    private Classe classe;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "matiere_id")
+    private Matiere matiere;
 
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuizStudent> allowedStudents = new ArrayList<>();
