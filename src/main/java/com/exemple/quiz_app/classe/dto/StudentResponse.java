@@ -10,4 +10,8 @@ public class StudentResponse {
     private String email;
     private String cne;
     private String codeApoge;
+    private Long classId;
+    private String className;
+    private String classFiliere;
+    private String classNiveau;
 }

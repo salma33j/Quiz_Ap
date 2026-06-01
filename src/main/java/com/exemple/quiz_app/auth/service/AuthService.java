@@ -646,16 +646,27 @@ public class AuthService {
     // =========================================================
     private UserDto mapToDto(User user) {
         UserDto dto = new UserDto();
+
         dto.setId(user.getId());
         dto.setFirstName(user.getFirstName());
         dto.setLastName(user.getLastName());
         dto.setEmail(user.getEmail());
-      dto.setRole(user.getRole().name());
-      dto.setCne(user.getCne());
-      dto.setCodeApoge(user.getCodeApoge());
-      dto.setBlocked(user.isBlocked());
-      dto.setCreatedAt(user.getCreatedAt());
+        dto.setRole(user.getRole().name());
+
+        dto.setCne(user.getCne());
+        dto.setCodeApoge(user.getCodeApoge());
+
+        dto.setBlocked(user.isBlocked());
+        dto.setCreatedAt(user.getCreatedAt());
         dto.setUpdatedAt(user.getUpdatedAt());
+
+        if (user.getClasse() != null) {
+            dto.setClassId(user.getClasse().getId());
+            dto.setClassName(user.getClasse().getName());
+            dto.setClassFiliere(user.getClasse().getFiliere());
+            dto.setClassNiveau(user.getClasse().getNiveau());
+        }
+
         return dto;
     }
 }
