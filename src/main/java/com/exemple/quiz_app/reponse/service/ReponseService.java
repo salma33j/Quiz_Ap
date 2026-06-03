@@ -224,8 +224,8 @@ public class ReponseService {
         QuizSession session = quizSessionRepository.findByStudentAndQuiz(currentUser, quiz)
                 .orElseThrow(() -> new RuntimeException("Session non trouvée. Veuillez démarrer le quiz."));
 
-        if (session.isExpired()) {
-            throw new RuntimeException("Temps écoulé ! Vous ne pouvez plus soumettre le quiz.");
+        if (session.getStatus() == QuizSession.SessionStatus.COMPLETED) {
+            throw new RuntimeException("Quiz deja soumis.");
         }
 
         // Marquer la session comme complétée
@@ -307,16 +307,34 @@ public class ReponseService {
 
     // ==================== CORRECTIONS DÉTAILLÉES ====================
 
+    @Transactional
+    public QuizSubmissionResponseDto submitQuizWithAnswers(Long quizId, List<ReponseRequestDto> answers) {
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Quiz non trouve"));
+        User currentUser = authService.getCurrentUser();
+
+        QuizSession session = quizSessionRepository.findByStudentAndQuiz(currentUser, quiz)
+                .orElseThrow(() -> new RuntimeException("Session non trouvee. Veuillez demarrer le quiz."));
+
+        if (session.getStatus() == QuizSession.SessionStatus.COMPLETED) {
+            throw new RuntimeException("Quiz deja soumis.");
+        }
+
+        if (answers != null) {
+            for (ReponseRequestDto answer : answers) {
+                saveFinalAnswer(currentUser, quiz, quizId, answer);
+            }
+        }
+
+        return submitQuizAndGetResult(quizId);
+    }
+
     public List<ReponseDetailDto> getCorrectionsDetails(Long quizId) {
         User currentUser = authService.getCurrentUser();
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
 
         List<Reponse> reponses = reponseRepository.findByStudentAndQuiz(currentUser, quiz);
-
-        if (reponses.isEmpty()) {
-            throw new RuntimeException("Vous n'avez pas encore répondu à des questions");
-        }
 
         List<Question> questions = questionRepository.findByQuizId(quizId);
         Map<Long, Reponse> reponseMap = reponses.stream()
@@ -343,6 +361,60 @@ public class ReponseService {
     /**
      * Construire un feedback structuré
      */
+    private void saveFinalAnswer(User currentUser, Quiz quiz, Long quizId, ReponseRequestDto request) {
+        if (request == null || request.getQuestionId() == null) {
+            return;
+        }
+
+        if (request.getQuizId() != null && !request.getQuizId().equals(quizId)) {
+            throw new RuntimeException("La reponse n'appartient pas au quiz soumis.");
+        }
+
+        Question question = questionRepository.findById(request.getQuestionId())
+                .orElseThrow(() -> new RuntimeException("Question non trouvee"));
+
+        if (!question.getQuiz().getId().equals(quiz.getId())) {
+            throw new RuntimeException("Cette question n'appartient pas au quiz soumis.");
+        }
+
+        String studentAnswer = request.getStudentAnswer() == null ? "" : request.getStudentAnswer();
+        boolean isCorrect;
+        Integer pointsEarned;
+
+        if (question.getType() == Question.QuestionType.TEXT) {
+            try {
+                AiCorrectionRequestDto correctionRequest = AiCorrectionRequestDto.builder()
+                        .questionText(question.getEnonce())
+                        .expectedAnswer(question.getReponseCorrecte())
+                        .studentAnswer(studentAnswer)
+                        .pointsMax(question.getPoints())
+                        .language("fr")
+                        .build();
+
+                AiCorrectionResponseDto correction = callAiForCorrection(correctionRequest);
+                isCorrect = correction.getIsCorrect();
+                pointsEarned = correction.getPointsEarned();
+            } catch (Exception e) {
+                isCorrect = question.checkAnswer(studentAnswer);
+                pointsEarned = isCorrect ? question.getPoints() : 0;
+            }
+        } else {
+            isCorrect = question.checkAnswer(studentAnswer);
+            pointsEarned = isCorrect ? question.getPoints() : 0;
+        }
+
+        Reponse reponse = reponseRepository.findByStudentAndQuestion(currentUser, question)
+                .orElseGet(Reponse::new);
+        reponse.setQuiz(quiz);
+        reponse.setQuestion(question);
+        reponse.setStudent(currentUser);
+        reponse.setStudentAnswer(studentAnswer);
+        reponse.setIsCorrect(isCorrect);
+        reponse.setPointsEarned(pointsEarned);
+
+        reponseRepository.save(reponse);
+    }
+
     private String buildStructuredFeedback(Quiz quiz, double percentage, int correctCount, int answeredCount, int totalQuestions, String feedbackIA, String strengths, String weaknesses) {
         StringBuilder fb = new StringBuilder();
 
@@ -560,3 +632,4 @@ public class ReponseService {
         return quizStudentRepository.existsByQuizAndStudent(quiz, currentUser);
     }
 }
+

@@ -1,0 +1,2751 @@
+[INFO] Scanning for projects...
+[WARNING] 
+[WARNING] Some problems were encountered while building the effective model for com.exemple:quiz_app:jar:0.0.1
+[WARNING] 'parent.relativePath' of POM com.exemple:quiz_app:0.0.1 (C:\Users\akils\IdeaProjects\quiz_app\quiz_app\pom.xml) points at com.exemple:quiz_app instead of org.springframework.boot:spring-boot-starter-parent, please verify your project structure @ line 8, column 13
+[WARNING] 
+[WARNING] It is highly recommended to fix these problems because they threaten the stability of your build.
+[WARNING] 
+[WARNING] For this reason, future Maven versions might no longer support building such malformed projects.
+[WARNING] 
+[INFO] 
+[INFO] ------------------------< com.exemple:quiz_app >------------------------
+[INFO] Building quiz_app 0.0.1
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.2.5:run (default-cli) > test-compile @ quiz_app >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ quiz_app ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ quiz_app ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ quiz_app ---
+[INFO] skip non existing resourceDirectory C:\Users\akils\IdeaProjects\quiz_app\quiz_app\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ quiz_app ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] <<< spring-boot:3.2.5:run (default-cli) < test-compile @ quiz_app <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.2.5:run (default-cli) @ quiz_app ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-06-03T23:21:20.228+01:00  INFO 14016 --- [quiz_app] [           main] c.exemple.quiz_app.QuizAppApplication    : Starting QuizAppApplication using Java 17.0.18 with PID 14016 (C:\Users\akils\IdeaProjects\quiz_app\quiz_app\target\classes started by akils in C:\Users\akils\IdeaProjects\quiz_app\quiz_app)
+2026-06-03T23:21:20.231+01:00  INFO 14016 --- [quiz_app] [           main] c.exemple.quiz_app.QuizAppApplication    : No active profile set, falling back to 1 default profile: "default"
+2026-06-03T23:21:20.956+01:00  INFO 14016 --- [quiz_app] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-06-03T23:21:21.052+01:00  INFO 14016 --- [quiz_app] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 88 ms. Found 9 JPA repository interfaces.
+2026-06-03T23:21:21.799+01:00  INFO 14016 --- [quiz_app] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 9091 (http)
+2026-06-03T23:21:21.813+01:00  INFO 14016 --- [quiz_app] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-06-03T23:21:21.813+01:00  INFO 14016 --- [quiz_app] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.20]
+2026-06-03T23:21:21.884+01:00  INFO 14016 --- [quiz_app] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-06-03T23:21:21.884+01:00  INFO 14016 --- [quiz_app] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1596 ms
+2026-06-03T23:21:22.024+01:00  INFO 14016 --- [quiz_app] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-06-03T23:21:22.087+01:00  INFO 14016 --- [quiz_app] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.4.4.Final
+2026-06-03T23:21:22.136+01:00  INFO 14016 --- [quiz_app] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-06-03T23:21:22.381+01:00  INFO 14016 --- [quiz_app] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-06-03T23:21:22.412+01:00  INFO 14016 --- [quiz_app] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-06-03T23:21:22.882+01:00  INFO 14016 --- [quiz_app] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@63dc3420
+2026-06-03T23:21:22.884+01:00  INFO 14016 --- [quiz_app] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-06-03T23:21:22.951+01:00  WARN 14016 --- [quiz_app] [           main] org.hibernate.orm.deprecation            : HHH90000025: MySQL8Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-06-03T23:21:22.952+01:00  WARN 14016 --- [quiz_app] [           main] org.hibernate.orm.deprecation            : HHH90000026: MySQL8Dialect has been deprecated; use org.hibernate.dialect.MySQLDialect instead
+2026-06-03T23:21:24.135+01:00  INFO 14016 --- [quiz_app] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-06-03T23:21:24.235+01:00 DEBUG 14016 --- [quiz_app] [           main] org.hibernate.SQL                        : 
+    alter table quiz 
+       add column description varchar(1000)
+Hibernate: 
+    alter table quiz 
+       add column description varchar(1000)
+2026-06-03T23:21:24.575+01:00 DEBUG 14016 --- [quiz_app] [           main] org.hibernate.SQL                        : 
+    alter table quiz 
+       add column difficulty varchar(30)
+Hibernate: 
+    alter table quiz 
+       add column difficulty varchar(30)
+2026-06-03T23:21:24.820+01:00  INFO 14016 --- [quiz_app] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-06-03T23:21:25.328+01:00  INFO 14016 --- [quiz_app] [           main] c.e.quiz_app.AI.config.GeminiConfig      : ? Gemini URL utilisée : https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent
+2026-06-03T23:21:25.329+01:00  INFO 14016 --- [quiz_app] [           main] c.e.quiz_app.AI.config.GeminiConfig      : ? Clé configurée : OUI
+2026-06-03T23:21:25.400+01:00  INFO 14016 --- [quiz_app] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-06-03T23:21:26.491+01:00  WARN 14016 --- [quiz_app] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-06-03T23:21:26.815+01:00  INFO 14016 --- [quiz_app] [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@24d6355c, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@69e4e90b, org.springframework.security.web.context.SecurityContextHolderFilter@4799ce06, org.springframework.security.web.header.HeaderWriterFilter@28d4c7ec, org.springframework.web.filter.CorsFilter@5872376d, org.springframework.security.web.authentication.logout.LogoutFilter@e937569, com.exemple.quiz_app.auth.security.JwtAuthFilter@3b8ce72, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@7f792c5a, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@1eacc589, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@7231547f, org.springframework.security.web.session.SessionManagementFilter@16f453c9, org.springframework.security.web.access.ExceptionTranslationFilter@45e6b8fa, org.springframework.security.web.access.intercept.AuthorizationFilter@6ac4f76a]
+2026-06-03T23:21:27.062+01:00  INFO 14016 --- [quiz_app] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 9091 (http) with context path ''
+2026-06-03T23:21:27.069+01:00  INFO 14016 --- [quiz_app] [           main] c.exemple.quiz_app.QuizAppApplication    : Started QuizAppApplication in 7.329 seconds (process running for 8.47)
+2026-06-03T23:21:27.131+01:00 DEBUG 14016 --- [quiz_app] [           main] org.hibernate.SQL                        : 
+    select
+        count(*) 
+    from
+        users u1_0
+Hibernate: 
+    select
+        count(*) 
+    from
+        users u1_0
+? [DataInitializer] Données déjà présentes — aucune insertion.
+2026-06-03T23:21:43.523+01:00  INFO 14016 --- [quiz_app] [nio-9091-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-06-03T23:21:43.528+01:00  INFO 14016 --- [quiz_app] [nio-9091-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-06-03T23:21:43.529+01:00  INFO 14016 --- [quiz_app] [nio-9091-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-06-03T23:21:43.545+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-2] o.s.security.web.FilterChainProxy        : Securing GET /api/student/matieres
+2026-06-03T23:21:43.553+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-2] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-06-03T23:21:43.555+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-2] o.s.s.w.a.Http403ForbiddenEntryPoint     : Pre-authenticated entry point called. Rejecting access
+2026-06-03T23:21:43.562+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-2] o.s.security.web.FilterChainProxy        : Securing GET /error
+2026-06-03T23:21:43.562+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-2] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2026-06-03T23:21:43.563+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-2] o.s.s.w.a.Http403ForbiddenEntryPoint     : Pre-authenticated entry point called. Rejecting access
+2026-06-03T23:23:05.465+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] o.s.security.web.FilterChainProxy        : Securing GET /api/teacher/quizzes
+2026-06-03T23:23:05.611+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:05.626+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] o.s.security.web.FilterChainProxy        : Secured GET /api/teacher/quizzes
+2026-06-03T23:23:05.638+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] horizationManagerBeforeMethodInterceptor : Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.quiz.controller.QuizController.getMyQuizzes(); target is of class [com.exemple.quiz_app.quiz.controller.QuizController]
+2026-06-03T23:23:05.667+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] horizationManagerBeforeMethodInterceptor : Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.quiz.controller.QuizController.getMyQuizzes(); target is of class [com.exemple.quiz_app.quiz.controller.QuizController]
+2026-06-03T23:23:05.669+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:05.684+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        q1_0.id,
+        q1_0.available_from,
+        q1_0.available_until,
+        q1_0.classe_id,
+        q1_0.created_at,
+        q1_0.creation_type,
+        q1_0.deleted_at,
+        q1_0.deleted_by,
+        q1_0.description,
+        q1_0.difficulty,
+        q1_0.id_enseignant,
+        q1_0.matiere_id,
+        q1_0.question_count,
+        q1_0.status,
+        q1_0.theme,
+        q1_0.time_limit,
+        q1_0.titre,
+        q1_0.updated_at 
+    from
+        quiz q1_0 
+    where
+        q1_0.id_enseignant=?
+Hibernate: 
+    select
+        q1_0.id,
+        q1_0.available_from,
+        q1_0.available_until,
+        q1_0.classe_id,
+        q1_0.created_at,
+        q1_0.creation_type,
+        q1_0.deleted_at,
+        q1_0.deleted_by,
+        q1_0.description,
+        q1_0.difficulty,
+        q1_0.id_enseignant,
+        q1_0.matiere_id,
+        q1_0.question_count,
+        q1_0.status,
+        q1_0.theme,
+        q1_0.time_limit,
+        q1_0.titre,
+        q1_0.updated_at 
+    from
+        quiz q1_0 
+    where
+        q1_0.id_enseignant=?
+2026-06-03T23:23:05.717+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    left join
+        classes c1_0 
+            on c1_0.id=u1_0.classe_id 
+    where
+        c1_0.id=? 
+    order by
+        u1_0.last_name,
+        u1_0.first_name
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    left join
+        classes c1_0 
+            on c1_0.id=u1_0.classe_id 
+    where
+        c1_0.id=? 
+    order by
+        u1_0.last_name,
+        u1_0.first_name
+2026-06-03T23:23:05.726+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+2026-06-03T23:23:05.734+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+2026-06-03T23:23:05.741+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+Hibernate: 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+2026-06-03T23:23:05.744+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        m1_0.id,
+        m1_0.classe_id,
+        m1_0.created_at,
+        m1_0.description,
+        m1_0.enseignant_id,
+        m1_0.nom 
+    from
+        matieres m1_0 
+    where
+        m1_0.id=?
+Hibernate: 
+    select
+        m1_0.id,
+        m1_0.classe_id,
+        m1_0.created_at,
+        m1_0.description,
+        m1_0.enseignant_id,
+        m1_0.nom 
+    from
+        matieres m1_0 
+    where
+        m1_0.id=?
+2026-06-03T23:23:05.749+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        count(qs1_0.id) 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=?
+Hibernate: 
+    select
+        count(qs1_0.id) 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=?
+2026-06-03T23:23:05.753+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    left join
+        classes c1_0 
+            on c1_0.id=u1_0.classe_id 
+    where
+        c1_0.id=? 
+    order by
+        u1_0.last_name,
+        u1_0.first_name
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    left join
+        classes c1_0 
+            on c1_0.id=u1_0.classe_id 
+    where
+        c1_0.id=? 
+    order by
+        u1_0.last_name,
+        u1_0.first_name
+2026-06-03T23:23:05.757+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+2026-06-03T23:23:05.760+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+2026-06-03T23:23:05.764+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        count(qs1_0.id) 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=?
+Hibernate: 
+    select
+        count(qs1_0.id) 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=?
+2026-06-03T23:23:05.768+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    left join
+        classes c1_0 
+            on c1_0.id=u1_0.classe_id 
+    where
+        c1_0.id=? 
+    order by
+        u1_0.last_name,
+        u1_0.first_name
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    left join
+        classes c1_0 
+            on c1_0.id=u1_0.classe_id 
+    where
+        c1_0.id=? 
+    order by
+        u1_0.last_name,
+        u1_0.first_name
+2026-06-03T23:23:05.773+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+2026-06-03T23:23:05.777+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+2026-06-03T23:23:05.785+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+2026-06-03T23:23:05.787+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+Hibernate: 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+2026-06-03T23:23:05.789+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        m1_0.id,
+        m1_0.classe_id,
+        m1_0.created_at,
+        m1_0.description,
+        m1_0.enseignant_id,
+        m1_0.nom 
+    from
+        matieres m1_0 
+    where
+        m1_0.id=?
+Hibernate: 
+    select
+        m1_0.id,
+        m1_0.classe_id,
+        m1_0.created_at,
+        m1_0.description,
+        m1_0.enseignant_id,
+        m1_0.nom 
+    from
+        matieres m1_0 
+    where
+        m1_0.id=?
+2026-06-03T23:23:05.794+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        count(qs1_0.id) 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=?
+Hibernate: 
+    select
+        count(qs1_0.id) 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=?
+2026-06-03T23:23:05.800+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    left join
+        classes c1_0 
+            on c1_0.id=u1_0.classe_id 
+    where
+        c1_0.id=? 
+    order by
+        u1_0.last_name,
+        u1_0.first_name
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    left join
+        classes c1_0 
+            on c1_0.id=u1_0.classe_id 
+    where
+        c1_0.id=? 
+    order by
+        u1_0.last_name,
+        u1_0.first_name
+2026-06-03T23:23:05.804+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+2026-06-03T23:23:05.807+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+2026-06-03T23:23:05.810+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        count(qs1_0.id) 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=?
+Hibernate: 
+    select
+        count(qs1_0.id) 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=?
+2026-06-03T23:23:05.854+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] o.s.security.web.FilterChainProxy        : Securing GET /api/teacher/quizzes
+2026-06-03T23:23:05.857+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-5] o.s.security.web.FilterChainProxy        : Securing GET /api/resultats/quiz/16
+2026-06-03T23:23:05.858+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:05.860+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-5] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:05.863+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] o.s.security.web.FilterChainProxy        : Secured GET /api/teacher/quizzes
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:05.865+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] horizationManagerBeforeMethodInterceptor : Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.quiz.controller.QuizController.getMyQuizzes(); target is of class [com.exemple.quiz_app.quiz.controller.QuizController]
+2026-06-03T23:23:05.867+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-5] o.s.security.web.FilterChainProxy        : Secured GET /api/resultats/quiz/16
+2026-06-03T23:23:05.867+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] horizationManagerBeforeMethodInterceptor : Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.quiz.controller.QuizController.getMyQuizzes(); target is of class [com.exemple.quiz_app.quiz.controller.QuizController]
+2026-06-03T23:23:05.870+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:05.873+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        q1_0.id,
+        q1_0.available_from,
+        q1_0.available_until,
+        q1_0.classe_id,
+        q1_0.created_at,
+        q1_0.creation_type,
+        q1_0.deleted_at,
+        q1_0.deleted_by,
+        q1_0.description,
+        q1_0.difficulty,
+        q1_0.id_enseignant,
+        q1_0.matiere_id,
+        q1_0.question_count,
+        q1_0.status,
+        q1_0.theme,
+        q1_0.time_limit,
+        q1_0.titre,
+        q1_0.updated_at 
+    from
+        quiz q1_0 
+    where
+        q1_0.id_enseignant=?
+Hibernate: 
+    select
+        q1_0.id,
+        q1_0.available_from,
+        q1_0.available_until,
+        q1_0.classe_id,
+        q1_0.created_at,
+        q1_0.creation_type,
+        q1_0.deleted_at,
+        q1_0.deleted_by,
+        q1_0.description,
+        q1_0.difficulty,
+        q1_0.id_enseignant,
+        q1_0.matiere_id,
+        q1_0.question_count,
+        q1_0.status,
+        q1_0.theme,
+        q1_0.time_limit,
+        q1_0.titre,
+        q1_0.updated_at 
+    from
+        quiz q1_0 
+    where
+        q1_0.id_enseignant=?
+2026-06-03T23:23:05.876+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-5] horizationManagerBeforeMethodInterceptor : Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.resultat.controller.ResultatController.getResultatsByQuiz(java.lang.Long); target is of class [com.exemple.quiz_app.resultat.controller.ResultatController]
+2026-06-03T23:23:05.877+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-5] horizationManagerBeforeMethodInterceptor : Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.resultat.controller.ResultatController.getResultatsByQuiz(java.lang.Long); target is of class [com.exemple.quiz_app.resultat.controller.ResultatController]
+2026-06-03T23:23:05.879+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    left join
+        classes c1_0 
+            on c1_0.id=u1_0.classe_id 
+    where
+        c1_0.id=? 
+    order by
+        u1_0.last_name,
+        u1_0.first_name
+2026-06-03T23:23:05.879+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-5] org.hibernate.SQL                        : 
+    select
+        r1_0.id,
+        r1_0.completed_date,
+        r1_0.earned_points,
+        r1_0.feedback_ia,
+        r1_0.grade,
+        r1_0.is_completed,
+        r1_0.quiz_id,
+        r1_0.recommendations,
+        r1_0.score,
+        r1_0.score_percentage,
+        r1_0.started_at,
+        r1_0.status,
+        r1_0.strengths,
+        r1_0.student_id,
+        r1_0.suggested_quiz,
+        r1_0.total_points,
+        r1_0.weaknesses 
+    from
+        resultats r1_0 
+    where
+        r1_0.quiz_id=? 
+    order by
+        r1_0.score_percentage desc
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.completed_date,
+        r1_0.earned_points,
+        r1_0.feedback_ia,
+        r1_0.grade,
+        r1_0.is_completed,
+        r1_0.quiz_id,
+        r1_0.recommendations,
+        r1_0.score,
+        r1_0.score_percentage,
+        r1_0.started_at,
+        r1_0.status,
+        r1_0.strengths,
+        r1_0.student_id,
+        r1_0.suggested_quiz,
+        r1_0.total_points,
+        r1_0.weaknesses 
+    from
+        resultats r1_0 
+    where
+        r1_0.quiz_id=? 
+    order by
+        r1_0.score_percentage desc
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    left join
+        classes c1_0 
+            on c1_0.id=u1_0.classe_id 
+    where
+        c1_0.id=? 
+    order by
+        u1_0.last_name,
+        u1_0.first_name
+2026-06-03T23:23:05.884+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+2026-06-03T23:23:05.886+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+2026-06-03T23:23:05.888+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+Hibernate: 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+2026-06-03T23:23:05.889+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        m1_0.id,
+        m1_0.classe_id,
+        m1_0.created_at,
+        m1_0.description,
+        m1_0.enseignant_id,
+        m1_0.nom 
+    from
+        matieres m1_0 
+    where
+        m1_0.id=?
+Hibernate: 
+    select
+        m1_0.id,
+        m1_0.classe_id,
+        m1_0.created_at,
+        m1_0.description,
+        m1_0.enseignant_id,
+        m1_0.nom 
+    from
+        matieres m1_0 
+    where
+        m1_0.id=?
+2026-06-03T23:23:05.891+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        count(qs1_0.id) 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=?
+Hibernate: 
+    select
+        count(qs1_0.id) 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=?
+2026-06-03T23:23:05.893+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    left join
+        classes c1_0 
+            on c1_0.id=u1_0.classe_id 
+    where
+        c1_0.id=? 
+    order by
+        u1_0.last_name,
+        u1_0.first_name
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    left join
+        classes c1_0 
+            on c1_0.id=u1_0.classe_id 
+    where
+        c1_0.id=? 
+    order by
+        u1_0.last_name,
+        u1_0.first_name
+2026-06-03T23:23:05.897+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-6] o.s.security.web.FilterChainProxy        : Securing GET /api/resultats/quiz/17
+2026-06-03T23:23:05.897+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+2026-06-03T23:23:05.899+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+2026-06-03T23:23:05.900+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-6] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:05.901+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        count(qs1_0.id) 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=?
+Hibernate: 
+    select
+        count(qs1_0.id) 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=?
+2026-06-03T23:23:05.904+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    left join
+        classes c1_0 
+            on c1_0.id=u1_0.classe_id 
+    where
+        c1_0.id=? 
+    order by
+        u1_0.last_name,
+        u1_0.first_name
+2026-06-03T23:23:05.904+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-6] o.s.security.web.FilterChainProxy        : Secured GET /api/resultats/quiz/17
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    left join
+        classes c1_0 
+            on c1_0.id=u1_0.classe_id 
+    where
+        c1_0.id=? 
+    order by
+        u1_0.last_name,
+        u1_0.first_name
+2026-06-03T23:23:05.905+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-6] horizationManagerBeforeMethodInterceptor : Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.resultat.controller.ResultatController.getResultatsByQuiz(java.lang.Long); target is of class [com.exemple.quiz_app.resultat.controller.ResultatController]
+2026-06-03T23:23:05.905+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-6] horizationManagerBeforeMethodInterceptor : Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.resultat.controller.ResultatController.getResultatsByQuiz(java.lang.Long); target is of class [com.exemple.quiz_app.resultat.controller.ResultatController]
+2026-06-03T23:23:05.906+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-6] org.hibernate.SQL                        : 
+    select
+        r1_0.id,
+        r1_0.completed_date,
+        r1_0.earned_points,
+        r1_0.feedback_ia,
+        r1_0.grade,
+        r1_0.is_completed,
+        r1_0.quiz_id,
+        r1_0.recommendations,
+        r1_0.score,
+        r1_0.score_percentage,
+        r1_0.started_at,
+        r1_0.status,
+        r1_0.strengths,
+        r1_0.student_id,
+        r1_0.suggested_quiz,
+        r1_0.total_points,
+        r1_0.weaknesses 
+    from
+        resultats r1_0 
+    where
+        r1_0.quiz_id=? 
+    order by
+        r1_0.score_percentage desc
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.completed_date,
+        r1_0.earned_points,
+        r1_0.feedback_ia,
+        r1_0.grade,
+        r1_0.is_completed,
+        r1_0.quiz_id,
+        r1_0.recommendations,
+        r1_0.score,
+        r1_0.score_percentage,
+        r1_0.started_at,
+        r1_0.status,
+        r1_0.strengths,
+        r1_0.student_id,
+        r1_0.suggested_quiz,
+        r1_0.total_points,
+        r1_0.weaknesses 
+    from
+        resultats r1_0 
+    where
+        r1_0.quiz_id=? 
+    order by
+        r1_0.score_percentage desc
+2026-06-03T23:23:05.907+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+2026-06-03T23:23:05.911+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-7] o.s.security.web.FilterChainProxy        : Securing GET /api/resultats/quiz/18
+2026-06-03T23:23:05.913+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+2026-06-03T23:23:05.915+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-7] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:05.915+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:05.916+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+Hibernate: 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+2026-06-03T23:23:05.918+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        m1_0.id,
+        m1_0.classe_id,
+        m1_0.created_at,
+        m1_0.description,
+        m1_0.enseignant_id,
+        m1_0.nom 
+    from
+        matieres m1_0 
+    where
+        m1_0.id=?
+Hibernate: 
+    select
+        m1_0.id,
+        m1_0.classe_id,
+        m1_0.created_at,
+        m1_0.description,
+        m1_0.enseignant_id,
+        m1_0.nom 
+    from
+        matieres m1_0 
+    where
+        m1_0.id=?
+2026-06-03T23:23:05.918+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-7] o.s.security.web.FilterChainProxy        : Secured GET /api/resultats/quiz/18
+2026-06-03T23:23:05.919+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-7] horizationManagerBeforeMethodInterceptor : Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.resultat.controller.ResultatController.getResultatsByQuiz(java.lang.Long); target is of class [com.exemple.quiz_app.resultat.controller.ResultatController]
+2026-06-03T23:23:05.920+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        count(qs1_0.id) 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=?
+2026-06-03T23:23:05.920+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-7] horizationManagerBeforeMethodInterceptor : Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.resultat.controller.ResultatController.getResultatsByQuiz(java.lang.Long); target is of class [com.exemple.quiz_app.resultat.controller.ResultatController]
+Hibernate: 
+    select
+        count(qs1_0.id) 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=?
+2026-06-03T23:23:05.920+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-7] org.hibernate.SQL                        : 
+    select
+        r1_0.id,
+        r1_0.completed_date,
+        r1_0.earned_points,
+        r1_0.feedback_ia,
+        r1_0.grade,
+        r1_0.is_completed,
+        r1_0.quiz_id,
+        r1_0.recommendations,
+        r1_0.score,
+        r1_0.score_percentage,
+        r1_0.started_at,
+        r1_0.status,
+        r1_0.strengths,
+        r1_0.student_id,
+        r1_0.suggested_quiz,
+        r1_0.total_points,
+        r1_0.weaknesses 
+    from
+        resultats r1_0 
+    where
+        r1_0.quiz_id=? 
+    order by
+        r1_0.score_percentage desc
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.completed_date,
+        r1_0.earned_points,
+        r1_0.feedback_ia,
+        r1_0.grade,
+        r1_0.is_completed,
+        r1_0.quiz_id,
+        r1_0.recommendations,
+        r1_0.score,
+        r1_0.score_percentage,
+        r1_0.started_at,
+        r1_0.status,
+        r1_0.strengths,
+        r1_0.student_id,
+        r1_0.suggested_quiz,
+        r1_0.total_points,
+        r1_0.weaknesses 
+    from
+        resultats r1_0 
+    where
+        r1_0.quiz_id=? 
+    order by
+        r1_0.score_percentage desc
+2026-06-03T23:23:05.922+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    left join
+        classes c1_0 
+            on c1_0.id=u1_0.classe_id 
+    where
+        c1_0.id=? 
+    order by
+        u1_0.last_name,
+        u1_0.first_name
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    left join
+        classes c1_0 
+            on c1_0.id=u1_0.classe_id 
+    where
+        c1_0.id=? 
+    order by
+        u1_0.last_name,
+        u1_0.first_name
+2026-06-03T23:23:05.925+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+2026-06-03T23:23:05.925+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-7] org.hibernate.SQL                        : 
+    select
+        q1_0.id,
+        q1_0.available_from,
+        q1_0.available_until,
+        q1_0.classe_id,
+        q1_0.created_at,
+        q1_0.creation_type,
+        q1_0.deleted_at,
+        q1_0.deleted_by,
+        q1_0.description,
+        q1_0.difficulty,
+        q1_0.id_enseignant,
+        q1_0.matiere_id,
+        q1_0.question_count,
+        q1_0.status,
+        q1_0.theme,
+        q1_0.time_limit,
+        q1_0.titre,
+        q1_0.updated_at 
+    from
+        quiz q1_0 
+    where
+        q1_0.id=?
+Hibernate: 
+    select
+        q1_0.id,
+        q1_0.available_from,
+        q1_0.available_until,
+        q1_0.classe_id,
+        q1_0.created_at,
+        q1_0.creation_type,
+        q1_0.deleted_at,
+        q1_0.deleted_by,
+        q1_0.description,
+        q1_0.difficulty,
+        q1_0.id_enseignant,
+        q1_0.matiere_id,
+        q1_0.question_count,
+        q1_0.status,
+        q1_0.theme,
+        q1_0.time_limit,
+        q1_0.titre,
+        q1_0.updated_at 
+    from
+        quiz q1_0 
+    where
+        q1_0.id=?
+2026-06-03T23:23:05.927+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-7] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.id=?
+2026-06-03T23:23:05.927+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        qs1_0.id 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=? 
+        and qs1_0.student_id=? 
+    limit
+        ?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.id=?
+2026-06-03T23:23:05.930+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-7] org.hibernate.SQL                        : 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+2026-06-03T23:23:05.930+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-9] org.hibernate.SQL                        : 
+    select
+        count(qs1_0.id) 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=?
+Hibernate: 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+Hibernate: 
+    select
+        count(qs1_0.id) 
+    from
+        quiz_students qs1_0 
+    where
+        qs1_0.quiz_id=?
+2026-06-03T23:23:05.932+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-7] org.hibernate.SQL                        : 
+    select
+        m1_0.id,
+        m1_0.classe_id,
+        m1_0.created_at,
+        m1_0.description,
+        m1_0.enseignant_id,
+        m1_0.nom 
+    from
+        matieres m1_0 
+    where
+        m1_0.id=?
+Hibernate: 
+    select
+        m1_0.id,
+        m1_0.classe_id,
+        m1_0.created_at,
+        m1_0.description,
+        m1_0.enseignant_id,
+        m1_0.nom 
+    from
+        matieres m1_0 
+    where
+        m1_0.id=?
+2026-06-03T23:23:05.937+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-8] o.s.security.web.FilterChainProxy        : Securing GET /api/resultats/quiz/16
+2026-06-03T23:23:05.940+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-8] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:05.944+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-8] o.s.security.web.FilterChainProxy        : Secured GET /api/resultats/quiz/16
+2026-06-03T23:23:05.945+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-8] horizationManagerBeforeMethodInterceptor : Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.resultat.controller.ResultatController.getResultatsByQuiz(java.lang.Long); target is of class [com.exemple.quiz_app.resultat.controller.ResultatController]
+2026-06-03T23:23:05.945+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-8] horizationManagerBeforeMethodInterceptor : Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.resultat.controller.ResultatController.getResultatsByQuiz(java.lang.Long); target is of class [com.exemple.quiz_app.resultat.controller.ResultatController]
+2026-06-03T23:23:05.946+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-8] org.hibernate.SQL                        : 
+    select
+        r1_0.id,
+        r1_0.completed_date,
+        r1_0.earned_points,
+        r1_0.feedback_ia,
+        r1_0.grade,
+        r1_0.is_completed,
+        r1_0.quiz_id,
+        r1_0.recommendations,
+        r1_0.score,
+        r1_0.score_percentage,
+        r1_0.started_at,
+        r1_0.status,
+        r1_0.strengths,
+        r1_0.student_id,
+        r1_0.suggested_quiz,
+        r1_0.total_points,
+        r1_0.weaknesses 
+    from
+        resultats r1_0 
+    where
+        r1_0.quiz_id=? 
+    order by
+        r1_0.score_percentage desc
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.completed_date,
+        r1_0.earned_points,
+        r1_0.feedback_ia,
+        r1_0.grade,
+        r1_0.is_completed,
+        r1_0.quiz_id,
+        r1_0.recommendations,
+        r1_0.score,
+        r1_0.score_percentage,
+        r1_0.started_at,
+        r1_0.status,
+        r1_0.strengths,
+        r1_0.student_id,
+        r1_0.suggested_quiz,
+        r1_0.total_points,
+        r1_0.weaknesses 
+    from
+        resultats r1_0 
+    where
+        r1_0.quiz_id=? 
+    order by
+        r1_0.score_percentage desc
+2026-06-03T23:23:05.948+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-3] o.s.security.web.FilterChainProxy        : Securing GET /api/resultats/quiz/19
+2026-06-03T23:23:05.951+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-3] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:05.952+01:00 DEBUG 14016 --- [quiz_app] [io-9091-exec-10] o.s.security.web.FilterChainProxy        : Securing GET /api/resultats/quiz/17
+2026-06-03T23:23:05.955+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-3] o.s.security.web.FilterChainProxy        : Secured GET /api/resultats/quiz/19
+2026-06-03T23:23:05.956+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-3] horizationManagerBeforeMethodInterceptor : Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.resultat.controller.ResultatController.getResultatsByQuiz(java.lang.Long); target is of class [com.exemple.quiz_app.resultat.controller.ResultatController]
+2026-06-03T23:23:05.956+01:00 DEBUG 14016 --- [quiz_app] [io-9091-exec-10] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:05.956+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-3] horizationManagerBeforeMethodInterceptor : Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.resultat.controller.ResultatController.getResultatsByQuiz(java.lang.Long); target is of class [com.exemple.quiz_app.resultat.controller.ResultatController]
+2026-06-03T23:23:05.957+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-3] org.hibernate.SQL                        : 
+    select
+        r1_0.id,
+        r1_0.completed_date,
+        r1_0.earned_points,
+        r1_0.feedback_ia,
+        r1_0.grade,
+        r1_0.is_completed,
+        r1_0.quiz_id,
+        r1_0.recommendations,
+        r1_0.score,
+        r1_0.score_percentage,
+        r1_0.started_at,
+        r1_0.status,
+        r1_0.strengths,
+        r1_0.student_id,
+        r1_0.suggested_quiz,
+        r1_0.total_points,
+        r1_0.weaknesses 
+    from
+        resultats r1_0 
+    where
+        r1_0.quiz_id=? 
+    order by
+        r1_0.score_percentage desc
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.completed_date,
+        r1_0.earned_points,
+        r1_0.feedback_ia,
+        r1_0.grade,
+        r1_0.is_completed,
+        r1_0.quiz_id,
+        r1_0.recommendations,
+        r1_0.score,
+        r1_0.score_percentage,
+        r1_0.started_at,
+        r1_0.status,
+        r1_0.strengths,
+        r1_0.student_id,
+        r1_0.suggested_quiz,
+        r1_0.total_points,
+        r1_0.weaknesses 
+    from
+        resultats r1_0 
+    where
+        r1_0.quiz_id=? 
+    order by
+        r1_0.score_percentage desc
+2026-06-03T23:23:05.959+01:00 DEBUG 14016 --- [quiz_app] [io-9091-exec-10] o.s.security.web.FilterChainProxy        : Secured GET /api/resultats/quiz/17
+2026-06-03T23:23:05.961+01:00 DEBUG 14016 --- [quiz_app] [io-9091-exec-10] horizationManagerBeforeMethodInterceptor : Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.resultat.controller.ResultatController.getResultatsByQuiz(java.lang.Long); target is of class [com.exemple.quiz_app.resultat.controller.ResultatController]
+2026-06-03T23:23:05.961+01:00 DEBUG 14016 --- [quiz_app] [io-9091-exec-10] horizationManagerBeforeMethodInterceptor : Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.resultat.controller.ResultatController.getResultatsByQuiz(java.lang.Long); target is of class [com.exemple.quiz_app.resultat.controller.ResultatController]
+2026-06-03T23:23:05.962+01:00 DEBUG 14016 --- [quiz_app] [io-9091-exec-10] org.hibernate.SQL                        : 
+    select
+        r1_0.id,
+        r1_0.completed_date,
+        r1_0.earned_points,
+        r1_0.feedback_ia,
+        r1_0.grade,
+        r1_0.is_completed,
+        r1_0.quiz_id,
+        r1_0.recommendations,
+        r1_0.score,
+        r1_0.score_percentage,
+        r1_0.started_at,
+        r1_0.status,
+        r1_0.strengths,
+        r1_0.student_id,
+        r1_0.suggested_quiz,
+        r1_0.total_points,
+        r1_0.weaknesses 
+    from
+        resultats r1_0 
+    where
+        r1_0.quiz_id=? 
+    order by
+        r1_0.score_percentage desc
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.completed_date,
+        r1_0.earned_points,
+        r1_0.feedback_ia,
+        r1_0.grade,
+        r1_0.is_completed,
+        r1_0.quiz_id,
+        r1_0.recommendations,
+        r1_0.score,
+        r1_0.score_percentage,
+        r1_0.started_at,
+        r1_0.status,
+        r1_0.strengths,
+        r1_0.student_id,
+        r1_0.suggested_quiz,
+        r1_0.total_points,
+        r1_0.weaknesses 
+    from
+        resultats r1_0 
+    where
+        r1_0.quiz_id=? 
+    order by
+        r1_0.score_percentage desc
+2026-06-03T23:23:05.967+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-2] o.s.security.web.FilterChainProxy        : Securing GET /api/resultats/quiz/18
+2026-06-03T23:23:05.970+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-2] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:05.973+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-2] o.s.security.web.FilterChainProxy        : Secured GET /api/resultats/quiz/18
+2026-06-03T23:23:05.974+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-2] horizationManagerBeforeMethodInterceptor : Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.resultat.controller.ResultatController.getResultatsByQuiz(java.lang.Long); target is of class [com.exemple.quiz_app.resultat.controller.ResultatController]
+2026-06-03T23:23:05.974+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-2] horizationManagerBeforeMethodInterceptor : Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.resultat.controller.ResultatController.getResultatsByQuiz(java.lang.Long); target is of class [com.exemple.quiz_app.resultat.controller.ResultatController]
+2026-06-03T23:23:05.975+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-2] org.hibernate.SQL                        : 
+    select
+        r1_0.id,
+        r1_0.completed_date,
+        r1_0.earned_points,
+        r1_0.feedback_ia,
+        r1_0.grade,
+        r1_0.is_completed,
+        r1_0.quiz_id,
+        r1_0.recommendations,
+        r1_0.score,
+        r1_0.score_percentage,
+        r1_0.started_at,
+        r1_0.status,
+        r1_0.strengths,
+        r1_0.student_id,
+        r1_0.suggested_quiz,
+        r1_0.total_points,
+        r1_0.weaknesses 
+    from
+        resultats r1_0 
+    where
+        r1_0.quiz_id=? 
+    order by
+        r1_0.score_percentage desc
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.completed_date,
+        r1_0.earned_points,
+        r1_0.feedback_ia,
+        r1_0.grade,
+        r1_0.is_completed,
+        r1_0.quiz_id,
+        r1_0.recommendations,
+        r1_0.score,
+        r1_0.score_percentage,
+        r1_0.started_at,
+        r1_0.status,
+        r1_0.strengths,
+        r1_0.student_id,
+        r1_0.suggested_quiz,
+        r1_0.total_points,
+        r1_0.weaknesses 
+    from
+        resultats r1_0 
+    where
+        r1_0.quiz_id=? 
+    order by
+        r1_0.score_percentage desc
+2026-06-03T23:23:05.976+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-2] org.hibernate.SQL                        : 
+    select
+        q1_0.id,
+        q1_0.available_from,
+        q1_0.available_until,
+        q1_0.classe_id,
+        q1_0.created_at,
+        q1_0.creation_type,
+        q1_0.deleted_at,
+        q1_0.deleted_by,
+        q1_0.description,
+        q1_0.difficulty,
+        q1_0.id_enseignant,
+        q1_0.matiere_id,
+        q1_0.question_count,
+        q1_0.status,
+        q1_0.theme,
+        q1_0.time_limit,
+        q1_0.titre,
+        q1_0.updated_at 
+    from
+        quiz q1_0 
+    where
+        q1_0.id=?
+Hibernate: 
+    select
+        q1_0.id,
+        q1_0.available_from,
+        q1_0.available_until,
+        q1_0.classe_id,
+        q1_0.created_at,
+        q1_0.creation_type,
+        q1_0.deleted_at,
+        q1_0.deleted_by,
+        q1_0.description,
+        q1_0.difficulty,
+        q1_0.id_enseignant,
+        q1_0.matiere_id,
+        q1_0.question_count,
+        q1_0.status,
+        q1_0.theme,
+        q1_0.time_limit,
+        q1_0.titre,
+        q1_0.updated_at 
+    from
+        quiz q1_0 
+    where
+        q1_0.id=?
+2026-06-03T23:23:05.979+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-2] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.id=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.id=?
+2026-06-03T23:23:05.981+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-2] org.hibernate.SQL                        : 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+Hibernate: 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+2026-06-03T23:23:05.982+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-2] org.hibernate.SQL                        : 
+    select
+        m1_0.id,
+        m1_0.classe_id,
+        m1_0.created_at,
+        m1_0.description,
+        m1_0.enseignant_id,
+        m1_0.nom 
+    from
+        matieres m1_0 
+    where
+        m1_0.id=?
+Hibernate: 
+    select
+        m1_0.id,
+        m1_0.classe_id,
+        m1_0.created_at,
+        m1_0.description,
+        m1_0.enseignant_id,
+        m1_0.nom 
+    from
+        matieres m1_0 
+    where
+        m1_0.id=?
+2026-06-03T23:23:05.987+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-1] o.s.security.web.FilterChainProxy        : Securing GET /api/resultats/quiz/19
+2026-06-03T23:23:05.990+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-1] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:05.993+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-1] o.s.security.web.FilterChainProxy        : Secured GET /api/resultats/quiz/19
+2026-06-03T23:23:05.994+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-1] horizationManagerBeforeMethodInterceptor : Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.resultat.controller.ResultatController.getResultatsByQuiz(java.lang.Long); target is of class [com.exemple.quiz_app.resultat.controller.ResultatController]
+2026-06-03T23:23:05.995+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-1] horizationManagerBeforeMethodInterceptor : Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.resultat.controller.ResultatController.getResultatsByQuiz(java.lang.Long); target is of class [com.exemple.quiz_app.resultat.controller.ResultatController]
+2026-06-03T23:23:05.996+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-1] org.hibernate.SQL                        : 
+    select
+        r1_0.id,
+        r1_0.completed_date,
+        r1_0.earned_points,
+        r1_0.feedback_ia,
+        r1_0.grade,
+        r1_0.is_completed,
+        r1_0.quiz_id,
+        r1_0.recommendations,
+        r1_0.score,
+        r1_0.score_percentage,
+        r1_0.started_at,
+        r1_0.status,
+        r1_0.strengths,
+        r1_0.student_id,
+        r1_0.suggested_quiz,
+        r1_0.total_points,
+        r1_0.weaknesses 
+    from
+        resultats r1_0 
+    where
+        r1_0.quiz_id=? 
+    order by
+        r1_0.score_percentage desc
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.completed_date,
+        r1_0.earned_points,
+        r1_0.feedback_ia,
+        r1_0.grade,
+        r1_0.is_completed,
+        r1_0.quiz_id,
+        r1_0.recommendations,
+        r1_0.score,
+        r1_0.score_percentage,
+        r1_0.started_at,
+        r1_0.status,
+        r1_0.strengths,
+        r1_0.student_id,
+        r1_0.suggested_quiz,
+        r1_0.total_points,
+        r1_0.weaknesses 
+    from
+        resultats r1_0 
+    where
+        r1_0.quiz_id=? 
+    order by
+        r1_0.score_percentage desc
+2026-06-03T23:23:21.274+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] o.s.security.web.FilterChainProxy        : Securing GET /api/teacher/matieres
+2026-06-03T23:23:21.280+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:21.285+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] o.s.security.web.FilterChainProxy        : Secured GET /api/teacher/matieres
+2026-06-03T23:23:21.286+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] horizationManagerBeforeMethodInterceptor : Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.matiere.controller.MatiereController.getMatieres(); target is of class [com.exemple.quiz_app.matiere.controller.MatiereController]
+2026-06-03T23:23:21.288+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] horizationManagerBeforeMethodInterceptor : Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.matiere.controller.MatiereController.getMatieres(); target is of class [com.exemple.quiz_app.matiere.controller.MatiereController]
+2026-06-03T23:23:21.291+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:21.299+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        m1_0.id,
+        m1_0.classe_id,
+        m1_0.created_at,
+        m1_0.description,
+        m1_0.enseignant_id,
+        m1_0.nom 
+    from
+        matieres m1_0 
+    left join
+        users e1_0 
+            on e1_0.id=m1_0.enseignant_id 
+    where
+        e1_0.id=? 
+    order by
+        m1_0.created_at desc
+Hibernate: 
+    select
+        m1_0.id,
+        m1_0.classe_id,
+        m1_0.created_at,
+        m1_0.description,
+        m1_0.enseignant_id,
+        m1_0.nom 
+    from
+        matieres m1_0 
+    left join
+        users e1_0 
+            on e1_0.id=m1_0.enseignant_id 
+    where
+        e1_0.id=? 
+    order by
+        m1_0.created_at desc
+2026-06-03T23:23:21.307+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+Hibernate: 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+2026-06-03T23:23:21.311+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+Hibernate: 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+2026-06-03T23:23:21.323+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] o.s.security.web.FilterChainProxy        : Securing GET /api/teacher/matieres
+2026-06-03T23:23:21.329+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:21.335+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] o.s.security.web.FilterChainProxy        : Secured GET /api/teacher/matieres
+2026-06-03T23:23:21.337+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] horizationManagerBeforeMethodInterceptor : Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.matiere.controller.MatiereController.getMatieres(); target is of class [com.exemple.quiz_app.matiere.controller.MatiereController]
+2026-06-03T23:23:21.337+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] horizationManagerBeforeMethodInterceptor : Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.exemple.quiz_app.matiere.controller.MatiereController.getMatieres(); target is of class [com.exemple.quiz_app.matiere.controller.MatiereController]
+2026-06-03T23:23:21.340+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.blocked,
+        u1_0.classe_id,
+        u1_0.cne,
+        u1_0.code_apoge,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.first_name,
+        u1_0.last_name,
+        u1_0.must_change_password,
+        u1_0.password,
+        u1_0.role,
+        u1_0.updated_at 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-06-03T23:23:21.345+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        m1_0.id,
+        m1_0.classe_id,
+        m1_0.created_at,
+        m1_0.description,
+        m1_0.enseignant_id,
+        m1_0.nom 
+    from
+        matieres m1_0 
+    left join
+        users e1_0 
+            on e1_0.id=m1_0.enseignant_id 
+    where
+        e1_0.id=? 
+    order by
+        m1_0.created_at desc
+Hibernate: 
+    select
+        m1_0.id,
+        m1_0.classe_id,
+        m1_0.created_at,
+        m1_0.description,
+        m1_0.enseignant_id,
+        m1_0.nom 
+    from
+        matieres m1_0 
+    left join
+        users e1_0 
+            on e1_0.id=m1_0.enseignant_id 
+    where
+        e1_0.id=? 
+    order by
+        m1_0.created_at desc
+2026-06-03T23:23:21.350+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+Hibernate: 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+2026-06-03T23:23:21.354+01:00 DEBUG 14016 --- [quiz_app] [nio-9091-exec-4] org.hibernate.SQL                        : 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?
+Hibernate: 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.enseignant_id,
+        c1_0.filiere,
+        c1_0.name,
+        c1_0.niveau 
+    from
+        classes c1_0 
+    where
+        c1_0.id=?

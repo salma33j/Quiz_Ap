@@ -193,6 +193,9 @@ public class QuestionService {
 
         QuizGenerationRequestDto request = new QuizGenerationRequestDto();
         request.setTheme(theme);
+        request.setMatiere(theme);
+        request.setTitre(theme);
+        request.setDescription(theme);
         request.setNumberOfQuestions(numberOfQuestions);
         request.setDifficulty(difficulty);
 
@@ -217,6 +220,9 @@ public class QuestionService {
     private QuizGenerationRequestDto buildRequest(String theme, int n, String difficulty) {
         QuizGenerationRequestDto req = new QuizGenerationRequestDto();
         req.setTheme(theme);
+        req.setMatiere(theme);
+        req.setTitre(theme);
+        req.setDescription(theme);
         req.setNumberOfQuestions(n);
         req.setDifficulty(difficulty);
         return req;

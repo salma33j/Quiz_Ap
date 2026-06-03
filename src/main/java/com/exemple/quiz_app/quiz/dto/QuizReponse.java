@@ -8,6 +8,8 @@ public class QuizReponse {
     private Long id;
     private String titre;
     private String theme;
+    private String description;
+    private String difficulty;
     private Integer questionCount;
     private LocalDateTime availableFrom;
     private LocalDateTime availableUntil;

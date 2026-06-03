@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 public class QuizRequest {
     private String titre;
     private String theme;
+    private String description;
+    private String difficulty;
     private LocalDateTime availableFrom;
     private LocalDateTime availableUntil;
     private Integer timeLimit;

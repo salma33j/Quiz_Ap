@@ -43,6 +43,16 @@ public class ReponseController {
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
+    @PostMapping("/quiz/{quizId}/submit-with-answers")
+    @PreAuthorize("hasAnyRole('ETUDIANT', 'ADMIN')")
+    public ResponseEntity<QuizSubmissionResponseDto> submitQuizWithAnswers(
+            @PathVariable Long quizId,
+            @RequestBody List<ReponseRequestDto> answers
+    ) {
+        QuizSubmissionResponseDto result = reponseService.submitQuizWithAnswers(quizId, answers);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
+    }
+
     /**
      * 3. Voir les corrections (bouton "Voir corrections")
      * Appelé après soumission

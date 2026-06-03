@@ -4,6 +4,7 @@ import com.exemple.quiz_app.auth.model.Role;
 import com.exemple.quiz_app.auth.model.User;
 import com.exemple.quiz_app.auth.repository.UserRepository;
 import com.exemple.quiz_app.auth.service.AuthService;
+import com.exemple.quiz_app.auth.service.EmailService;
 import com.exemple.quiz_app.classe.entity.Classe;
 import com.exemple.quiz_app.classe.repository.ClasseRepository;
 import com.exemple.quiz_app.matiere.entity.Matiere;
@@ -40,6 +41,9 @@ public class QuizService {
     private AuthService authService;
 
     @Autowired
+    private EmailService emailService;
+
+    @Autowired
     private ClasseRepository classeRepository;
 
     @Autowired
@@ -55,7 +59,8 @@ public class QuizService {
 
         Quiz quiz = new Quiz();
         quiz.setTitre(request.getTitre());
-        quiz.setTheme(request.getTheme());
+        quiz.setDescription(cleanText(request.getDescription()));
+        quiz.setDifficulty(normalizeDifficulty(request.getDifficulty()));
         quiz.setQuestionCount(0);
         quiz.setAvailableFrom(request.getAvailableFrom());
         quiz.setAvailableUntil(request.getAvailableUntil());
@@ -79,16 +84,26 @@ public class QuizService {
             Matiere matiere = matiereRepository.findById(request.getMatiereId())
                     .orElseThrow(() -> new RuntimeException("Matiere introuvable"));
             quiz.setMatiere(matiere);
+            if (quiz.getClasse() == null) {
+                quiz.setClasse(matiere.getClasse());
+            }
         }
 
-        return mapToResponse(quizRepository.save(quiz));
+        quiz.setTheme(resolveTheme(request, quiz.getMatiere()));
+
+        Quiz savedQuiz = quizRepository.save(quiz);
+        assignClassStudentsToQuiz(savedQuiz);
+
+        return mapToResponse(savedQuiz);
     }
 
+    @Transactional
     public List<QuizReponse> getMyQuizzes() {
         User enseignant = authService.getCurrentUser();
 
         return quizRepository.findByEnseignant(enseignant)
                 .stream()
+                .peek(this::assignClassStudentsToQuiz)
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -123,7 +138,8 @@ public class QuizService {
         }
 
         quiz.setTitre(request.getTitre());
-        quiz.setTheme(request.getTheme());
+        quiz.setDescription(cleanText(request.getDescription()));
+        quiz.setDifficulty(normalizeDifficulty(request.getDifficulty()));
         quiz.setAvailableFrom(request.getAvailableFrom());
         quiz.setAvailableUntil(request.getAvailableUntil());
         quiz.setTimeLimit(request.getTimeLimit());
@@ -146,11 +162,19 @@ public class QuizService {
             Matiere matiere = matiereRepository.findById(request.getMatiereId())
                     .orElseThrow(() -> new RuntimeException("Matiere introuvable"));
             quiz.setMatiere(matiere);
+            if (quiz.getClasse() == null) {
+                quiz.setClasse(matiere.getClasse());
+            }
         } else {
             quiz.setMatiere(null);
         }
 
-        return mapToResponse(quizRepository.save(quiz));
+        quiz.setTheme(resolveTheme(request, quiz.getMatiere()));
+
+        Quiz savedQuiz = quizRepository.save(quiz);
+        assignClassStudentsToQuiz(savedQuiz);
+
+        return mapToResponse(savedQuiz);
     }
 
     @Transactional
@@ -187,16 +211,20 @@ public class QuizService {
             throw new RuntimeException("Quiz deja publie");
         }
 
-        if (quiz.getQuestionCount() == null || quiz.getQuestionCount() < 10) {
-            throw new RuntimeException("Ajoutez au moins 10 questions avant de publier");
+        if (quiz.getQuestionCount() == null || quiz.getQuestionCount() < 15) {
+            throw new RuntimeException("Ajoutez au moins 15 questions avant de publier");
         }
+
+        assignClassStudentsToQuiz(quiz);
 
         if (quizRepository.countAllowedStudents(id) == 0) {
             throw new RuntimeException("Ajoutez au moins un etudiant avant de publier");
         }
 
         quiz.setStatus(Quiz.QuizStatus.PUBLISHED);
-        return mapToResponse(quizRepository.save(quiz));
+        Quiz savedQuiz = quizRepository.save(quiz);
+        notifyClassStudentsAboutPublishedQuiz(savedQuiz);
+        return mapToResponse(savedQuiz);
     }
 
     @Transactional
@@ -352,7 +380,7 @@ public class QuizService {
         status.put("canBePublished",
                 quiz.getStatus() == Quiz.QuizStatus.DRAFT &&
                         quiz.getQuestionCount() != null &&
-                        quiz.getQuestionCount() >= 10 &&
+                        quiz.getQuestionCount() >= 15 &&
                         quizRepository.countAllowedStudents(quizId) > 0
         );
 
@@ -367,12 +395,83 @@ public class QuizService {
         return quizRepository.countAllowedStudents(quizId);
     }
 
+    private void notifyClassStudentsAboutPublishedQuiz(Quiz quiz) {
+        Classe classe = resolveQuizClasse(quiz);
+
+        if (classe == null) {
+            System.out.println("[QuizService] Aucun email envoye: quiz " + quiz.getId() + " sans classe.");
+            return;
+        }
+
+        List<User> students = userRepository.findByClasseIdOrderByLastNameAscFirstNameAsc(classe.getId());
+        int attempted = 0;
+        int sent = 0;
+
+        for (User student : students) {
+            if (student.getRole() != Role.ETUDIANT) {
+                continue;
+            }
+
+            if (student.getEmail() == null || student.getEmail().isBlank()) {
+                continue;
+            }
+
+            attempted++;
+            if (emailService.sendQuizPublishedEmail(student, quiz)) {
+                sent++;
+            }
+        }
+
+        System.out.println("[QuizService] Notifications quiz " + quiz.getId()
+                + " envoyees: " + sent + "/" + attempted + " etudiant(s).");
+    }
+
+    private Classe resolveQuizClasse(Quiz quiz) {
+        Classe classe = quiz.getClasse();
+
+        if (classe == null && quiz.getMatiere() != null) {
+            classe = quiz.getMatiere().getClasse();
+            quiz.setClasse(classe);
+        }
+
+        return classe;
+    }
+
+    private int assignClassStudentsToQuiz(Quiz quiz) {
+        Classe classe = resolveQuizClasse(quiz);
+
+        if (classe == null) {
+            return 0;
+        }
+
+        List<User> students = userRepository.findByClasseIdOrderByLastNameAscFirstNameAsc(classe.getId());
+        int added = 0;
+
+        for (User student : students) {
+            if (student.getRole() != Role.ETUDIANT) {
+                continue;
+            }
+
+            if (!quizStudentRepository.existsByQuizAndStudent(quiz, student)) {
+                QuizStudent qs = new QuizStudent();
+                qs.setQuiz(quiz);
+                qs.setStudent(student);
+                quizStudentRepository.save(qs);
+                added++;
+            }
+        }
+
+        return added;
+    }
+
     private QuizReponse mapToResponse(Quiz quiz) {
         QuizReponse response = new QuizReponse();
 
         response.setId(quiz.getId());
         response.setTitre(quiz.getTitre());
         response.setTheme(quiz.getTheme());
+        response.setDescription(quiz.getDescription());
+        response.setDifficulty(quiz.getDifficulty());
         response.setQuestionCount(quiz.getQuestionCount());
         response.setAvailableFrom(quiz.getAvailableFrom());
         response.setAvailableUntil(quiz.getAvailableUntil());
@@ -396,11 +495,46 @@ public class QuizService {
         if (quiz.getMatiere() != null) {
             response.setMatiereId(quiz.getMatiere().getId());
             response.setMatiereName(quiz.getMatiere().getNom());
+
+            if (response.getClasseId() == null && quiz.getMatiere().getClasse() != null) {
+                response.setClasseId(quiz.getMatiere().getClasse().getId());
+                response.setClasseName(quiz.getMatiere().getClasse().getName());
+                response.setClassFiliere(quiz.getMatiere().getClasse().getFiliere());
+                response.setClassNiveau(quiz.getMatiere().getClasse().getNiveau());
+            }
         }
 
         response.setTotalStudentsAllowed(quizRepository.countAllowedStudents(quiz.getId()));
         response.setCreatedAt(quiz.getCreatedAt());
 
         return response;
+    }
+
+    private String cleanText(String value) {
+        return value == null ? null : value.trim();
+    }
+
+    private String normalizeDifficulty(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return "MOYEN";
+        }
+
+        String normalized = value.trim().toUpperCase();
+        return switch (normalized) {
+            case "FACILE", "DIFFICILE" -> normalized;
+            default -> "MOYEN";
+        };
+    }
+
+    private String resolveTheme(QuizRequest request, Matiere matiere) {
+        if (matiere != null && matiere.getNom() != null && !matiere.getNom().trim().isEmpty()) {
+            return matiere.getNom().trim();
+        }
+
+        if (request.getTheme() != null && !request.getTheme().trim().isEmpty()) {
+            return request.getTheme().trim();
+        }
+
+        return request.getTitre();
     }
 }

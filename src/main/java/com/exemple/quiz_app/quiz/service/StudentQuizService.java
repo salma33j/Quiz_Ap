@@ -2,6 +2,8 @@ package com.exemple.quiz_app.quiz.service;
 
 import com.exemple.quiz_app.auth.model.User;
 import com.exemple.quiz_app.auth.service.AuthService;
+import com.exemple.quiz_app.classe.entity.Classe;
+import com.exemple.quiz_app.matiere.entity.Matiere;
 import com.exemple.quiz_app.question.dto.QuestionDto;
 import com.exemple.quiz_app.question.entity.Question;
 import com.exemple.quiz_app.question.repository.QuestionRepository;
@@ -45,6 +47,7 @@ public class StudentQuizService {
      * Quizzes disponibles (uniquement "À faire")
      * Ne montre PAS les quiz terminés, expirés, ou avec session expirée
      */
+    @Transactional(readOnly = true)
     public List<QuizForStudentDto> getAvailableQuizzes() {
         User student = authService.getCurrentUser();
         LocalDateTime now = LocalDateTime.now();
@@ -72,6 +75,7 @@ public class StudentQuizService {
                     dto.setQuestionCount(quiz.getQuestionCount());
                     dto.setTimeLimit(quiz.getTimeLimit());
                     dto.setAvailableUntil(quiz.getAvailableUntil());
+                    applyQuizContext(dto, quiz);
                     dto.setStatus("À faire");
 
                     if (quiz.getAvailableUntil() != null) {
@@ -91,6 +95,7 @@ public class StudentQuizService {
      * - Expiré = date du professeur dépassée uniquement
      * - À faire = quiz disponible
      */
+    @Transactional(readOnly = true)
     public List<QuizForStudentDto> getQuizHistory() {
         User student = authService.getCurrentUser();
         LocalDateTime now = LocalDateTime.now();
@@ -104,6 +109,7 @@ public class StudentQuizService {
             dto.setQuestionCount(quiz.getQuestionCount());
             dto.setTimeLimit(quiz.getTimeLimit());
             dto.setAvailableUntil(quiz.getAvailableUntil());
+            applyQuizContext(dto, quiz);
 
             boolean completed = resultatRepository.hasStudentCompletedQuiz(student.getId().longValue(), quiz.getId());
             Optional<QuizSession> session = quizSessionRepository.findByStudentAndQuiz(student, quiz);
@@ -135,6 +141,7 @@ public class StudentQuizService {
         }).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public QuizForStudentDto getQuizDetails(Long quizId) {
         User student = authService.getCurrentUser();
 
@@ -153,6 +160,7 @@ public class StudentQuizService {
         dto.setQuestionCount(quiz.getQuestionCount());
         dto.setTimeLimit(quiz.getTimeLimit());
         dto.setAvailableUntil(quiz.getAvailableUntil());
+        applyQuizContext(dto, quiz);
 
         boolean completed = resultatRepository.hasStudentCompletedQuiz(student.getId().longValue(), quizId);
         Optional<QuizSession> session = quizSessionRepository.findByStudentAndQuiz(student, quiz);
@@ -365,8 +373,12 @@ public class StudentQuizService {
 
         Optional<QuizSession> session = quizSessionRepository.findByStudentAndQuiz(student, quiz);
 
-        if (session.isPresent() && !session.get().isExpired()) {
-            return session.get().getRemainingSeconds();
+        if (session.isPresent()) {
+            QuizSession quizSession = session.get();
+            if (quizSession.getStatus() == QuizSession.SessionStatus.COMPLETED || quizSession.isExpired()) {
+                return 0L;
+            }
+            return quizSession.getRemainingSeconds();
         }
 
         if (quiz.getTimeLimit() != null) {
@@ -420,6 +432,30 @@ public class StudentQuizService {
         dto.setType(question.getType().name());
         dto.setPoints(question.getPoints());
         return dto;
+    }
+
+    private void applyQuizContext(QuizForStudentDto dto, Quiz quiz) {
+        Matiere matiere = quiz.getMatiere();
+        Classe classe = quiz.getClasse();
+
+        if (matiere != null) {
+            dto.setMatiereId(matiere.getId());
+            dto.setMatiereName(matiere.getNom());
+            dto.setMatiereNom(matiere.getNom());
+
+            if (classe == null) {
+                classe = matiere.getClasse();
+            }
+        }
+
+        if (classe != null) {
+            dto.setClassId(classe.getId());
+            dto.setClasseId(classe.getId());
+            dto.setClassName(classe.getName());
+            dto.setClasseName(classe.getName());
+            dto.setClassFiliere(classe.getFiliere());
+            dto.setClassNiveau(classe.getNiveau());
+        }
     }
 
     private static String teacherDisplayName(User enseignant) {

@@ -13,6 +13,7 @@ import com.exemple.quiz_app.matiere.repository.MatiereRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -55,6 +56,23 @@ public class MatiereService {
         return matiereRepository.findByClasseIdOrderByNomAsc(classe.getId())
                 .stream()
                 .filter(matiere -> requester.getRole() == Role.ADMIN || matiere.getEnseignant().getId().equals(requester.getId()))
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<MatiereResponse> getMatieresForCurrentStudent() {
+        User student = authService.getCurrentUser();
+
+        if (student.getRole() != Role.ETUDIANT && student.getRole() != Role.ADMIN) {
+            throw new RuntimeException("Acces reserve aux etudiants.");
+        }
+
+        if (student.getClasse() == null) {
+            return Collections.emptyList();
+        }
+
+        return matiereRepository.findByClasseIdOrderByNomAsc(student.getClasse().getId())
+                .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }

@@ -73,13 +73,22 @@ public class ResultatMapper {
     }
 
     private String getSubjectName(Resultat resultat) {
-        if (resultat.getQuiz() == null || resultat.getQuiz().getTheme() == null) {
-            return "Matière non définie";
+        if (resultat.getQuiz() == null) {
+            return "Matiere non definie";
         }
 
-        return resultat.getQuiz().getTheme();
-    }
+        if (resultat.getQuiz().getMatiere() != null
+                && resultat.getQuiz().getMatiere().getNom() != null
+                && !resultat.getQuiz().getMatiere().getNom().trim().isEmpty()) {
+            return resultat.getQuiz().getMatiere().getNom().trim();
+        }
 
+        if (resultat.getQuiz().getTheme() != null && !resultat.getQuiz().getTheme().trim().isEmpty()) {
+            return resultat.getQuiz().getTheme().trim();
+        }
+
+        return "Matiere non definie";
+    }
     private Double getNoteSur20(Resultat resultat) {
         if (resultat.getScorePercentage() == null) {
             return 0.0;

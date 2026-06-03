@@ -1,11 +1,17 @@
 package com.exemple.quiz_app.auth.service;
 
+import com.exemple.quiz_app.auth.model.User;
+import com.exemple.quiz_app.classe.entity.Classe;
+import com.exemple.quiz_app.matiere.entity.Matiere;
+import com.exemple.quiz_app.quiz.entity.Quiz;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import jakarta.mail.internet.MimeMessage;
+
+import java.time.format.DateTimeFormatter;
 
 @Service
 public class EmailService {
@@ -33,7 +39,7 @@ public class EmailService {
                 
                     <!-- HEADER -->
                     <div style="background-color: #1a73e8; padding: 30px; text-align: center;">
-                        <h1 style="color: white; margin: 0; font-size: 24px;">🎓 Plateforme Quiz FSB</h1>
+                        <h1 style="color: white; margin: 0; font-size: 24px;">🎓 Plateforme Quiz APP</h1>
                         <p style="color: #d0e8ff; margin: 5px 0 0;">Faculté des Sciences Ben M'Sick</p>
                     </div>
                 
@@ -83,7 +89,7 @@ public class EmailService {
                     <!-- FOOTER -->
                     <div style="background-color: #f5f5f5; padding: 15px; text-align: center;
                                 color: #999; font-size: 12px;">
-                        <p style="margin: 0;">Université Hassan II de Casablanca — Faculté des Sciences Ben M'Sick</p>
+ 
                         <p style="margin: 5px 0 0;">© 2025-2026 Plateforme Quiz FSB</p>
                     </div>
                 </div>
@@ -97,7 +103,7 @@ public class EmailService {
      */
     public void sendEnseignantCredentials(String toEmail, String firstName, String lastName,
                                           String password) {
-        String subject = "👨‍🏫 Vos identifiants Enseignant - Plateforme Quiz FSB";
+        String subject = "👨‍🏫 Vos identifiants Enseignant - Plateforme Quiz APP";
 
         String htmlContent = """
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;
@@ -155,7 +161,6 @@ public class EmailService {
                     <!-- FOOTER -->
                     <div style="background-color: #f5f5f5; padding: 15px; text-align: center;
                                 color: #999; font-size: 12px;">
-                        <p style="margin: 0;">Université Hassan II de Casablanca — Faculté des Sciences Ben M'Sick</p>
                         <p style="margin: 5px 0 0;">© 2025-2026 Plateforme Quiz FSB</p>
                     </div>
                 </div>
@@ -165,7 +170,7 @@ public class EmailService {
     }
 
     public void sendAdminCredentials(String toEmail, String firstName, String lastName, String password) {
-        String subject = "Vos identifiants Admin - Plateforme Quiz FSB";
+        String subject = "Vos identifiants Admin - Plateforme Quiz APP";
         String htmlContent = """
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;
                             border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden;">
@@ -220,10 +225,70 @@ public class EmailService {
         sendHtmlEmail(toEmail, subject, htmlContent);
     }
 
+    public boolean sendQuizPublishedEmail(User student, Quiz quiz) {
+        String quizTitle = escapeHtml(orDefault(quiz.getTitre(), "Quiz"));
+        String studentName = escapeHtml(orDefault(student.getFullName(), "Etudiant"));
+        String matiereName = escapeHtml(resolveMatiereName(quiz));
+        String classeName = escapeHtml(resolveClasseName(quiz));
+        String deadline = quiz.getAvailableUntil() == null
+                ? "Non definie"
+                : quiz.getAvailableUntil().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        String timeLimit = quiz.getTimeLimit() == null ? "Non definie" : quiz.getTimeLimit() + " min";
+        String questionCount = quiz.getQuestionCount() == null ? "0" : quiz.getQuestionCount().toString();
+        String quizUrl = cleanFrontendUrl() + "/student/quizzes";
+
+        String subject = "Nouveau quiz disponible - " + orDefault(quiz.getTitre(), "Quiz");
+        String htmlContent = """
+                <div style="font-family: Arial, sans-serif; max-width: 620px; margin: auto;
+                            border: 1px solid #f2d46b; border-radius: 18px; overflow: hidden;
+                            background: #fffdf4;">
+                    <div style="background: linear-gradient(135deg, #fffaf0, #ffe98f);
+                                padding: 28px 32px; text-align: left;">
+                        <p style="margin: 0 0 10px; color: #a16207; font-weight: 700;">
+                            QuizApp
+                        </p>
+                        <h1 style="margin: 0; color: #111827; font-size: 24px;">
+                            Nouveau quiz disponible
+                        </h1>
+                    </div>
+                    <div style="padding: 30px 32px; background: #ffffff;">
+                        <p style="font-size: 16px; color: #111827; margin-top: 0;">
+                            Bonjour <strong>%s</strong>,
+                        </p>
+                        <p style="font-size: 15px; color: #4b5563; line-height: 1.6;">
+                            Un nouveau quiz vient d'etre publie pour votre classe.
+                        </p>
+
+                        <div style="border: 1px solid #f2d46b; border-radius: 16px;
+                                    padding: 20px; background: #fffbeb; margin: 22px 0;">
+                            <h2 style="margin: 0 0 14px; color: #111827; font-size: 21px;">%s</h2>
+                            <p style="margin: 7px 0; color: #111827;"><strong>Matiere :</strong> %s</p>
+                            <p style="margin: 7px 0; color: #111827;"><strong>Classe :</strong> %s</p>
+                            <p style="margin: 7px 0; color: #111827;"><strong>Questions :</strong> %s</p>
+                            <p style="margin: 7px 0; color: #111827;"><strong>Duree :</strong> %s</p>
+                            <p style="margin: 7px 0; color: #111827;"><strong>Date limite :</strong> %s</p>
+                        </div>
+
+                        <div style="text-align: center; margin: 28px 0 10px;">
+                            <a href="%s"
+                               style="background: linear-gradient(135deg, #ffcc33, #f5ad00);
+                                      color: #111827; padding: 14px 30px; text-decoration: none;
+                                      border-radius: 14px; font-weight: 800; display: inline-block;">
+                                Voir les quiz disponibles
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                """.formatted(studentName, quizTitle, matiereName, classeName, questionCount,
+                timeLimit, deadline, quizUrl);
+
+        return sendHtmlEmail(student.getEmail(), subject, htmlContent);
+    }
+
     /**
      * ✅ Méthode générique pour envoyer un email HTML
      */
-    private void sendHtmlEmail(String toEmail, String subject, String htmlContent) {
+    private boolean sendHtmlEmail(String toEmail, String subject, String htmlContent) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -233,9 +298,61 @@ public class EmailService {
             helper.setText(htmlContent, true); // true = HTML
             mailSender.send(message);
             System.out.println("✅ [EmailService] Email envoyé à : " + toEmail);
+            return true;
         } catch (Exception e) {
             // On log l'erreur mais on ne bloque pas la création du compte
             System.err.println("❌ [EmailService] Erreur envoi email à " + toEmail + " : " + e.getMessage());
+            return false;
         }
+    }
+
+    private String resolveMatiereName(Quiz quiz) {
+        Matiere matiere = quiz.getMatiere();
+        if (matiere != null && matiere.getNom() != null && !matiere.getNom().isBlank()) {
+            return matiere.getNom();
+        }
+        return orDefault(quiz.getTheme(), "Matiere");
+    }
+
+    private String resolveClasseName(Quiz quiz) {
+        Classe classe = quiz.getClasse();
+        if (classe == null && quiz.getMatiere() != null) {
+            classe = quiz.getMatiere().getClasse();
+        }
+        if (classe == null) {
+            return "Classe non definie";
+        }
+
+        String name = orDefault(classe.getName(), "Classe");
+        String filiere = classe.getFiliere();
+        String niveau = classe.getNiveau();
+
+        if (filiere != null && !filiere.isBlank()) {
+            name += " - " + filiere;
+        }
+        if (niveau != null && !niveau.isBlank()) {
+            name += " - " + niveau;
+        }
+        return name;
+    }
+
+    private String cleanFrontendUrl() {
+        return frontendUrl == null ? "http://localhost:5174" : frontendUrl.replaceAll("/+$", "");
+    }
+
+    private String orDefault(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value.trim();
+    }
+
+    private String escapeHtml(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 }

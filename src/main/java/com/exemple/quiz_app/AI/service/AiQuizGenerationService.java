@@ -30,10 +30,34 @@ public class AiQuizGenerationService {
 
         String prompt = buildGenerationPrompt(request);
         String response = geminiApiClient.callGemini(prompt);
-        return parseQuizResponse(response, request.getTheme());
+        return parseQuizResponse(response, getMatiere(request));
+    }
+
+    private String firstText(String... values) {
+        if (values == null) {
+            return "";
+        }
+
+        for (String value : values) {
+            if (value != null && !value.trim().isEmpty()) {
+                return value.trim();
+            }
+        }
+
+        return "";
+    }
+
+    private String getMatiere(QuizGenerationRequestDto request) {
+        return firstText(request.getMatiere(), request.getTheme(), "Matiere non definie");
     }
 
     private String buildGenerationPrompt(QuizGenerationRequestDto request) {
+        String matiere = getMatiere(request);
+        String titre = firstText(request.getTitre(), "Quiz sans titre");
+        String description = firstText(request.getDescription(), "Objectif pedagogique non precise");
+        String classe = firstText(request.getClasse(), "classe non precisee");
+        int numberOfQuestions = request.getNumberOfQuestions() != null ? request.getNumberOfQuestions() : 15;
+
         String difficultyText = "";
         if ("FACILE".equals(request.getDifficulty())) {
             difficultyText = "niveau debutant, questions simples";
@@ -51,8 +75,23 @@ public class AiQuizGenerationService {
         };
 
         return String.format("""
-            Tu es un generateur de quiz. Cree %d questions de %s sur le theme: "%s".
+            Tu es un assistant pedagogique pour enseignants.
+            Cree exactement %d questions de %s.
+
+            Contraintes du professeur:
+            - Matiere: "%s"
+            - Titre du quiz: "%s"
+            - Description / besoins pedagogiques: "%s"
+            - Classe et niveau des etudiants: "%s"
+            - Difficulte demandee: %s
             Type demande: %s.
+
+            Regles importantes:
+            - Toutes les questions doivent rester strictement dans la matiere indiquee.
+            - Les questions doivent servir le titre et la description fournis par le professeur.
+            - Adapte le vocabulaire, les exemples et la profondeur au niveau de la classe.
+            - Ne cree pas de questions hors sujet, trop generales ou d'un niveau different.
+            - Le resultat doit contenir exactement %d questions, pas plus, pas moins.
 
             Pour chaque question, fournis:
             1. Le texte de la question
@@ -80,10 +119,15 @@ public class AiQuizGenerationService {
             Si Type demande impose TEXT, chaque question doit avoir:
             "type": "TEXT", "options": [], "correctAnswer": une reponse texte.
             """,
-                request.getNumberOfQuestions(),
+                numberOfQuestions,
                 difficultyText,
-                request.getTheme(),
-                typeText
+                matiere,
+                titre,
+                description,
+                classe,
+                request.getDifficulty(),
+                typeText,
+                numberOfQuestions
         );
     }
 

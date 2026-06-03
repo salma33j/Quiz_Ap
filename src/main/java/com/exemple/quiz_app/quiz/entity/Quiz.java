@@ -32,6 +32,12 @@ public class Quiz {
     @Column(length = 100)
     private String theme;
 
+    @Column(length = 1000)
+    private String description;
+
+    @Column(length = 30)
+    private String difficulty;
+
     private Integer questionCount = 0;
 
     private LocalDateTime availableFrom;
