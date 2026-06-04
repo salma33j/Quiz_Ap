@@ -31,9 +31,3 @@ build/
 
 ### VS Code ###
 .vscode/
-
-### Secrets locaux (clés API, etc.) ###
-**/application-local.properties
-
-# Application properties (contient les clés secrètes)
-src/main/resources/application.properties
