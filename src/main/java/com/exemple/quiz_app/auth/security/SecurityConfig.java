@@ -77,7 +77,7 @@ public class SecurityConfig {
                 "http://127.0.0.1:5173",
                 "http://localhost:9091",
                 "http://127.0.0.1:9091",
-                "https://quiz-ap-nsgj.vercel.app"
+                "https://quiz-ap-sa.vercel.app"
         ));
 
         configuration.setAllowedMethods(Arrays.asList(
