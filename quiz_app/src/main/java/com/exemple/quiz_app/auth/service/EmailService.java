@@ -316,7 +316,7 @@ public class EmailService {
      * ✅ Méthode générique pour envoyer un email HTML
      */
     private boolean sendHtmlEmail(String toEmail, String subject, String htmlContent) {
-        if ("resend".equalsIgnoreCase(emailProvider)) {
+        if (shouldUseResend()) {
             return sendHtmlEmailWithResend(toEmail, subject, htmlContent);
         }
 
@@ -392,6 +392,16 @@ public class EmailService {
             return configured;
         }
         return fromEmail == null ? "" : fromEmail.trim();
+    }
+
+    private boolean shouldUseResend() {
+        String provider = emailProvider == null ? "auto" : emailProvider.trim();
+        if ("resend".equalsIgnoreCase(provider)) {
+            return true;
+        }
+        return "auto".equalsIgnoreCase(provider)
+                && resendApiKey != null
+                && !resendApiKey.isBlank();
     }
 
     private String abbreviate(String value) {
