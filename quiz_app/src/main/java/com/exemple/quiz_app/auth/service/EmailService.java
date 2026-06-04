@@ -7,6 +7,7 @@ import com.exemple.quiz_app.quiz.entity.Quiz;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -52,6 +53,14 @@ public class EmailService {
 
     @Value("${resend.api.url:https://api.resend.com/emails}")
     private String resendApiUrl;
+
+    @PostConstruct
+    public void logEmailConfiguration() {
+        System.out.println("[EmailService] Configuration email: provider=" + resolveProvider()
+                + ", resendApiKeyConfigured=" + isConfigured(resendApiKey)
+                + ", emailFromConfigured=" + isConfigured(resolveFromEmail())
+                + ", smtpUsernameConfigured=" + isConfigured(fromEmail));
+    }
 
     /**
      * ✅ Envoie les identifiants à un ÉTUDIANT nouvellement créé
@@ -395,13 +404,21 @@ public class EmailService {
     }
 
     private boolean shouldUseResend() {
-        String provider = emailProvider == null ? "auto" : emailProvider.trim();
+        String provider = resolveProvider();
         if ("resend".equalsIgnoreCase(provider)) {
             return true;
         }
         return "auto".equalsIgnoreCase(provider)
                 && resendApiKey != null
                 && !resendApiKey.isBlank();
+    }
+
+    private String resolveProvider() {
+        return emailProvider == null || emailProvider.isBlank() ? "resend" : emailProvider.trim();
+    }
+
+    private boolean isConfigured(String value) {
+        return value != null && !value.isBlank();
     }
 
     private String abbreviate(String value) {
