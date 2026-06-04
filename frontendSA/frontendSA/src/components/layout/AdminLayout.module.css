@@ -1,0 +1,37 @@
+.layout {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top right, rgba(242, 217, 141, 0.28), transparent 28%),
+    var(--app-bg);
+}
+
+.main {
+  --content-min-height: calc(100dvh - 44px);
+  height: 100dvh;
+  min-height: 0;
+  margin-left: 290px;
+  padding: 16px 30px 28px;
+  background: var(--app-bg);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  transition: margin-left 0.28s ease;
+}
+
+.mainCollapsed {
+  margin-left: 84px;
+}
+
+@media (max-width: 900px) {
+  .main,
+  .mainCollapsed {
+    --content-min-height: calc(100dvh - 34px);
+    margin-left: 0;
+    padding: 14px 18px 20px;
+  }
+}

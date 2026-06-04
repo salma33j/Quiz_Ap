@@ -1,0 +1,5 @@
+[2m17:01:03[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mAxiosError: Network Error
+    at XMLHttpRequest.handleError (http://localhost:5173/.vite-cache/deps/axios.js?v=7fc98169:2120:16)
+    at Axios$1.request (http://localhost:5173/.vite-cache/deps/axios.js?v=7fc98169:2792:37)
+    at async login (http://localhost:5173/src/context/AuthContext.jsx:23:20)
+    at async handleSubmit (http://localhost:5173/src/pages/auth/Login.jsx:43:17)

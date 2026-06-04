@@ -1,0 +1,235 @@
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 1000;
+  width: 290px;
+  height: 100dvh;
+  padding: 16px 14px;
+  background: linear-gradient(180deg, #05072a 0%, #11165a 58%, #17206f 100%);
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 22px 0 55px rgba(7, 10, 53, 0.25);
+  transition: width 0.28s ease, padding 0.28s ease;
+}
+
+.collapsed {
+  width: 84px;
+  padding: 16px 8px;
+}
+
+.brand {
+  height: 62px;
+  width: 100%;
+  padding: 0 0 12px;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.22s ease,
+    border-color 0.22s ease,
+    transform 0.22s ease;
+}
+
+.brand img {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  background: #ffffff;
+  object-fit: cover;
+  flex: 0 0 auto;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.brand:hover,
+.brand:focus-visible {
+  border-bottom-color: rgba(255, 199, 18, 0.55);
+  background: rgba(255, 199, 18, 0.1);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.brand:hover img,
+.brand:focus-visible img {
+  transform: scale(1.06);
+  box-shadow:
+    0 0 0 4px rgba(255, 199, 18, 0.2),
+    0 14px 28px rgba(255, 184, 0, 0.22);
+}
+
+.brand h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 1000;
+  white-space: nowrap;
+}
+
+.brand p {
+  margin: 2px 0 0;
+  color: #c7d2fe;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.collapsed .brand {
+  justify-content: center;
+}
+
+.collapsed .brand h2,
+.collapsed .brand p {
+  display: none;
+}
+
+.toggle {
+  width: 42px;
+  height: 42px;
+  margin: 14px auto 0;
+  border: none;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: 0.22s ease;
+}
+
+.studentMark {
+  min-height: 44px;
+  margin-top: 16px;
+  padding: 0 13px;
+  border-radius: 15px;
+  background: rgba(125, 211, 252, 0.14);
+  color: #d9f3ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.nav {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.32) transparent;
+}
+
+.nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.32);
+  border-radius: 999px;
+}
+
+.link,
+.profile,
+.logout {
+  min-height: 48px;
+  border: none;
+  border-radius: 15px;
+  color: #e8eeff;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 0 13px;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.22s ease;
+}
+
+.profile,
+.logout {
+  width: 100%;
+  justify-content: center;
+}
+
+.profile {
+  margin-top: 12px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.logout {
+  margin-top: 8px;
+  background: rgba(239, 68, 68, 0.88);
+}
+
+.link svg,
+.profile svg,
+.logout svg {
+  flex: 0 0 auto;
+}
+
+.toggle:hover,
+.link:hover,
+.profile:hover {
+  background: rgba(100, 150, 255, 0.28);
+  transform: translateY(-2px);
+}
+
+.logout:hover {
+  background: #ff4444;
+  transform: translateY(-2px);
+}
+
+.active {
+  background: linear-gradient(135deg, #ffffff, #dff2fb);
+  color: #05072a;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+.collapsed .link,
+.collapsed .profile,
+.collapsed .logout {
+  width: 52px;
+  height: 52px;
+  min-height: 52px;
+  justify-content: center;
+  padding: 0;
+  margin-inline: auto;
+}
+
+.collapsed .profile {
+  margin-top: 12px;
+}
+
+.collapsed .logout {
+  margin-top: 8px;
+}
+
+.collapsed .link span,
+.collapsed .profile span,
+.collapsed .logout span,
+.collapsed .studentMark span {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    display: none;
+  }
+}

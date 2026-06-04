@@ -1,0 +1,57 @@
+.layout {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--app-bg);
+}
+
+.main {
+  --content-min-height: calc(100dvh - 46px);
+  height: 100dvh;
+  min-height: 0;
+  margin-left: 290px;
+  padding: 16px 34px 30px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  background: var(--app-bg);
+  scrollbar-color: #050505 var(--app-scroll-track);
+  scrollbar-width: auto;
+  transition: margin-left 0.28s ease;
+}
+
+.main::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.main::-webkit-scrollbar-track {
+  background: var(--app-scroll-track);
+}
+
+.main::-webkit-scrollbar-thumb {
+  background: #050505;
+  border: 3px solid var(--app-scroll-track);
+  border-radius: 999px;
+}
+
+.main::-webkit-scrollbar-thumb:hover {
+  background: #000000;
+}
+
+.mainCollapsed {
+  margin-left: 84px;
+}
+
+@media (max-width: 900px) {
+  .main,
+  .mainCollapsed {
+    --content-min-height: calc(100dvh - 34px);
+    margin-left: 0;
+    padding: 14px 18px 20px;
+  }
+}

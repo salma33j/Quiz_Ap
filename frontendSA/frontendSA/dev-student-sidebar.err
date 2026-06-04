@@ -1,0 +1,21 @@
+[2m23:05:30[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mAxiosError: Request failed with status code 401
+    at settle (http://127.0.0.1:5173/.vite-cache/deps/axios.js?v=c2803cc3:1738:14)
+    at XMLHttpRequest.onloadend (http://127.0.0.1:5173/.vite-cache/deps/axios.js?v=c2803cc3:2091:4)
+    at Axios$1.request (http://127.0.0.1:5173/.vite-cache/deps/axios.js?v=c2803cc3:2792:37)
+    at async login (http://127.0.0.1:5173/src/context/AuthContext.jsx:23:20)
+    at async handleSubmit (http://127.0.0.1:5173/src/pages/auth/Login.jsx:43:17)
+[2m01:56:51[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[vite] ReferenceError: v is not defined
+    at http://127.0.0.1:5173/src/pages/teacher/CreateQuiz.jsx?t=1780448211637:1:1
+[2m01:56:51[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[vite] Failed to reload /src/pages/teacher/CreateQuiz.jsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+[2m02:03:20[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[vite] ReferenceError: a is not defined
+    at http://127.0.0.1:5173/src/pages/teacher/CreateQuiz.jsx?t=1780448599931:793:1
+[2m02:03:20[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[vite] Failed to reload /src/pages/teacher/CreateQuiz.jsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+[2m02:03:25[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[vite] ReferenceError: a is not defined
+    at http://127.0.0.1:5173/src/pages/teacher/CreateQuiz.jsx?t=1780448605627:793:1
+[2m02:03:25[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[vite] Failed to reload /src/pages/teacher/CreateQuiz.jsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+[2m02:03:40[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[vite] ReferenceError: a is not defined
+    at http://127.0.0.1:5173/src/pages/teacher/CreateQuiz.jsx?t=1780448620145:793:1
+[2m02:03:40[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[vite] Failed to reload /src/pages/teacher/CreateQuiz.jsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+[2m02:04:26[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[vite] ReferenceError: a is not defined
+    at http://127.0.0.1:5173/src/pages/teacher/CreateQuiz.jsx?t=1780448666296:793:1
+[2m02:04:26[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[vite] Failed to reload /src/pages/teacher/CreateQuiz.jsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
