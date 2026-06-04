@@ -1,44 +1,64 @@
-# Application
+# ============================================
+# APPLICATION
+# ============================================
 spring.application.name=quiz_app
-server.port=9091
+server.port=${PORT:9091}
 
-# MySQL Database
-spring.datasource.url=jdbc:mysql://localhost:3306/quiz_db?createDatabaseIfNotExist=true
-spring.datasource.username=quiz
-spring.datasource.password=quiz123!
+# ============================================
+# MYSQL DATABASE (RAILWAY)
+# ============================================
+spring.datasource.url=jdbc:mysql://${MYSQLHOST}:${MYSQLPORT}/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTCspring.datasource.username=${MYSQLUSER}
+spring.datasource.password=${MYSQLPASSWORD}
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 
-# JPA Configuration
+# ============================================
+# JPA
+# ============================================
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
 spring.jpa.properties.hibernate.format_sql=true
 
-# Logging
+# ============================================
+# LOGGING
+# ============================================
 logging.level.org.hibernate.SQL=DEBUG
 logging.level.org.springframework.security=DEBUG
 
-# JWT Configuration
-jwt.secret=mySuperSecretKeyForJWTGeneration2025QuizApp
-jwt.expirationMs=86400000   # 24h
+# ============================================
+# JWT
+# ============================================
+jwt.secret=${JWT_SECRET}
+jwt.expirationMs=86400000
 
-# Fichier optionnel pour secrets locaux (clÃ© Gemini, etc.) â copier application-local.properties.example
-spring.config.import=optional:classpath:application-local.properties
-
-# Gemini API â gemini-pro n'est plus disponible sur v1beta ; utiliser gemini-1.5-flash (ou gemini-2.0-flash selon ListModels).
-# ClÃ© : variable GEMINI_API_KEY, ou gemini.api.key dans application-local.properties (non versionnÃ©).
-gemini.api.key=ta_clè
+# ============================================
+# GEMINI AI
+# ============================================
+gemini.api.key=${GEMINI_API_KEY}
 gemini.api.url=https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent
 
-✅ CONFIGURATION EMAIL (Gmail)
+# ============================================
+# EMAIL
 # ============================================
 spring.mail.host=smtp.gmail.com
 spring.mail.port=587
-spring.mail.username=ton_émail
-spring.mail.password=mot_de_passe(16caractères)
+spring.mail.username=${MAIL_USERNAME}
+spring.mail.password=${MAIL_PASSWORD}
+
 spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
 spring.mail.properties.mail.smtp.starttls.required=true
 spring.mail.properties.mail.smtp.connectiontimeout=5000
 spring.mail.properties.mail.smtp.timeout=5000
 spring.mail.properties.mail.smtp.writetimeout=5000
+
+# ============================================
+# FRONTEND URL
+# ============================================
+app.frontend.url=${FRONTEND_URL}
+
+# ============================================
+# MAIL LOGS
+# ============================================
+logging.level.org.springframework.mail=DEBUG
+logging.level.com.sun.mail=DEBUG
