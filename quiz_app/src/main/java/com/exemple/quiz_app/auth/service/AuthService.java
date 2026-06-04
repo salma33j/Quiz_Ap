@@ -164,7 +164,7 @@ public class AuthService {
         user.setMustChangePassword(true);
         user = userRepository.save(user);
 
-        emailService.sendEtudiantCredentials(
+        boolean emailSent = emailService.sendEtudiantCredentials(
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
@@ -176,7 +176,7 @@ public class AuthService {
         response.setUsername(user.getFirstName() + " " + user.getLastName());
         response.setEmail(user.getEmail());
         response.setRole("ETUDIANT");
-        response.setMessage("Compte etudiant cree avec succes. Un email a ete envoye a " + user.getEmail());
+        response.setMessage(accountEmailMessage("Compte etudiant cree avec succes", user.getEmail(), emailSent));
         response.setSuccess(true);
         return response;
     }
@@ -204,7 +204,7 @@ public class AuthService {
         user.setMustChangePassword(true);
         user = userRepository.save(user);
 
-        emailService.sendEnseignantCredentials(
+        boolean emailSent = emailService.sendEnseignantCredentials(
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
@@ -216,7 +216,7 @@ public class AuthService {
         response.setUsername(user.getFirstName() + " " + user.getLastName());
         response.setEmail(user.getEmail());
         response.setRole("ENSEIGNANT");
-        response.setMessage("Compte enseignant cree avec succes. Un email a ete envoye a " + user.getEmail());
+        response.setMessage(accountEmailMessage("Compte enseignant cree avec succes", user.getEmail(), emailSent));
         response.setSuccess(true);
       return response;
   }
@@ -241,7 +241,7 @@ public class AuthService {
         user.setMustChangePassword(true);
         user = userRepository.save(user);
 
-        emailService.sendAdminCredentials(
+        boolean emailSent = emailService.sendAdminCredentials(
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
@@ -253,7 +253,7 @@ public class AuthService {
         response.setUsername(user.getFirstName() + " " + user.getLastName());
         response.setEmail(user.getEmail());
         response.setRole("ADMIN");
-        response.setMessage("Compte admin cree avec succes. Un email a ete envoye a " + user.getEmail());
+        response.setMessage(accountEmailMessage("Compte admin cree avec succes", user.getEmail(), emailSent));
         response.setSuccess(true);
         return response;
     }
@@ -487,8 +487,21 @@ public class AuthService {
                 .filter(user -> !user.isBlocked())
                 .collect(Collectors.toList());
 
-        recipients.forEach(user -> emailService.sendAnnouncement(user.getEmail(), subject, message));
-        return AuthResponse.success(recipients.size() + " email(s) envoye(s)");
+        int sent = 0;
+        for (User user : recipients) {
+            if (emailService.sendAnnouncement(user.getEmail(), subject, message)) {
+                sent++;
+            }
+        }
+
+        if (recipients.isEmpty()) {
+            return AuthResponse.error("Aucun destinataire trouve");
+        }
+        if (sent == 0) {
+            return AuthResponse.error("Aucun email n'a pu etre envoye sur " + recipients.size() + " destinataire(s)");
+        }
+
+        return AuthResponse.success(sent + "/" + recipients.size() + " email(s) envoye(s)");
     }
 
     public AuthResponse blockUser(Long id) {
@@ -532,9 +545,11 @@ public class AuthService {
         user.setMustChangePassword(true);
         userRepository.save(user);
 
-        sendCredentialsEmail(user, provisoryPassword);
+        boolean emailSent = sendCredentialsEmail(user, provisoryPassword);
 
-        AuthResponse response = AuthResponse.success("Mot de passe reinitialise et envoye par email");
+        AuthResponse response = AuthResponse.success(emailSent
+                ? "Mot de passe reinitialise et envoye par email"
+                : "Mot de passe reinitialise, mais l'email n'a pas pu etre envoye");
         response.setUserId(user.getId());
         response.setEmail(user.getEmail());
         response.setRole(user.getRole().name());
@@ -631,14 +646,20 @@ public class AuthService {
         return prefix + special + nombre;
     }
 
-    private void sendCredentialsEmail(User user, String password) {
+    private boolean sendCredentialsEmail(User user, String password) {
         if (user.getRole() == Role.ADMIN) {
-            emailService.sendAdminCredentials(user.getEmail(), user.getFirstName(), user.getLastName(), password);
+            return emailService.sendAdminCredentials(user.getEmail(), user.getFirstName(), user.getLastName(), password);
         } else if (user.getRole() == Role.ENSEIGNANT) {
-            emailService.sendEnseignantCredentials(user.getEmail(), user.getFirstName(), user.getLastName(), password);
-        } else {
-            emailService.sendEtudiantCredentials(user.getEmail(), user.getFirstName(), user.getLastName(), password);
+            return emailService.sendEnseignantCredentials(user.getEmail(), user.getFirstName(), user.getLastName(), password);
         }
+        return emailService.sendEtudiantCredentials(user.getEmail(), user.getFirstName(), user.getLastName(), password);
+    }
+
+    private String accountEmailMessage(String prefix, String email, boolean emailSent) {
+        if (emailSent) {
+            return prefix + ". Un email a ete envoye a " + email;
+        }
+        return prefix + ", mais l'email n'a pas pu etre envoye. Verifiez la configuration email.";
     }
 
     // =========================================================

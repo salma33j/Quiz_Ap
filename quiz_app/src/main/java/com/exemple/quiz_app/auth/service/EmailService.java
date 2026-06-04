@@ -4,6 +4,9 @@ import com.exemple.quiz_app.auth.model.User;
 import com.exemple.quiz_app.classe.entity.Classe;
 import com.exemple.quiz_app.matiere.entity.Matiere;
 import com.exemple.quiz_app.quiz.entity.Quiz;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -11,6 +14,12 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import jakarta.mail.internet.MimeMessage;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 
 @Service
@@ -19,17 +28,35 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(10))
+            .build();
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     // URL de votre application frontend (à configurer dans application.properties)
     @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
 
-    @Value("${spring.mail.username}")
+    @Value("${spring.mail.username:}")
     private String fromEmail;
+
+    @Value("${email.provider:smtp}")
+    private String emailProvider;
+
+    @Value("${email.from:}")
+    private String configuredFromEmail;
+
+    @Value("${resend.api.key:}")
+    private String resendApiKey;
+
+    @Value("${resend.api.url:https://api.resend.com/emails}")
+    private String resendApiUrl;
 
     /**
      * ✅ Envoie les identifiants à un ÉTUDIANT nouvellement créé
      */
-    public void sendEtudiantCredentials(String toEmail, String firstName, String lastName,
+    public boolean sendEtudiantCredentials(String toEmail, String firstName, String lastName,
                                         String password) {
         String subject = "🎓 Vos identifiants - Plateforme Quiz FSB";
 
@@ -95,13 +122,13 @@ public class EmailService {
                 </div>
                 """.formatted(firstName, lastName, toEmail, password, frontendUrl);
 
-        sendHtmlEmail(toEmail, subject, htmlContent);
+        return sendHtmlEmail(toEmail, subject, htmlContent);
     }
 
     /**
      * ✅ Envoie les identifiants à un ENSEIGNANT nouvellement créé
      */
-    public void sendEnseignantCredentials(String toEmail, String firstName, String lastName,
+    public boolean sendEnseignantCredentials(String toEmail, String firstName, String lastName,
                                           String password) {
         String subject = "👨‍🏫 Vos identifiants Enseignant - Plateforme Quiz APP";
 
@@ -166,10 +193,10 @@ public class EmailService {
                 </div>
                 """.formatted(firstName, lastName, toEmail, password, frontendUrl);
 
-        sendHtmlEmail(toEmail, subject, htmlContent);
+        return sendHtmlEmail(toEmail, subject, htmlContent);
     }
 
-    public void sendAdminCredentials(String toEmail, String firstName, String lastName, String password) {
+    public boolean sendAdminCredentials(String toEmail, String firstName, String lastName, String password) {
         String subject = "Vos identifiants Admin - Plateforme Quiz APP";
         String htmlContent = """
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;
@@ -205,10 +232,10 @@ public class EmailService {
                 </div>
                 """.formatted(firstName, lastName, toEmail, password, frontendUrl);
 
-        sendHtmlEmail(toEmail, subject, htmlContent);
+        return sendHtmlEmail(toEmail, subject, htmlContent);
     }
 
-    public void sendAnnouncement(String toEmail, String subject, String message) {
+    public boolean sendAnnouncement(String toEmail, String subject, String message) {
         String htmlContent = """
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;
                             border: 1px solid #dbeafe; border-radius: 12px; overflow: hidden;">
@@ -222,7 +249,7 @@ public class EmailService {
                 </div>
                 """.formatted(message);
 
-        sendHtmlEmail(toEmail, subject, htmlContent);
+        return sendHtmlEmail(toEmail, subject, htmlContent);
     }
 
     public boolean sendQuizPublishedEmail(User student, Quiz quiz) {
@@ -289,10 +316,14 @@ public class EmailService {
      * ✅ Méthode générique pour envoyer un email HTML
      */
     private boolean sendHtmlEmail(String toEmail, String subject, String htmlContent) {
+        if ("resend".equalsIgnoreCase(emailProvider)) {
+            return sendHtmlEmailWithResend(toEmail, subject, htmlContent);
+        }
+
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromEmail);
+            helper.setFrom(resolveFromEmail());
             helper.setTo(toEmail);
             helper.setSubject(subject);
             helper.setText(htmlContent, true); // true = HTML
@@ -304,6 +335,70 @@ public class EmailService {
             System.err.println("❌ [EmailService] Erreur envoi email à " + toEmail + " : " + e.getMessage());
             return false;
         }
+    }
+
+    private boolean sendHtmlEmailWithResend(String toEmail, String subject, String htmlContent) {
+        String sender = resolveFromEmail();
+
+        if (resendApiKey == null || resendApiKey.isBlank()) {
+            System.err.println("[EmailService] RESEND_API_KEY manquant. Email non envoye a : " + toEmail);
+            return false;
+        }
+        if (sender == null || sender.isBlank()) {
+            System.err.println("[EmailService] EMAIL_FROM manquant. Email non envoye a : " + toEmail);
+            return false;
+        }
+
+        try {
+            ObjectNode payload = objectMapper.createObjectNode();
+            payload.put("from", sender);
+            ArrayNode to = payload.putArray("to");
+            to.add(toEmail);
+            payload.put("subject", subject);
+            payload.put("html", htmlContent);
+
+            HttpRequest request = HttpRequest.newBuilder(URI.create(resendApiUrl))
+                    .timeout(Duration.ofSeconds(15))
+                    .header("Authorization", "Bearer " + resendApiKey.trim())
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(
+                            objectMapper.writeValueAsString(payload),
+                            StandardCharsets.UTF_8
+                    ))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(
+                    request,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
+            );
+
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                System.out.println("[EmailService] Email envoye via Resend a : " + toEmail);
+                return true;
+            }
+
+            System.err.println("[EmailService] Resend a refuse l'email a " + toEmail
+                    + " (HTTP " + response.statusCode() + ") : " + abbreviate(response.body()));
+            return false;
+        } catch (Exception e) {
+            System.err.println("[EmailService] Erreur envoi Resend a " + toEmail + " : " + e.getMessage());
+            return false;
+        }
+    }
+
+    private String resolveFromEmail() {
+        String configured = configuredFromEmail == null ? "" : configuredFromEmail.trim();
+        if (!configured.isBlank()) {
+            return configured;
+        }
+        return fromEmail == null ? "" : fromEmail.trim();
+    }
+
+    private String abbreviate(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.length() <= 500 ? value : value.substring(0, 500) + "...";
     }
 
     private String resolveMatiereName(Quiz quiz) {
