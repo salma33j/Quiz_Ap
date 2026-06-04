@@ -75,7 +75,7 @@ export default function Login() {
             <h1>Bienvenue</h1>
 
             <p className={styles.subtitle}>
-              Connectez-vous à votre plateforme Quiz FSB
+              Connectez-vous à votre plateforme Quiz APP
             </p>
 
             {error && <div className={styles.error}>{error}</div>}
