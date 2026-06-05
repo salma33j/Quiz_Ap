@@ -39,6 +39,34 @@ const getQuestionCount = (quiz) =>
   Number(quiz?.questionCount ?? quiz?.questionsCount ?? quiz?.nombreQuestions ?? 0);
 const getAllowedCount = (quiz) =>
   Number(quiz?.totalStudentsAllowed ?? quiz?.allowedStudentsCount ?? quiz?.studentCount ?? 0);
+const getClassKey = (quiz) =>
+  quiz?.classeId ??
+  quiz?.classId ??
+  quiz?.classe?.id ??
+  quiz?.className ??
+  quiz?.classeName ??
+  null;
+
+const countStudentsByUniqueClass = (quizzes) => {
+  const classCounts = new Map();
+  let withoutClassCount = 0;
+
+  quizzes.forEach((quiz) => {
+    const allowedCount = getAllowedCount(quiz);
+    if (allowedCount <= 0) return;
+
+    const classKey = getClassKey(quiz);
+    if (!classKey) {
+      withoutClassCount += allowedCount;
+      return;
+    }
+
+    const key = String(classKey);
+    classCounts.set(key, Math.max(classCounts.get(key) || 0, allowedCount));
+  });
+
+  return [...classCounts.values()].reduce((sum, count) => sum + count, 0) + withoutClassCount;
+};
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
@@ -127,10 +155,7 @@ const TeacherDashboard = () => {
           (sum, row) => sum + Number(row.totalParticipants ?? 0),
           0
         );
-        const totalStudentsFromStats = dashboardRows.reduce(
-          (sum, row) => sum + Number(row.totalStudentsAllowed ?? 0),
-          0
-        );
+        const totalStudentsByClass = countStudentsByUniqueClass(safeQuizzes);
         const weightedScore = dashboardRows.reduce((sum, row) => {
           const participants = Number(row.totalParticipants ?? 0);
           return sum + Number(row.moyenneScore ?? 0) * participants;
@@ -148,9 +173,7 @@ const TeacherDashboard = () => {
           readyToPublish: safeQuizzes.filter(
             (q) => getStatus(q) === "DRAFT" && getQuestionCount(q) >= 15 && getAllowedCount(q) > 0
           ).length,
-          totalStudents:
-            totalStudentsFromStats ||
-            safeQuizzes.reduce((sum, quiz) => sum + getAllowedCount(quiz), 0),
+          totalStudents: totalStudentsByClass,
           totalAttempts: totalAttemptsFromStats || allResults.length,
           averageScore:
             totalAttemptsFromStats > 0 ? weightedScore / totalAttemptsFromStats : simpleAverage,
@@ -224,7 +247,7 @@ const TeacherDashboard = () => {
       label: "Étudiants",
       value: stats.totalStudents,
       icon: Users,
-      hint: "assignés aux quiz",
+      hint: "dans vos classes",
       color: "purple",
     },
     {

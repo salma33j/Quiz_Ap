@@ -587,6 +587,10 @@ export default function GenerateQuizAI() {
         }
       }
 
+      if (quizInfo.publishNow === "true") {
+        await teacherQuizApi.publishQuiz(quizId);
+      }
+
       navigate(`/teacher/quizzes/${quizId}/questions`);
     } catch (err) {
       setError(

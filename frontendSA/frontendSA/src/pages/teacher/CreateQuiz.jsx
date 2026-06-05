@@ -5,6 +5,7 @@ import teacherQuizApi from "../../api/teacherQuizApi";
 import styles from "./CreateQuiz.module.css";
 
 const AI_QUIZ_STORAGE_KEY = "teacher-ai-quizzes";
+const PUBLISH_INTENT_STORAGE_KEY = "teacher-quiz-publish-intents";
 
 const rememberAiQuizChoice = (quizId, creationType) => {
   if (!quizId) return;
@@ -29,6 +30,21 @@ const formatDateForInput = (value) => {
 const formatDateTimeForBackend = (value) => {
   if (!value) return null;
   return value.length === 16 ? `${value}:00` : value;
+};
+
+const setQuizPublishIntent = (quizId, shouldPublish) => {
+  if (!quizId) return;
+
+  const storedIds = JSON.parse(localStorage.getItem(PUBLISH_INTENT_STORAGE_KEY) || "[]");
+  const ids = new Set(storedIds.map(String));
+
+  if (shouldPublish) {
+    ids.add(String(quizId));
+  } else {
+    ids.delete(String(quizId));
+  }
+
+  localStorage.setItem(PUBLISH_INTENT_STORAGE_KEY, JSON.stringify([...ids]));
 };
 
 const toArray = (data) => {
@@ -260,15 +276,18 @@ const CreateQuiz = () => {
       setLoading(true);
 
       const payload = buildPayload();
+      const shouldPublish = form.publishNow === "true";
 
       if (isEditMode) {
         await teacherQuizApi.updateQuiz(editId, payload);
         rememberAiQuizChoice(editId, form.creationType);
-        navigate("/teacher/quizzes");
+        setQuizPublishIntent(editId, shouldPublish);
+        navigate(shouldPublish ? `/teacher/quizzes/${editId}/questions` : "/teacher/quizzes");
       } else {
         const createdQuiz = await teacherQuizApi.createQuiz(payload);
         const quizId = createdQuiz?.id;
 
+        setQuizPublishIntent(quizId, shouldPublish);
         navigate(quizId ? `/teacher/quizzes/${quizId}/questions` : "/teacher/quizzes");
       }
     } catch (err) {

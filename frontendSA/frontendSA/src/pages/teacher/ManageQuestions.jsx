@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -7,11 +7,27 @@ import {
   Edit,
   Plus,
   Trash2,
-  Users,
 } from "lucide-react";
 
 import teacherQuizApi from "../../api/teacherQuizApi";
 import styles from "./ManageQuestions.module.css";
+
+const PUBLISH_INTENT_STORAGE_KEY = "teacher-quiz-publish-intents";
+
+const getPublishIntents = () => {
+  try {
+    return JSON.parse(localStorage.getItem(PUBLISH_INTENT_STORAGE_KEY) || "[]").map(String);
+  } catch {
+    return [];
+  }
+};
+
+const hasPublishIntent = (quizId) => getPublishIntents().includes(String(quizId));
+
+const clearPublishIntent = (quizId) => {
+  const ids = getPublishIntents().filter((item) => item !== String(quizId));
+  localStorage.setItem(PUBLISH_INTENT_STORAGE_KEY, JSON.stringify(ids));
+};
 
 export default function ManageQuestions() {
   const { id } = useParams();
@@ -24,6 +40,8 @@ export default function ManageQuestions() {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [publishNotice, setPublishNotice] = useState("");
+  const autoPublishRef = useRef(false);
 
   useEffect(() => {
     load();
@@ -68,25 +86,49 @@ export default function ManageQuestions() {
 
   async function publishQuiz() {
     if (questions.length < 15) {
-      setErr("Le quiz doit contenir au moins 15 questions avant publication.");
+      setPublishNotice(
+        `Publication automatique active : ajoutez encore ${15 - questions.length} question(s).`
+      );
       return;
     }
 
     try {
       setErr("");
+      setPublishNotice("Publication du quiz en cours...");
 
       await teacherQuizApi.publishQuiz(id);
 
+      clearPublishIntent(id);
       navigate("/teacher/quizzes");
     } catch (e) {
       setErr(
         e?.response?.data?.message ||
           "Impossible de publier ce quiz."
       );
+      setPublishNotice("");
     }
   }
 
   const canEdit = !isViewMode && quiz?.status === "DRAFT";
+  const shouldAutoPublish = canEdit && hasPublishIntent(id);
+
+  useEffect(() => {
+    if (!shouldAutoPublish || loading) {
+      setPublishNotice("");
+      return;
+    }
+
+    if (questions.length < 15) {
+      setPublishNotice(
+        `Publication automatique active : ajoutez encore ${15 - questions.length} question(s).`
+      );
+      return;
+    }
+
+    if (autoPublishRef.current) return;
+    autoPublishRef.current = true;
+    void publishQuiz();
+  }, [shouldAutoPublish, loading, questions.length]);
 
   const statusFr = (status) => {
     switch (status) {
@@ -196,6 +238,7 @@ export default function ManageQuestions() {
       </div>
 
       {err && <div className={styles.error}>{err}</div>}
+      {publishNotice && <div className={styles.error}>{publishNotice}</div>}
 
       <section className={styles.infoGrid}>
         <div>
@@ -338,7 +381,7 @@ export default function ManageQuestions() {
         </section>
       )}
 
-      {canEdit && questions.length > 0 && (
+      {false && canEdit && questions.length > 0 && (
         <div className={styles.footerActions}>
           <Link
             className={styles.secondaryBtn}
