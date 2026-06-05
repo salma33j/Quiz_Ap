@@ -47,11 +47,12 @@ public class StudentQuizService {
      * Quizzes disponibles (uniquement "Ã€ faire")
      * Ne montre PAS les quiz terminÃ©s, expirÃ©s, ou avec session expirÃ©e
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public List<QuizForStudentDto> getAvailableQuizzes() {
         User student = authService.getCurrentUser();
         LocalDateTime now = LocalDateTime.now();
         Long classId = getStudentClassId(student);
+        expirePublishedQuizzesPastDeadline(now);
 
         return quizRepository.findAvailableQuizzesForStudent(student.getId(), classId, now).stream()
                 .filter(quiz -> {
@@ -95,11 +96,12 @@ public class StudentQuizService {
      * - ExpirÃ© = date du professeur dÃ©passÃ©e uniquement
      * - Ã€ faire = quiz disponible
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public List<QuizForStudentDto> getQuizHistory() {
         User student = authService.getCurrentUser();
         LocalDateTime now = LocalDateTime.now();
         Long classId = getStudentClassId(student);
+        expirePublishedQuizzesPastDeadline(now);
 
         return quizRepository.findAllQuizzesForStudent(student.getId(), classId).stream().map(quiz -> {
             QuizForStudentDto dto = new QuizForStudentDto();
@@ -143,9 +145,10 @@ public class StudentQuizService {
         }).collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public QuizForStudentDto getQuizDetails(Long quizId) {
         User student = authService.getCurrentUser();
+        expirePublishedQuizzesPastDeadline(LocalDateTime.now());
 
         if (!quizRepository.isStudentAllowed(quizId, student.getId().longValue())) {
             throw new RuntimeException("AccÃ¨s non autorisÃ©");
@@ -457,5 +460,9 @@ public class StudentQuizService {
             return null;
         }
         return enseignant.getFullName();
+    }
+
+    private void expirePublishedQuizzesPastDeadline(LocalDateTime now) {
+        quizRepository.expirePublishedQuizzesPastDeadline(now);
     }
 }

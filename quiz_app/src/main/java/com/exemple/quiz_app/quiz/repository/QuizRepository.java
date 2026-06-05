@@ -3,9 +3,11 @@ package com.exemple.quiz_app.quiz.repository;
 import com.exemple.quiz_app.auth.model.User;
 import com.exemple.quiz_app.quiz.entity.Quiz;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,6 +28,14 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
 
     long countByStatus(Quiz.QuizStatus status);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("UPDATE Quiz q SET q.status = 'EXPIRED' " +
+            "WHERE q.status = 'PUBLISHED' " +
+            "AND q.availableUntil IS NOT NULL " +
+            "AND q.availableUntil <= :now")
+    int expirePublishedQuizzesPastDeadline(@Param("now") LocalDateTime now);
+
     // ========== ETUDIANT - QUIZ DISPONIBLES ==========
     @Query(value = """
             SELECT DISTINCT q.*
@@ -36,6 +46,12 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
                 qs.student_id = :studentId
                 OR (:classId IS NOT NULL AND q.classe_id = :classId)
                 OR (:classId IS NOT NULL AND m.classe_id = :classId)
+                OR (:classId IS NOT NULL AND EXISTS (
+                    SELECT 1 FROM matieres sm
+                    WHERE sm.classe_id = :classId
+                    AND q.theme IS NOT NULL
+                    AND LOWER(sm.nom) = LOWER(q.theme)
+                ))
             )
             AND q.status = 'PUBLISHED'
             AND (q.available_from IS NULL OR q.available_from <= :now)
@@ -57,6 +73,12 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
                 qs.student_id = :studentId
                 OR (:classId IS NOT NULL AND q.classe_id = :classId)
                 OR (:classId IS NOT NULL AND m.classe_id = :classId)
+                OR (:classId IS NOT NULL AND EXISTS (
+                    SELECT 1 FROM matieres sm
+                    WHERE sm.classe_id = :classId
+                    AND q.theme IS NOT NULL
+                    AND LOWER(sm.nom) = LOWER(q.theme)
+                ))
             )
             AND q.status IN ('PUBLISHED', 'EXPIRED', 'ARCHIVED')
             """, nativeQuery = true)
@@ -74,6 +96,12 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
                 qs.student_id = :studentId
                 OR (u.classe_id IS NOT NULL AND q.classe_id = u.classe_id)
                 OR (u.classe_id IS NOT NULL AND m.classe_id = u.classe_id)
+                OR (u.classe_id IS NOT NULL AND EXISTS (
+                    SELECT 1 FROM matieres sm
+                    WHERE sm.classe_id = u.classe_id
+                    AND q.theme IS NOT NULL
+                    AND LOWER(sm.nom) = LOWER(q.theme)
+                ))
             )
             """, nativeQuery = true)
     boolean isStudentAllowed(@Param("quizId") Long quizId, @Param("studentId") Long studentId);

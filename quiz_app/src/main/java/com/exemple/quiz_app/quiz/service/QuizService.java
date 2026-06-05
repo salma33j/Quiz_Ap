@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,6 +101,7 @@ public class QuizService {
     @Transactional
     public List<QuizReponse> getMyQuizzes() {
         User enseignant = authService.getCurrentUser();
+        expirePublishedQuizzesPastDeadline();
 
         return quizRepository.findByEnseignant(enseignant)
                 .stream()
@@ -110,6 +112,7 @@ public class QuizService {
 
     public QuizReponse getQuizById(Long id) {
         User currentUser = authService.getCurrentUser();
+        expirePublishedQuizzesPastDeadline();
 
         Quiz quiz = quizRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Quiz non trouve"));
@@ -180,6 +183,7 @@ public class QuizService {
     @Transactional
     public void deleteQuiz(Long id) {
         User enseignant = authService.getCurrentUser();
+        expirePublishedQuizzesPastDeadline();
 
         Quiz quiz = quizRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Quiz non trouve"));
@@ -367,6 +371,8 @@ public class QuizService {
     }
 
     public Map<String, Object> getQuizStatus(Long quizId) {
+        expirePublishedQuizzesPastDeadline();
+
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz non trouve"));
 
@@ -529,5 +535,9 @@ public class QuizService {
         }
 
         return request.getTitre();
+    }
+
+    private void expirePublishedQuizzesPastDeadline() {
+        quizRepository.expirePublishedQuizzesPastDeadline(LocalDateTime.now());
     }
 }
