@@ -161,6 +161,8 @@ public class QuizAdminService {
         response.setId(quiz.getId());
         response.setTitre(quiz.getTitre());
         response.setTheme(quiz.getTheme());
+        response.setDescription(quiz.getDescription());
+        response.setDifficulty(quiz.getDifficulty());
         response.setQuestionCount(quiz.getQuestionCount());
         response.setAvailableFrom(quiz.getAvailableFrom());
         response.setAvailableUntil(quiz.getAvailableUntil());
@@ -170,6 +172,26 @@ public class QuizAdminService {
         if (quiz.getEnseignant() != null) {
             response.setEnseignantNom(quiz.getEnseignant().getFirstName() + " " + quiz.getEnseignant().getLastName());
         }
+
+        if (quiz.getClasse() != null) {
+            response.setClasseId(quiz.getClasse().getId());
+            response.setClasseName(quiz.getClasse().getName());
+            response.setClassFiliere(quiz.getClasse().getFiliere());
+            response.setClassNiveau(quiz.getClasse().getNiveau());
+        }
+
+        if (quiz.getMatiere() != null) {
+            response.setMatiereId(quiz.getMatiere().getId());
+            response.setMatiereName(quiz.getMatiere().getNom());
+
+            if (response.getClasseId() == null && quiz.getMatiere().getClasse() != null) {
+                response.setClasseId(quiz.getMatiere().getClasse().getId());
+                response.setClasseName(quiz.getMatiere().getClasse().getName());
+                response.setClassFiliere(quiz.getMatiere().getClasse().getFiliere());
+                response.setClassNiveau(quiz.getMatiere().getClasse().getNiveau());
+            }
+        }
+
         response.setTotalStudentsAllowed(quizRepository.countAllowedStudents(quiz.getId()));
         response.setCreatedAt(quiz.getCreatedAt());
         return response;

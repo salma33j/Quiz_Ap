@@ -1097,15 +1097,21 @@ export default function AdminWorkspace({ section = "dashboard" }) {
       subject?.teacher ||
       subject?.enseignant;
     const classTeacherNames = teacherNamesOf(classe);
+    const teacherFullName = fullName(teacher);
 
     return {
       id: teacherId || getId(teacher) || "unknown-teacher",
       name:
         source?.teacherName ||
         source?.enseignantName ||
+        source?.enseignantNom ||
         fallbackQuiz?.teacherName ||
         fallbackQuiz?.enseignantName ||
-        fullName(teacher) ||
+        fallbackQuiz?.enseignantNom ||
+        subject?.teacherName ||
+        subject?.enseignantName ||
+        subject?.enseignantNom ||
+        (teacherFullName !== "Utilisateur" ? teacherFullName : "") ||
         classTeacherNames[0] ||
         "Professeur non défini",
       email:
@@ -2047,7 +2053,7 @@ export default function AdminWorkspace({ section = "dashboard" }) {
                     return (
                       <article className={styles.miniCard} key={getSubjectId(subject) || `${subject.nom}-${subject.classId}-${subject.teacherId}`}>
                         <strong>{subject.nom || subject.name || subject.titre}</strong>
-                        <span>{subject.description || "Description non définie"}</span>
+                        {subject.description?.trim() && <span>{subject.description}</span>}
 
                         <p>
                           <b>Enseignant :</b> {group.teacherName}

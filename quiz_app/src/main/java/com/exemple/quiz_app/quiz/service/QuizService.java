@@ -396,22 +396,15 @@ public class QuizService {
     }
 
     private void notifyClassStudentsAboutPublishedQuiz(Quiz quiz) {
-        Classe classe = resolveQuizClasse(quiz);
+        List<User> students = quizStudentRepository.findByQuiz(quiz).stream()
+                .map(QuizStudent::getStudent)
+                .filter(student -> student != null && student.getRole() == Role.ETUDIANT)
+                .collect(Collectors.toList());
 
-        if (classe == null) {
-            System.out.println("[QuizService] Aucun email envoye: quiz " + quiz.getId() + " sans classe.");
-            return;
-        }
-
-        List<User> students = userRepository.findByClasseIdOrderByLastNameAscFirstNameAsc(classe.getId());
         int attempted = 0;
         int sent = 0;
 
         for (User student : students) {
-            if (student.getRole() != Role.ETUDIANT) {
-                continue;
-            }
-
             if (student.getEmail() == null || student.getEmail().isBlank()) {
                 continue;
             }
