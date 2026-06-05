@@ -13,6 +13,9 @@ import styles from "./AvailableQuizzes.module.css";
 
 const unwrap = (res) => res?.data?.data ?? res?.data ?? res ?? [];
 
+const getErrorMessage = (err) =>
+  err?.response?.data?.message || err?.message || "Impossible de charger les quiz disponibles.";
+
 const normalizeText = (value) =>
   String(value || "")
     .normalize("NFD")
@@ -116,15 +119,19 @@ export default function AvailableQuizzes() {
         setLoading(true);
         setError("");
 
-        const [matieresRes, availableRes, historyRes] = await Promise.all([
-          studentQuizApi.getMySubjects().catch(() => []),
-          studentQuizApi.getAvailableQuizzes().catch(() => []),
-          studentQuizApi.getQuizHistory().catch(() => []),
+        const [matieresRes, availableRes, historyRes] = await Promise.allSettled([
+          studentQuizApi.getMySubjects(),
+          studentQuizApi.getAvailableQuizzes(),
+          studentQuizApi.getQuizHistory(),
         ]);
 
-        const safeMatieres = unwrap(matieresRes);
-        const safeAvailable = unwrap(availableRes);
-        const safeHistory = unwrap(historyRes);
+        if (availableRes.status === "rejected" && historyRes.status === "rejected") {
+          throw availableRes.reason || historyRes.reason;
+        }
+
+        const safeMatieres = matieresRes.status === "fulfilled" ? unwrap(matieresRes.value) : [];
+        const safeAvailable = availableRes.status === "fulfilled" ? unwrap(availableRes.value) : [];
+        const safeHistory = historyRes.status === "fulfilled" ? unwrap(historyRes.value) : [];
 
         const availableFromEndpoint = Array.isArray(safeAvailable) ? safeAvailable : [];
         const availableFromHistory = Array.isArray(safeHistory)
@@ -134,11 +141,7 @@ export default function AvailableQuizzes() {
         setMatieres(Array.isArray(safeMatieres) ? safeMatieres : []);
         setQuizzes(uniqueById([...availableFromEndpoint, ...availableFromHistory]));
       } catch (err) {
-        setError(
-          err?.response?.data?.message ||
-            err?.message ||
-            "Impossible de charger les quiz disponibles."
-        );
+        setError(getErrorMessage(err));
       } finally {
         setLoading(false);
       }
