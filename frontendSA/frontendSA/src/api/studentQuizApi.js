@@ -13,6 +13,21 @@ const studentQuizApi = {
     return unwrap(res);
   },
 
+  getQuizHistory: async () => {
+    const res = await axiosInstance.get("/student/quizzes/history");
+    return unwrap(res);
+  },
+
+  getMyResultsHistory: async () => {
+    const res = await axiosInstance.get("/resultats/my-history");
+    return unwrap(res);
+  },
+
+  getMyPerformance: async () => {
+    const res = await axiosInstance.get("/resultats/my-performance");
+    return unwrap(res);
+  },
+
   getQuizDetails: async (quizId) => {
     const res = await axiosInstance.get(`/student/quizzes/${quizId}`);
     return unwrap(res);
@@ -34,10 +49,7 @@ const studentQuizApi = {
   },
 
   getRemainingSeconds: async (quizId) => {
-    const res = await axiosInstance.get(
-      `/student/quizzes/${quizId}/remaining-seconds`
-    );
-
+    const res = await axiosInstance.get(`/student/quizzes/${quizId}/remaining-seconds`);
     const data = unwrap(res);
 
     if (typeof data === "number") return data;
@@ -58,10 +70,7 @@ const studentQuizApi = {
   },
 
   submitQuizWithAnswers: async (quizId, answers = []) => {
-    const res = await axiosInstance.post(
-      `/reponses/quiz/${quizId}/submit-with-answers`,
-      answers
-    );
+    const res = await axiosInstance.post(`/reponses/quiz/${quizId}/submit-with-answers`, answers);
     return unwrap(res);
   },
 
@@ -75,23 +84,8 @@ const studentQuizApi = {
     return unwrap(res);
   },
 
-  getQuizHistory: async () => {
-    const res = await axiosInstance.get("/student/quizzes/history");
-    return unwrap(res);
-  },
-
-  getMyResultsHistory: async () => {
-    const res = await axiosInstance.get("/resultats/my-history");
-    return unwrap(res);
-  },
-
-  getMyPerformance: async () => {
-    const res = await axiosInstance.get("/statistiques/student/my-performance");
-    return unwrap(res);
-  },
-
   getRanking: async (quizId) => {
-    const res = await axiosInstance.get(`/statistiques/student/ranking/${quizId}`);
+    const res = await axiosInstance.get(`/resultats/quiz/${quizId}/ranking`);
     return unwrap(res);
   },
 };

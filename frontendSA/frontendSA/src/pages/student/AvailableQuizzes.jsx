@@ -11,47 +11,81 @@ import {
 import studentQuizApi from "../../api/studentQuizApi";
 import styles from "./AvailableQuizzes.module.css";
 
-const unwrapResponse = (res) => res?.data?.data ?? res?.data ?? res ?? [];
+const unwrap = (res) => res?.data?.data ?? res?.data ?? res ?? [];
+
+const normalizeText = (value) =>
+  String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+const isTodoStatus = (status) => {
+  const s = normalizeText(status);
+  return s.includes("faire") || s.includes("available") || s.includes("published");
+};
+
+const isCompletedOrExpired = (quiz) => {
+  const s = normalizeText(quiz?.status);
+  if (s.includes("termin") || s.includes("complete") || s.includes("expir")) return true;
+
+  const end = quiz?.availableUntil || quiz?.dateFin || quiz?.deadline || quiz?.endDate;
+  if (!end) return false;
+  const parsedEnd = new Date(end);
+  return !Number.isNaN(parsedEnd.getTime()) && parsedEnd < new Date();
+};
+
+const uniqueById = (items) => {
+  const map = new Map();
+  items.forEach((item) => {
+    const id = item?.id || item?.quizId || item?.idQuiz;
+    if (!id) return;
+    map.set(String(id), item);
+  });
+  return Array.from(map.values());
+};
 
 const getSubjectName = (quiz) =>
-  quiz.matiereName ||
-  quiz.matiereNom ||
-  quiz.subjectName ||
-  quiz.nom ||
-  quiz.name ||
-  quiz.matiere?.nom ||
-  quiz.subject?.name ||
-  quiz.theme ||
+  quiz?.matiereName ||
+  quiz?.matiereNom ||
+  quiz?.subjectName ||
+  quiz?.nom ||
+  quiz?.name ||
+  quiz?.matiere?.nom ||
+  quiz?.subject?.name ||
+  quiz?.theme ||
   "Matière générale";
 
 const getQuizSubjectId = (quiz) =>
-  quiz.matiereId ||
-  quiz.subjectId ||
-  quiz.matiere?.id ||
-  quiz.subject?.id ||
-  getSubjectName(quiz);
+  quiz?.matiereId ||
+  quiz?.subjectId ||
+  quiz?.matiere?.id ||
+  quiz?.subject?.id ||
+  null;
 
 const getMatiereId = (matiere) =>
-  matiere.id || matiere.matiereId || matiere.subjectId || getSubjectName(matiere);
+  matiere?.id || matiere?.matiereId || matiere?.subjectId || null;
 
 const getClassLabel = (source) =>
-  [source.className || source.classeName, source.classFiliere, source.classNiveau]
+  [source?.className || source?.classeName, source?.classFiliere, source?.classNiveau]
     .filter(Boolean)
     .join(" - ");
 
 const getTeacherLabel = (source) =>
-  source.teacherName ||
-  source.enseignantName ||
-  source.enseignantNom ||
-  source.profName ||
-  source.professeurName ||
-  source.teacher?.name ||
-  source.enseignant?.name ||
-  [source.teacher?.firstName, source.teacher?.lastName].filter(Boolean).join(" ") ||
-  [source.enseignant?.firstName, source.enseignant?.lastName].filter(Boolean).join(" ") ||
+  source?.teacherName ||
+  source?.enseignantName ||
+  source?.enseignantNom ||
+  source?.profName ||
+  source?.professeurName ||
+  source?.teacher?.name ||
+  source?.enseignant?.name ||
+  [source?.teacher?.firstName, source?.teacher?.lastName].filter(Boolean).join(" ") ||
+  [source?.enseignant?.firstName, source?.enseignant?.lastName].filter(Boolean).join(" ") ||
   "";
 
-const getQuizTitle = (quiz) => quiz.titre || quiz.title || "Quiz sans titre";
+const getQuizTitle = (quiz) => quiz?.titre || quiz?.title || quiz?.quizTitle || "Quiz sans titre";
+
+const getQuizId = (quiz) => quiz?.id || quiz?.quizId || quiz?.idQuiz;
 
 const formatDateTime = (value) => {
   if (!value) return "Non definie";
@@ -68,57 +102,6 @@ const formatDateTime = (value) => {
   });
 };
 
-const unwrap = (res) => res?.data?.data ?? res?.data ?? res ?? [];
-
-const normalizeStatus = (status) =>
-  `${status || ""}`
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-
-const getQuizEndDate = (quiz) =>
-  quiz?.availableUntil ||
-  quiz?.endDate ||
-  quiz?.dateFin ||
-  quiz?.deadline ||
-  quiz?.expiresAt ||
-  null;
-
-const getQuizStartDate = (quiz) =>
-  quiz?.availableFrom ||
-  quiz?.startDate ||
-  quiz?.dateDebut ||
-  quiz?.startsAt ||
-  null;
-
-const isAvailableQuiz = (quiz) => {
-  const status = normalizeStatus(quiz?.status);
-  const now = new Date();
-
-  if (status.includes("expir") || status.includes("termin") || status.includes("complete")) {
-    return false;
-  }
-
-  const startDate = getQuizStartDate(quiz);
-  const endDate = getQuizEndDate(quiz);
-  const parsedStart = startDate ? new Date(startDate) : null;
-  const parsedEnd = endDate ? new Date(endDate) : null;
-
-  if (parsedStart && !Number.isNaN(parsedStart.getTime()) && now < parsedStart) return false;
-  if (parsedEnd && !Number.isNaN(parsedEnd.getTime()) && now > parsedEnd) return false;
-
-  return status.includes("faire") || status.includes("available") || true;
-};
-
-const uniqueById = (items) => {
-  const map = new Map();
-  items.forEach((item) => {
-    const key = String(item?.id || item?.quizId || item?.idQuiz || JSON.stringify(item));
-    if (!map.has(key)) map.set(key, item);
-  });
-  return Array.from(map.values());
-};
-
 export default function AvailableQuizzes() {
   const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState([]);
@@ -132,16 +115,24 @@ export default function AvailableQuizzes() {
       try {
         setLoading(true);
         setError("");
-        const [matieresData, quizzesData] = await Promise.all([
+
+        const [matieresRes, availableRes, historyRes] = await Promise.all([
           studentQuizApi.getMySubjects().catch(() => []),
-          studentQuizApi.getAvailableQuizzes(),
+          studentQuizApi.getAvailableQuizzes().catch(() => []),
+          studentQuizApi.getQuizHistory().catch(() => []),
         ]);
 
-        const safeMatieres = unwrapResponse(matieresData);
-        const safeQuizzes = unwrapResponse(quizzesData);
+        const safeMatieres = unwrap(matieresRes);
+        const safeAvailable = unwrap(availableRes);
+        const safeHistory = unwrap(historyRes);
+
+        const availableFromEndpoint = Array.isArray(safeAvailable) ? safeAvailable : [];
+        const availableFromHistory = Array.isArray(safeHistory)
+          ? safeHistory.filter((quiz) => isTodoStatus(quiz?.status) && !isCompletedOrExpired(quiz))
+          : [];
 
         setMatieres(Array.isArray(safeMatieres) ? safeMatieres : []);
-        setQuizzes(Array.isArray(safeQuizzes) ? safeQuizzes : []);
+        setQuizzes(uniqueById([...availableFromEndpoint, ...availableFromHistory]));
       } catch (err) {
         setError(
           err?.response?.data?.message ||
@@ -158,22 +149,32 @@ export default function AvailableQuizzes() {
 
   const subjects = useMemo(() => {
     const grouped = new Map();
+    const nameToId = new Map();
 
     matieres.forEach((matiere) => {
-      const id = String(getMatiereId(matiere));
+      const matiereId = getMatiereId(matiere);
+      const name = getSubjectName(matiere);
+      const id = matiereId ? `id:${matiereId}` : `name:${normalizeText(name)}`;
 
       grouped.set(id, {
         id,
-        name: getSubjectName(matiere),
+        name,
         classLabel: getClassLabel(matiere),
         teacherName: getTeacherLabel(matiere),
         quizzes: [],
       });
+
+      nameToId.set(normalizeText(name), id);
     });
 
     quizzes.forEach((quiz) => {
       const name = getSubjectName(quiz);
-      const id = String(getQuizSubjectId(quiz));
+      const quizSubjectId = getQuizSubjectId(quiz);
+      let id = quizSubjectId ? `id:${quizSubjectId}` : nameToId.get(normalizeText(name));
+
+      if (!id) {
+        id = `name:${normalizeText(name)}`;
+      }
 
       if (!grouped.has(id)) {
         grouped.set(id, {
@@ -186,15 +187,12 @@ export default function AvailableQuizzes() {
       }
 
       const subject = grouped.get(id);
-      if (!subject.teacherName) {
-        subject.teacherName = getTeacherLabel(quiz);
-      }
+      if (!subject.teacherName) subject.teacherName = getTeacherLabel(quiz);
+      if (!subject.classLabel) subject.classLabel = getClassLabel(quiz);
       subject.quizzes.push(quiz);
     });
 
-    return Array.from(grouped.values()).sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
+    return Array.from(grouped.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [matieres, quizzes]);
 
   const selectedSubject = useMemo(
@@ -208,11 +206,7 @@ export default function AvailableQuizzes() {
     <div className={styles.page}>
       <div className={styles.header}>
         <span className={styles.badge}>Quiz disponibles</span>
-        <h1>
-          {selectedSubject
-            ? selectedSubject.name
-            : "Choisissez une matière"}
-        </h1>
+        <h1>{selectedSubject ? selectedSubject.name : "Choisissez une matière"}</h1>
         <p>
           {selectedSubject
             ? selectedSubject.quizzes.length > 0
@@ -228,9 +222,7 @@ export default function AvailableQuizzes() {
       {!loading && !error && !selectedSubject && (
         <>
           {subjects.length === 0 ? (
-            <div className={styles.stateBox}>
-              Aucune matière dédiée à votre classe pour le moment.
-            </div>
+            <div className={styles.stateBox}>Aucune matière dédiée à votre classe pour le moment.</div>
           ) : (
             <div className={styles.subjectGrid}>
               {subjects.map((subject) => (
@@ -245,9 +237,7 @@ export default function AvailableQuizzes() {
                   </div>
                   <div>
                     <h2>{subject.name}</h2>
-                    {subject.teacherName && (
-                      <small className={styles.teacherLine}>Prof : {subject.teacherName}</small>
-                    )}
+                    {subject.teacherName && <small className={styles.teacherLine}>Prof : {subject.teacherName}</small>}
                     {subject.classLabel && <small>{subject.classLabel}</small>}
                     <p>{subject.quizzes.length} quiz disponible(s)</p>
                   </div>
@@ -271,13 +261,11 @@ export default function AvailableQuizzes() {
           </button>
 
           {visibleQuizzes.length === 0 ? (
-            <div className={styles.stateBox}>
-              Aucun quiz disponible dans cette matière pour le moment.
-            </div>
+            <div className={styles.stateBox}>Aucun quiz disponible dans cette matière pour le moment.</div>
           ) : (
             <div className={styles.quizGrid}>
               {visibleQuizzes.map((quiz) => (
-                <article className={styles.quizCard} key={quiz.id}>
+                <article className={styles.quizCard} key={getQuizId(quiz)}>
                   <div className={styles.quizPreviewTop}>
                     <div className={styles.quizIntro}>
                       <h2>{getQuizTitle(quiz)}</h2>
@@ -287,7 +275,7 @@ export default function AvailableQuizzes() {
                     <button
                       type="button"
                       className={styles.startButton}
-                      onClick={() => navigate(`/student/quizzes/${quiz.id}/take`)}
+                      onClick={() => navigate(`/student/quizzes/${getQuizId(quiz)}/take`)}
                     >
                       Commencer le quiz
                     </button>
