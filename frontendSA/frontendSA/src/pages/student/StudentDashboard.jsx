@@ -34,7 +34,7 @@ import styles from "./StudentDashboard.module.css";
 
 const COLORS = ["#4F46E5", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"];
 
-const unwrap = (res) => res?.data?.data ?? res?.data ?? [];
+const unwrap = (res) => res?.data?.data ?? res?.data ?? res ?? [];
 
 const getSubjectName = (item) =>
   item?.matiereNom ||
@@ -205,14 +205,18 @@ export default function StudentDashboard() {
     try {
       setLoading(true);
 
-      const [availableQuizzes, historyRes, perfRes] = await Promise.all([
-        studentQuizApi.getAvailableQuizzes(),
-        studentQuizApi.getMyResultsHistory(),
+      const [availableRes, resultHistoryRes, quizHistoryRes, perfRes] = await Promise.all([
+        studentQuizApi.getAvailableQuizzes().catch(() => []),
+        studentQuizApi.getMyResultsHistory().catch(() => []),
+        studentQuizApi.getQuizHistory().catch(() => []),
         studentQuizApi.getMyPerformance().catch(() => ({})),
       ]);
 
-      const history = unwrap(historyRes);
+      const availableQuizzes = unwrap(availableRes);
+      const history = unwrap(resultHistoryRes);
+      const quizHistory = unwrap(quizHistoryRes);
       const perf = unwrap(perfRes);
+
       const safeAvailableQuizzes = Array.isArray(availableQuizzes)
         ? availableQuizzes.filter(isQuizCurrentlyAvailable)
         : [];
@@ -236,25 +240,28 @@ export default function StudentDashboard() {
           statusLabel: "Score insuffisant",
         }));
 
-      const missedQuizListData = Array.isArray(availableQuizzes)
-        ? availableQuizzes
+      const missedQuizListData = Array.isArray(quizHistory)
+        ? quizHistory
             .filter((quiz) => {
+              const status = normalizeStatus(quiz?.status);
+              const expiredByStatus = status.includes("expir") || status.includes("rate");
+
               const endDate = getQuizEndDate(quiz);
-              if (!endDate) return false;
+              const parsedEndDate = endDate ? new Date(endDate) : null;
+              const expiredByDate =
+                parsedEndDate &&
+                !Number.isNaN(parsedEndDate.getTime()) &&
+                parsedEndDate < nowDate;
 
-              const parsedEndDate = new Date(endDate);
-              if (Number.isNaN(parsedEndDate.getTime())) return false;
-
-              const expired = parsedEndDate < nowDate;
-
+              const quizId = quiz.id || quiz.quizId || quiz.idQuiz;
               const alreadyAnswered = completedHistory.some(
                 (h) =>
-                  String(h.quizId) === String(quiz.id) ||
-                  String(h.quizId) === String(quiz.quizId) ||
-                  String(h.idQuiz) === String(quiz.id)
+                  String(h.quizId) === String(quizId) ||
+                  String(h.idQuiz) === String(quizId) ||
+                  String(h.id) === String(quizId)
               );
 
-              return expired && !alreadyAnswered;
+              return (expiredByStatus || expiredByDate) && !alreadyAnswered;
             })
             .map((quiz) => ({
               id: quiz.id || quiz.quizId,

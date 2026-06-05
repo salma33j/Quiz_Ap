@@ -11,6 +11,8 @@ import {
 import studentQuizApi from "../../api/studentQuizApi";
 import styles from "./AvailableQuizzes.module.css";
 
+const unwrapResponse = (res) => res?.data?.data ?? res?.data ?? res ?? [];
+
 const getSubjectName = (quiz) =>
   quiz.matiereName ||
   quiz.matiereNom ||
@@ -84,8 +86,11 @@ export default function AvailableQuizzes() {
           studentQuizApi.getAvailableQuizzes(),
         ]);
 
-        setMatieres(Array.isArray(matieresData) ? matieresData : []);
-        setQuizzes(Array.isArray(quizzesData) ? quizzesData : []);
+        const safeMatieres = unwrapResponse(matieresData);
+        const safeQuizzes = unwrapResponse(quizzesData);
+
+        setMatieres(Array.isArray(safeMatieres) ? safeMatieres : []);
+        setQuizzes(Array.isArray(safeQuizzes) ? safeQuizzes : []);
       } catch (err) {
         setError(
           err?.response?.data?.message ||

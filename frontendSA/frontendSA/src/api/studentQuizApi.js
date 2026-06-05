@@ -13,11 +13,6 @@ const studentQuizApi = {
     return unwrap(res);
   },
 
-  getQuizHistory: async () => {
-    const res = await axiosInstance.get("/student/quizzes/history");
-    return unwrap(res);
-  },
-
   getQuizDetails: async (quizId) => {
     const res = await axiosInstance.get(`/student/quizzes/${quizId}`);
     return unwrap(res);
@@ -80,13 +75,13 @@ const studentQuizApi = {
     return unwrap(res);
   },
 
-  getMyResultsHistory: async () => {
-    const res = await axiosInstance.get("/resultats/my-history");
+  getQuizHistory: async () => {
+    const res = await axiosInstance.get("/student/quizzes/history");
     return unwrap(res);
   },
 
-  hasCompletedQuiz: async (quizId) => {
-    const res = await axiosInstance.get(`/resultats/quiz/${quizId}/has-completed`);
+  getMyResultsHistory: async () => {
+    const res = await axiosInstance.get("/resultats/my-history");
     return unwrap(res);
   },
 
