@@ -71,9 +71,6 @@ const isQuizCurrentlyAvailable = (quiz) => {
   const availableUntil = toDate(quiz.availableUntil || quiz.endDate || quiz.dateFin);
   const status = normalizeStatus(quiz.status);
 
-  if (quiz.sessionExists || quiz.started || quiz.hasStarted || quiz.inProgress) {
-    return false;
-  }
   if (status.includes("expir") || status.includes("termin") || status.includes("complete")) {
     return false;
   }

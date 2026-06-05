@@ -96,9 +96,6 @@ const isQuizCurrentlyAvailable = (quiz) => {
   const parsedEnd = endDate ? new Date(endDate) : null;
   const status = normalizeStatus(quiz?.status);
 
-  if (quiz?.sessionExists || quiz?.started || quiz?.hasStarted || quiz?.inProgress) {
-    return false;
-  }
   if (status.includes("expir") || status.includes("termin") || status.includes("complete")) {
     return false;
   }
@@ -209,7 +206,7 @@ export default function StudentDashboard() {
       setLoading(true);
 
       const [availableQuizzes, historyRes, perfRes] = await Promise.all([
-        studentQuizApi.getAvailableQuizzes().catch(() => []),
+        studentQuizApi.getAvailableQuizzes(),
         studentQuizApi.getMyResultsHistory(),
         studentQuizApi.getMyPerformance().catch(() => ({})),
       ]);
