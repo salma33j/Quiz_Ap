@@ -1,6 +1,5 @@
 package com.exemple.quiz_app.quiz.controller;
 
-import com.exemple.quiz_app.question.dto.QuestionDto;
 import com.exemple.quiz_app.quiz.dto.QuizForStudentDto;
 import com.exemple.quiz_app.quiz.service.StudentQuizService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,12 +32,6 @@ public class StudentQuizController {
     @GetMapping("/quizzes/{quizId}")
     public ResponseEntity<QuizForStudentDto> getQuizDetails(@PathVariable Long quizId) {
         return ResponseEntity.ok(studentQuizService.getQuizDetails(quizId));
-    }
-
-    // IMPORTANT : endpoint utilisé par React dans TakeQuiz.jsx
-    @GetMapping("/quizzes/{quizId}/questions")
-    public ResponseEntity<List<QuestionDto>> getQuizQuestions(@PathVariable Long quizId) {
-        return ResponseEntity.ok(studentQuizService.getQuizQuestions(quizId));
     }
 
     @GetMapping("/quizzes/{quizId}/can-participate")
