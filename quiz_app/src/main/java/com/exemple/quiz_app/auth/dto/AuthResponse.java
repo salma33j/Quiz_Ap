@@ -7,10 +7,18 @@ public class AuthResponse {
     private String refreshToken;
     private String type;
     private Long userId;
+    private String firstName;
+    private String lastName;
     private String username;
     private String email;
     private String role;
     private String fullName;
+    private String cne;
+    private String codeApoge;
+    private Long classeId;
+    private String classeName;
+    private String classFiliere;
+    private String classNiveau;
     private String message;
     private boolean success;
     private Long expiresIn;
@@ -67,10 +75,18 @@ public class AuthResponse {
     public String getRefreshToken() { return refreshToken; }
     public String getType() { return type; }
     public Long getUserId() { return userId; }
+    public String getFirstName() { return firstName; }
+    public String getLastName() { return lastName; }
     public String getUsername() { return username; }
     public String getEmail() { return email; }
     public String getRole() { return role; }
     public String getFullName() { return fullName; }
+    public String getCne() { return cne; }
+    public String getCodeApoge() { return codeApoge; }
+    public Long getClasseId() { return classeId; }
+    public String getClasseName() { return classeName; }
+    public String getClassFiliere() { return classFiliere; }
+    public String getClassNiveau() { return classNiveau; }
     public String getMessage() { return message; }
     public boolean isSuccess() { return success; }
     public Long getExpiresIn() { return expiresIn; }
@@ -83,10 +99,18 @@ public class AuthResponse {
     public void setRefreshToken(String refreshToken) { this.refreshToken = refreshToken; }
     public void setType(String type) { this.type = type; }
     public void setUserId(Long userId) { this.userId = userId; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
     public void setUsername(String username) { this.username = username; }
     public void setEmail(String email) { this.email = email; }
     public void setRole(String role) { this.role = role; }
     public void setFullName(String fullName) { this.fullName = fullName; }
+    public void setCne(String cne) { this.cne = cne; }
+    public void setCodeApoge(String codeApoge) { this.codeApoge = codeApoge; }
+    public void setClasseId(Long classeId) { this.classeId = classeId; }
+    public void setClasseName(String classeName) { this.classeName = classeName; }
+    public void setClassFiliere(String classFiliere) { this.classFiliere = classFiliere; }
+    public void setClassNiveau(String classNiveau) { this.classNiveau = classNiveau; }
     public void setMessage(String message) { this.message = message; }
     public void setSuccess(boolean success) { this.success = success; }
     public void setExpiresIn(Long expiresIn) { this.expiresIn = expiresIn; }

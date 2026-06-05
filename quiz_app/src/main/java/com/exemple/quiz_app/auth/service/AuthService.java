@@ -68,7 +68,7 @@ public class AuthService {
     private EntityManager entityManager;
 
     // =========================================================
-    // MÉTHODE UTILITAIRE : obtenir l'utilisateur connecté
+    // MÃ‰THODE UTILITAIRE : obtenir l'utilisateur connectÃ©
     // =========================================================
     public User getCurrentUser() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -80,10 +80,10 @@ public class AuthService {
     }
 
     // =========================================================
-    // ❌ REGISTER — DÉSACTIVÉ (plus d'inscription publique)
+    // âŒ REGISTER â€” DÃ‰SACTIVÃ‰ (plus d'inscription publique)
     // =========================================================
     public AuthResponse register(RegisterRequest request) {
-        return AuthResponse.error("❌ L'inscription publique est désactivée. Seul l'administrateur peut créer des comptes.");
+        return AuthResponse.error("âŒ L'inscription publique est dÃ©sactivÃ©e. Seul l'administrateur peut crÃ©er des comptes.");
     }
 
     // =========================================================
@@ -109,13 +109,14 @@ public class AuthService {
         response.setUpdatedAt(user.getUpdatedAt());
         response.setMustChangePassword(user.isMustChangePassword());
         response.setMessage("Connexion reussie");
+        populateUserResponse(response, user);
         response.setSuccess(true);
         response.setType("Bearer");
         return response;
     }
 
     // =========================================================
-    // ✅ ADMIN : Créer un compte ÉTUDIANT
+    // âœ… ADMIN : CrÃ©er un compte Ã‰TUDIANT
     // =========================================================
     public AuthResponse createEtudiant(RegisterRequest request) {
         User requester = getCurrentUser();
@@ -177,12 +178,13 @@ public class AuthService {
         response.setEmail(user.getEmail());
         response.setRole("ETUDIANT");
         response.setMessage(accountEmailMessage("Compte etudiant cree avec succes", user.getEmail(), emailSent));
+        populateUserResponse(response, user);
         response.setSuccess(true);
         return response;
     }
 
     // =========================================================
-    // ✅ ADMIN : Créer un compte ENSEIGNANT
+    // âœ… ADMIN : CrÃ©er un compte ENSEIGNANT
     // =========================================================
     public AuthResponse createEnseignant(RegisterRequest request) {
         User requester = getCurrentUser();
@@ -217,6 +219,7 @@ public class AuthService {
         response.setEmail(user.getEmail());
         response.setRole("ENSEIGNANT");
         response.setMessage(accountEmailMessage("Compte enseignant cree avec succes", user.getEmail(), emailSent));
+        populateUserResponse(response, user);
         response.setSuccess(true);
       return response;
   }
@@ -254,6 +257,7 @@ public class AuthService {
         response.setEmail(user.getEmail());
         response.setRole("ADMIN");
         response.setMessage(accountEmailMessage("Compte admin cree avec succes", user.getEmail(), emailSent));
+        populateUserResponse(response, user);
         response.setSuccess(true);
         return response;
     }
@@ -343,6 +347,7 @@ public class AuthService {
             response.setUpdatedAt(user.getUpdatedAt());
             response.setMustChangePassword(user.isMustChangePassword());
             response.setMessage("Utilisateur trouve");
+            populateUserResponse(response, user);
             response.setSuccess(true);
             return response;
         } catch (RuntimeException e) {
@@ -378,6 +383,7 @@ public class AuthService {
                     response.setRole(user.getRole().name());
                     response.setMustChangePassword(user.isMustChangePassword());
                     response.setMessage("OK");
+                    populateUserResponse(response, user);
                     response.setSuccess(true);
                     return response;
                 })
@@ -404,6 +410,7 @@ public class AuthService {
         response.setEmail(user.getEmail());
         response.setRole(user.getRole().name());
         response.setMessage("Utilisateur promu enseignant");
+        populateUserResponse(response, user);
         response.setSuccess(true);
         return response;
     }
@@ -613,6 +620,7 @@ public class AuthService {
         response.setUpdatedAt(user.getUpdatedAt());
         response.setToken(jwtUtil.generateToken(user.getEmail(), user.getRole().name()));
         response.setMessage("Profil mis a jour");
+        populateUserResponse(response, user);
         response.setSuccess(true);
         return response;
     }
@@ -635,9 +643,37 @@ public class AuthService {
         userRepository.save(user);
         return AuthResponse.success("Mot de passe modifie avec succes");
     }
+    private void populateUserResponse(AuthResponse response, User user) {
+        if (response == null || user == null) {
+            return;
+        }
+
+        response.setUserId(user.getId());
+        response.setFirstName(user.getFirstName());
+        response.setLastName(user.getLastName());
+        response.setUsername(user.getFullName());
+        response.setFullName(user.getFullName());
+        response.setEmail(user.getEmail());
+        response.setRole(user.getRole().name());
+        response.setMustChangePassword(user.isMustChangePassword());
+        response.setCne(user.getCne());
+        response.setCodeApoge(user.getCodeApoge());
+        response.setCreatedAt(user.getCreatedAt());
+        response.setUpdatedAt(user.getUpdatedAt());
+
+        var classe = user.getClasse();
+        if (classe != null) {
+            response.setClasseId(classe.getId());
+            response.setClasseName(classe.getName());
+            response.setClassFiliere(classe.getFiliere());
+            response.setClassNiveau(classe.getNiveau());
+        }
+    }
+
+
 
     // =========================================================
-    // MÉTHODE UTILITAIRE : générer un mot de passe provisoire
+    // MÃ‰THODE UTILITAIRE : gÃ©nÃ©rer un mot de passe provisoire
     // =========================================================
     private String genererMotDePasse(String prefix) {
         int nombre = (int) (Math.random() * 9000 + 1000);
@@ -663,7 +699,7 @@ public class AuthService {
     }
 
     // =========================================================
-    // MAPPER User → UserDto
+    // MAPPER User â†’ UserDto
     // =========================================================
     private UserDto mapToDto(User user) {
         UserDto dto = new UserDto();

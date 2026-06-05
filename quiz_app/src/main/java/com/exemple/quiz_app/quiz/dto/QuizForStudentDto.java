@@ -20,6 +20,7 @@ public class QuizForStudentDto {
     private String enseignantNom;
     private Integer questionCount;
     private Integer timeLimit;
+    private LocalDateTime availableFrom;
     private LocalDateTime availableUntil;
     private String status;
     private Long timeRemainingSeconds;
