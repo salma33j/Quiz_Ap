@@ -51,42 +51,6 @@ const getTeacherLabel = (source) =>
 
 const getQuizTitle = (quiz) => quiz.titre || quiz.title || "Quiz sans titre";
 
-const getQuizId = (quiz) => quiz.id || quiz.quizId;
-
-const toDate = (value) => {
-  if (!value) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
-};
-
-const normalizeStatus = (status) =>
-  `${status || ""}`
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-
-const isQuizCurrentlyAvailable = (quiz) => {
-  const now = new Date();
-  const availableFrom = toDate(quiz.availableFrom || quiz.startDate || quiz.dateDebut);
-  const availableUntil = toDate(quiz.availableUntil || quiz.endDate || quiz.dateFin);
-  const status = normalizeStatus(quiz.status);
-
-  if (status.includes("expir") || status.includes("termin") || status.includes("complete")) {
-    return false;
-  }
-  if (availableFrom && now < availableFrom) {
-    return false;
-  }
-  if (availableUntil && now > availableUntil) {
-    return false;
-  }
-  if (Number(quiz.timeRemainingSeconds) === 0 && availableUntil) {
-    return false;
-  }
-
-  return true;
-};
-
 const formatDateTime = (value) => {
   if (!value) return "Non definie";
 
@@ -151,7 +115,7 @@ export default function AvailableQuizzes() {
       });
     });
 
-    quizzes.filter(isQuizCurrentlyAvailable).forEach((quiz) => {
+    quizzes.forEach((quiz) => {
       const name = getSubjectName(quiz);
       const id = String(getQuizSubjectId(quiz));
 
@@ -172,9 +136,9 @@ export default function AvailableQuizzes() {
       subject.quizzes.push(quiz);
     });
 
-    return Array.from(grouped.values())
-      .filter((subject) => subject.quizzes.length > 0)
-      .sort((a, b) => a.name.localeCompare(b.name));
+    return Array.from(grouped.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
   }, [matieres, quizzes]);
 
   const selectedSubject = useMemo(
@@ -209,7 +173,7 @@ export default function AvailableQuizzes() {
         <>
           {subjects.length === 0 ? (
             <div className={styles.stateBox}>
-              Aucun quiz disponible maintenant.
+              Aucune matière dédiée à votre classe pour le moment.
             </div>
           ) : (
             <div className={styles.subjectGrid}>
@@ -257,7 +221,7 @@ export default function AvailableQuizzes() {
           ) : (
             <div className={styles.quizGrid}>
               {visibleQuizzes.map((quiz) => (
-                <article className={styles.quizCard} key={getQuizId(quiz)}>
+                <article className={styles.quizCard} key={quiz.id}>
                   <div className={styles.quizPreviewTop}>
                     <div className={styles.quizIntro}>
                       <h2>{getQuizTitle(quiz)}</h2>
@@ -267,7 +231,7 @@ export default function AvailableQuizzes() {
                     <button
                       type="button"
                       className={styles.startButton}
-                      onClick={() => navigate(`/student/quizzes/${getQuizId(quiz)}/take`)}
+                      onClick={() => navigate(`/student/quizzes/${quiz.id}/take`)}
                     >
                       Commencer le quiz
                     </button>
