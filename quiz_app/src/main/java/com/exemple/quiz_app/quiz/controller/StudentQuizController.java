@@ -20,46 +20,32 @@ public class StudentQuizController {
     @Autowired
     private StudentQuizService studentQuizService;
 
-    /**
-     * 1. Quizzes disponibles pour l'étudiant
-     */
     @GetMapping("/quizzes/available")
     public ResponseEntity<List<QuizForStudentDto>> getAvailableQuizzes() {
         return ResponseEntity.ok(studentQuizService.getAvailableQuizzes());
     }
 
-    /**
-     * 2. Historique des quizzes complétés
-     */
     @GetMapping("/quizzes/history")
     public ResponseEntity<List<QuizForStudentDto>> getQuizHistory() {
         return ResponseEntity.ok(studentQuizService.getQuizHistory());
     }
 
-    /**
-     * 3. Détails d'un quiz
-     */
     @GetMapping("/quizzes/{quizId}")
     public ResponseEntity<QuizForStudentDto> getQuizDetails(@PathVariable Long quizId) {
         return ResponseEntity.ok(studentQuizService.getQuizDetails(quizId));
     }
 
-    /**
-     * 4. Récupérer les questions d'un quiz (sans réponses correctes)
+    // IMPORTANT : endpoint utilisé par React dans TakeQuiz.jsx
+    @GetMapping("/quizzes/{quizId}/questions")
+    public ResponseEntity<List<QuestionDto>> getQuizQuestions(@PathVariable Long quizId) {
+        return ResponseEntity.ok(studentQuizService.getQuizQuestions(quizId));
+    }
 
-
-    /**
-     * 5. Vérifier si l'étudiant peut participer (retourne un Map avec détails)
-     * 🔥 CORRECTION : retourne Map<String, Object> au lieu de Boolean
-     */
     @GetMapping("/quizzes/{quizId}/can-participate")
     public ResponseEntity<Map<String, Object>> canParticipate(@PathVariable Long quizId) {
         return ResponseEntity.ok(studentQuizService.canParticipate(quizId));
     }
 
-    /**
-     * 6. 🔥 Démarrer un quiz (créer une session avec timer)
-     */
     @PostMapping("/quizzes/{quizId}/start")
     public ResponseEntity<Map<String, Object>> startQuiz(@PathVariable Long quizId) {
         studentQuizService.startQuiz(quizId);
@@ -70,17 +56,11 @@ public class StudentQuizController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * 7. 🔥 Vérifier le temps restant (appel périodique)
-     */
     @GetMapping("/quizzes/{quizId}/time-remaining")
     public ResponseEntity<Map<String, Object>> getRemainingTime(@PathVariable Long quizId) {
         return ResponseEntity.ok(studentQuizService.getRemainingTime(quizId));
     }
 
-    /**
-     * 8. 🔥 Récupérer le temps restant en secondes
-     */
     @GetMapping("/quizzes/{quizId}/remaining-seconds")
     public ResponseEntity<Map<String, Long>> getRemainingSeconds(@PathVariable Long quizId) {
         Long remainingSeconds = studentQuizService.getRemainingSecondsForQuiz(quizId);
