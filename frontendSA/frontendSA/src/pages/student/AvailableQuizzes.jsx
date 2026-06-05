@@ -68,6 +68,57 @@ const formatDateTime = (value) => {
   });
 };
 
+const unwrap = (res) => res?.data?.data ?? res?.data ?? res ?? [];
+
+const normalizeStatus = (status) =>
+  `${status || ""}`
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+const getQuizEndDate = (quiz) =>
+  quiz?.availableUntil ||
+  quiz?.endDate ||
+  quiz?.dateFin ||
+  quiz?.deadline ||
+  quiz?.expiresAt ||
+  null;
+
+const getQuizStartDate = (quiz) =>
+  quiz?.availableFrom ||
+  quiz?.startDate ||
+  quiz?.dateDebut ||
+  quiz?.startsAt ||
+  null;
+
+const isAvailableQuiz = (quiz) => {
+  const status = normalizeStatus(quiz?.status);
+  const now = new Date();
+
+  if (status.includes("expir") || status.includes("termin") || status.includes("complete")) {
+    return false;
+  }
+
+  const startDate = getQuizStartDate(quiz);
+  const endDate = getQuizEndDate(quiz);
+  const parsedStart = startDate ? new Date(startDate) : null;
+  const parsedEnd = endDate ? new Date(endDate) : null;
+
+  if (parsedStart && !Number.isNaN(parsedStart.getTime()) && now < parsedStart) return false;
+  if (parsedEnd && !Number.isNaN(parsedEnd.getTime()) && now > parsedEnd) return false;
+
+  return status.includes("faire") || status.includes("available") || true;
+};
+
+const uniqueById = (items) => {
+  const map = new Map();
+  items.forEach((item) => {
+    const key = String(item?.id || item?.quizId || item?.idQuiz || JSON.stringify(item));
+    if (!map.has(key)) map.set(key, item);
+  });
+  return Array.from(map.values());
+};
+
 export default function AvailableQuizzes() {
   const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState([]);

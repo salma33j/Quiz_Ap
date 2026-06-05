@@ -217,9 +217,35 @@ export default function StudentDashboard() {
       const quizHistory = unwrap(quizHistoryRes);
       const perf = unwrap(perfRes);
 
-      const safeAvailableQuizzes = Array.isArray(availableQuizzes)
+      const availableFromEndpoint = Array.isArray(availableQuizzes)
         ? availableQuizzes.filter(isQuizCurrentlyAvailable)
         : [];
+
+      const availableFromHistory = Array.isArray(quizHistory)
+        ? quizHistory.filter((quiz) => {
+            const status = normalizeStatus(quiz?.status);
+            return (
+              status.includes("faire") ||
+              status.includes("a faire") ||
+              status.includes("available") ||
+              isQuizCurrentlyAvailable(quiz)
+            );
+          })
+        : [];
+
+      const uniqueById = (items) => {
+        const map = new Map();
+        items.forEach((item) => {
+          const key = String(item?.id || item?.quizId || item?.idQuiz || JSON.stringify(item));
+          if (!map.has(key)) map.set(key, item);
+        });
+        return Array.from(map.values());
+      };
+
+      const safeAvailableQuizzes = uniqueById([
+        ...availableFromEndpoint,
+        ...availableFromHistory,
+      ]);
 
       const completedHistory = Array.isArray(history)
         ? history.filter((item) => item.isCompleted !== false)
