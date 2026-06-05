@@ -53,7 +53,7 @@ public class StudentQuizService {
         LocalDateTime now = LocalDateTime.now();
         Long classId = getStudentClassId(student);
 
-        return quizRepository.findAvailableQuizzesForStudent(student, classId, now).stream()
+        return quizRepository.findAvailableQuizzesForStudent(student.getId(), classId, now).stream()
                 .filter(quiz -> {
                     // ðŸ”¥ Exclure les quiz dÃ©jÃ  complÃ©tÃ©s (soumis)
                     boolean completed = resultatRepository.hasStudentCompletedQuiz(student.getId().longValue(), quiz.getId());
@@ -61,7 +61,9 @@ public class StudentQuizService {
 
                     // ðŸ”¥ Exclure les quiz avec session expirÃ©e
                     Optional<QuizSession> session = quizSessionRepository.findByStudentAndQuiz(student, quiz);
-                    return session.isEmpty();
+                    return session.isEmpty()
+                            || (session.get().getStatus() == QuizSession.SessionStatus.ACTIVE
+                            && !session.get().isExpired());
                 })
                 .map(quiz -> {
                     QuizForStudentDto dto = new QuizForStudentDto();
@@ -99,7 +101,7 @@ public class StudentQuizService {
         LocalDateTime now = LocalDateTime.now();
         Long classId = getStudentClassId(student);
 
-        return quizRepository.findAllQuizzesForStudent(student, classId).stream().map(quiz -> {
+        return quizRepository.findAllQuizzesForStudent(student.getId(), classId).stream().map(quiz -> {
             QuizForStudentDto dto = new QuizForStudentDto();
             dto.setId(quiz.getId());
             dto.setTitre(quiz.getTitre());
@@ -222,10 +224,17 @@ public class StudentQuizService {
         Optional<QuizSession> existingSession = quizSessionRepository.findByStudentAndQuiz(student, quiz);
 
         if (existingSession.isPresent()) {
-            result.put("canParticipate", false);
+            QuizSession quizSession = existingSession.get();
+            boolean canContinue = quizSession.getStatus() == QuizSession.SessionStatus.ACTIVE
+                    && !quizSession.isExpired();
+
+            result.put("canParticipate", canContinue);
             result.put("quizId", quizId);
             result.put("sessionExists", true);
-            result.put("reason", "Vous avez deja ouvert ce quiz. Chaque etudiant ne peut y entrer qu'une seule fois.");
+            result.put("remainingSeconds", quizSession.getRemainingSeconds());
+            result.put("reason", canContinue
+                    ? "Session deja ouverte, reprise du quiz."
+                    : "Vous avez deja ouvert ce quiz et la session est expiree.");
             return result;
         }
 
@@ -271,7 +280,14 @@ public class StudentQuizService {
         Optional<QuizSession> existingSession = quizSessionRepository.findByStudentAndQuiz(student, quiz);
 
         if (existingSession.isPresent()) {
-            throw new RuntimeException("Vous avez deja ouvert ce quiz. Chaque etudiant ne peut y entrer qu'une seule fois.");
+            QuizSession quizSession = existingSession.get();
+            if (quizSession.getStatus() == QuizSession.SessionStatus.ACTIVE && !quizSession.isExpired()) {
+                quizSession.updateLastActivity();
+                quizSessionRepository.save(quizSession);
+                return;
+            }
+
+            throw new RuntimeException("Vous avez deja ouvert ce quiz et la session est expiree.");
         }
 
         // CrÃ©er nouvelle session

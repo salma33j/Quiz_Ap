@@ -27,32 +27,55 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
     long countByStatus(Quiz.QuizStatus status);
 
     // ========== ETUDIANT - QUIZ DISPONIBLES ==========
-    @Query("SELECT DISTINCT q FROM Quiz q LEFT JOIN q.allowedStudents qs LEFT JOIN q.matiere m " +
-            "WHERE (qs.student = :student " +
-            "OR (:classId IS NOT NULL AND q.classe.id = :classId) " +
-            "OR (:classId IS NOT NULL AND m.classe.id = :classId)) " +
-            "AND q.status = 'PUBLISHED' " +
-            "AND (q.availableFrom IS NULL OR q.availableFrom <= :now) " +
-            "AND (q.availableUntil IS NULL OR q.availableUntil >= :now)")
+    @Query(value = """
+            SELECT DISTINCT q.*
+            FROM quiz q
+            LEFT JOIN quiz_students qs ON qs.quiz_id = q.id
+            LEFT JOIN matieres m ON m.id = q.matiere_id
+            WHERE (
+                qs.student_id = :studentId
+                OR (:classId IS NOT NULL AND q.classe_id = :classId)
+                OR (:classId IS NOT NULL AND m.classe_id = :classId)
+            )
+            AND q.status = 'PUBLISHED'
+            AND (q.available_from IS NULL OR q.available_from <= :now)
+            AND (q.available_until IS NULL OR q.available_until >= :now)
+            """, nativeQuery = true)
     List<Quiz> findAvailableQuizzesForStudent(
-            @Param("student") User student,
+            @Param("studentId") Long studentId,
             @Param("classId") Long classId,
             @Param("now") LocalDateTime now
     );
 
     // ========== ETUDIANT - TOUS LES QUIZ AUTORISES ==========
-    @Query("SELECT DISTINCT q FROM Quiz q LEFT JOIN q.allowedStudents qs LEFT JOIN q.matiere m " +
-            "WHERE qs.student = :student " +
-            "OR (:classId IS NOT NULL AND q.classe.id = :classId) " +
-            "OR (:classId IS NOT NULL AND m.classe.id = :classId)")
-    List<Quiz> findAllQuizzesForStudent(@Param("student") User student, @Param("classId") Long classId);
+    @Query(value = """
+            SELECT DISTINCT q.*
+            FROM quiz q
+            LEFT JOIN quiz_students qs ON qs.quiz_id = q.id
+            LEFT JOIN matieres m ON m.id = q.matiere_id
+            WHERE (
+                qs.student_id = :studentId
+                OR (:classId IS NOT NULL AND q.classe_id = :classId)
+                OR (:classId IS NOT NULL AND m.classe_id = :classId)
+            )
+            AND q.status IN ('PUBLISHED', 'EXPIRED', 'ARCHIVED')
+            """, nativeQuery = true)
+    List<Quiz> findAllQuizzesForStudent(@Param("studentId") Long studentId, @Param("classId") Long classId);
 
     // ========== VERIFICATION AUTORISATION ==========
-    @Query("SELECT COUNT(q) > 0 FROM Quiz q LEFT JOIN q.allowedStudents qs LEFT JOIN q.matiere m " +
-            "WHERE q.id = :quizId AND (" +
-            "qs.student.id = :studentId " +
-            "OR q.classe.id = (SELECT u.classe.id FROM User u WHERE u.id = :studentId) " +
-            "OR m.classe.id = (SELECT u.classe.id FROM User u WHERE u.id = :studentId))")
+    @Query(value = """
+            SELECT COUNT(q.id) > 0
+            FROM quiz q
+            LEFT JOIN quiz_students qs ON qs.quiz_id = q.id
+            LEFT JOIN matieres m ON m.id = q.matiere_id
+            LEFT JOIN users u ON u.id = :studentId
+            WHERE q.id = :quizId
+            AND (
+                qs.student_id = :studentId
+                OR (u.classe_id IS NOT NULL AND q.classe_id = u.classe_id)
+                OR (u.classe_id IS NOT NULL AND m.classe_id = u.classe_id)
+            )
+            """, nativeQuery = true)
     boolean isStudentAllowed(@Param("quizId") Long quizId, @Param("studentId") Long studentId);
 
     // ========== COMPTER LES ETUDIANTS AUTORISES ==========
