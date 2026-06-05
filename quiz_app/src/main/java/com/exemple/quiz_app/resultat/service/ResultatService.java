@@ -46,6 +46,7 @@ public class ResultatService {
 
         User currentUser = authService.getCurrentUser();
         User student = currentUser;
+        boolean shouldComplete = Boolean.TRUE.equals(resultatRequestDto.getIsCompleted());
 
         if (student.getRole() != Role.ETUDIANT && student.getRole() != Role.ADMIN) {
             throw new RuntimeException("Seuls les étudiants peuvent avoir des résultats");
@@ -83,7 +84,7 @@ public class ResultatService {
         }
 
         // Si le quiz est terminé
-        if (Boolean.TRUE.equals(resultatRequestDto.getIsCompleted())) {
+        if (shouldComplete) {
 
             // Recalculer le score final si nécessaire
             if (resultat.getTotalPoints() == null || resultat.getEarnedPoints() == null) {
@@ -91,20 +92,20 @@ public class ResultatService {
             }
 
             // Marquer comme complété (même si déjà fait)
-            if (!Boolean.TRUE.equals(resultat.getIsCompleted())) {
+            if (resultat.getStatus() != Resultat.SubmissionStatus.SUBMITTED) {
                 resultat.markAsCompleted();
-                resultat.setCompletedDate(LocalDateTime.now());
-                resultat.setGrade(resultat.getGradeLetter());
             } else {
                 // Si déjà complété, juste mettre à jour la date si nécessaire
                 if (resultat.getCompletedDate() == null) {
                     resultat.setCompletedDate(LocalDateTime.now());
                 }
             }
+            resultat.setGrade(resultat.getGradeLetter());
 
             // Génération AI si demandé (même si déjà fait, on peut regénérer)
             if (Boolean.TRUE.equals(resultatRequestDto.getGenerateFeedback())) {
-                generateAndSaveFeedback(resultat, resultatRequestDto.getLanguage() != null ?
+                Resultat persistedResultat = resultatRepository.saveAndFlush(resultat);
+                return generateAndSaveFeedback(persistedResultat, resultatRequestDto.getLanguage() != null ?
                         resultatRequestDto.getLanguage() : "fr");
             }
         }
@@ -152,9 +153,8 @@ public class ResultatService {
         }
 
         // Si le résultat n'est pas marqué comme complété, on le force
-        if (!Boolean.TRUE.equals(resultat.getIsCompleted())) {
-            resultat.setIsCompleted(true);
-            resultat.setStatus(Resultat.SubmissionStatus.SUBMITTED);
+        if (resultat.getStatus() != Resultat.SubmissionStatus.SUBMITTED) {
+            resultat.markAsCompleted();
         }
 
         Quiz quiz = resultat.getQuiz();

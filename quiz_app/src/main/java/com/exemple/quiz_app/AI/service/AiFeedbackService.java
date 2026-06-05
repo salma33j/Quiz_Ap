@@ -50,6 +50,10 @@ public class AiFeedbackService {
             throw new RuntimeException("Le feedback est disponible pour les etudiants uniquement");
         }
 
+        if (request.getResultatId() == null) {
+            throw new RuntimeException("Resultat non trouve");
+        }
+
         Resultat resultat = resultatRepository.findById(request.getResultatId())
                 .orElseThrow(() -> new RuntimeException("Resultat non trouve"));
 

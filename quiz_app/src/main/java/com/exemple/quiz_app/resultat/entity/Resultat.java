@@ -88,9 +88,17 @@ public class Resultat {
 
     @PrePersist
     protected void onCreate() {
-        startedAt = LocalDateTime.now();
-        isCompleted = false;
-        status = SubmissionStatus.IN_PROGRESS;
+        if (startedAt == null) {
+            startedAt = LocalDateTime.now();
+        }
+        if (isCompleted == null) {
+            isCompleted = false;
+        }
+        if (Boolean.TRUE.equals(isCompleted)) {
+            status = SubmissionStatus.SUBMITTED;
+        } else if (status == null) {
+            status = SubmissionStatus.IN_PROGRESS;
+        }
     }
 
     // 🔥 CORRECTION : Méthode getQuizId() qui retourne l'ID du quiz
