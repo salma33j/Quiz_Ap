@@ -3,10 +3,38 @@ import { loginApi, getCurrentUserApi } from "../api/authApi";
 
 export const AuthContext = createContext(null);
 
+function normalizeAuth(payload) {
+  const root = payload?.data ?? payload ?? {};
+  const user = root?.user || root?.customer || root?.enseignant || root?.student || root;
+  const nameFromParts = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
+  const fullName =
+    user?.fullName ||
+    nameFromParts ||
+    user?.username ||
+    "";
+  const [derivedFirstName, ...derivedLastNameParts] = `${fullName || ""}`
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  return {
+    ...user,
+    id: user?.id ?? user?.userId ?? root?.id ?? root?.userId,
+    userId: user?.userId ?? user?.id ?? root?.userId ?? root?.id,
+    firstName: user?.firstName || derivedFirstName || "",
+    lastName: user?.lastName || derivedLastNameParts.join(" "),
+    fullName,
+    username: user?.username || fullName,
+    role: user?.role || root?.role,
+    token: user?.token || root?.token || localStorage.getItem("token"),
+    mustChangePassword: user?.mustChangePassword ?? root?.mustChangePassword,
+  };
+}
+
 function getSavedUser() {
   try {
     const savedUser = localStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
+    return savedUser ? normalizeAuth(JSON.parse(savedUser)) : null;
   } catch {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
@@ -26,11 +54,12 @@ export function AuthProvider({ children }) {
       throw new Error(data.message || "Erreur de connexion");
     }
 
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data));
-    setUser(data);
+    const auth = normalizeAuth(data);
+    localStorage.setItem("token", auth.token);
+    localStorage.setItem("user", JSON.stringify(auth));
+    setUser(auth);
 
-    return data;
+    return auth;
   };
 
   const logout = () => {
@@ -45,12 +74,15 @@ export function AuthProvider({ children }) {
       const response = await getCurrentUserApi();
       const data = response.data;
 
-      localStorage.setItem("user", JSON.stringify(data));
-      setUser(data);
+      const auth = normalizeAuth(data);
+      localStorage.setItem("user", JSON.stringify(auth));
+      setUser(auth);
+      return auth;
     } catch {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       setUser(null);
+      return null;
     }
   };
 

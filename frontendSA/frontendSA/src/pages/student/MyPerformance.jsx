@@ -16,11 +16,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import axiosInstance from "../../api/axiosInstance";
 import studentQuizApi from "../../api/studentQuizApi";
 import styles from "./MyPerformance.module.css";
-
-const unwrap = (res) => res?.data?.data ?? res?.data ?? [];
 
 const getSubjectName = (item) =>
   item?.matiereNom ||
@@ -82,13 +79,13 @@ export default function MyPerformance() {
       setError("");
 
       const [perfRes, historyRes, matieresData] = await Promise.all([
-        axiosInstance.get("/statistiques/student/my-performance"),
-        axiosInstance.get("/resultats/my-history"),
+        studentQuizApi.getMyPerformance(),
+        studentQuizApi.getMyResultsHistory(),
         studentQuizApi.getMySubjects().catch(() => []),
       ]);
 
-      const perfData = unwrap(perfRes);
-      const historyData = unwrap(historyRes);
+      const perfData = perfRes;
+      const historyData = historyRes;
 
       const completed = Array.isArray(historyData)
         ? historyData.filter((item) => item.isCompleted !== false)

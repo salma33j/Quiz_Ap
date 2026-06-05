@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { BookOpen, CalendarDays, GraduationCap, Search, Trophy } from "lucide-react";
-import axiosInstance from "../../api/axiosInstance";
 import studentQuizApi from "../../api/studentQuizApi";
 import styles from "./MyHistory.module.css";
-
-const unwrap = (res) => res?.data?.data ?? res?.data ?? [];
 
 const getSubjectName = (item) =>
   item.matiereNom ||
@@ -114,10 +111,10 @@ export default function MyHistory() {
 
       const [matieresData, historyRes] = await Promise.all([
         studentQuizApi.getMySubjects().catch(() => []),
-        axiosInstance.get("/resultats/my-history"),
+        studentQuizApi.getMyResultsHistory(),
       ]);
 
-      const data = unwrap(historyRes);
+      const data = historyRes;
 
       const completed = Array.isArray(data)
         ? data.filter((item) => item.isCompleted !== false)

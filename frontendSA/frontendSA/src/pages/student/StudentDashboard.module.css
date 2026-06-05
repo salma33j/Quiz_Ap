@@ -36,6 +36,33 @@
   font-weight: 650;
 }
 
+.studentIntro {
+  flex: 1;
+  min-width: 0;
+}
+
+.studentDetails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.studentDetails span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  border-radius: 999px;
+  background: #fffaf1;
+  border: 1px solid #f1e2ad;
+  color: #344054;
+  padding: 8px 11px;
+  font-size: 12px;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
 .todayBox {
   padding: 16px 20px;
   border-radius: 18px;
@@ -407,6 +434,14 @@
   .topSection {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .studentDetails {
+    width: 100%;
+  }
+
+  .studentDetails span {
+    width: 100%;
   }
 
   .todayBox {

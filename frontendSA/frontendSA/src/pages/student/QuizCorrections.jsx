@@ -10,10 +10,7 @@ import {
 } from "lucide-react";
 
 import studentQuizApi from "../../api/studentQuizApi";
-import axiosInstance from "../../api/axiosInstance";
 import styles from "./QuizCorrections.module.css";
-
-const unwrap = (res) => res?.data?.data ?? res?.data ?? [];
 
 const getSubjectName = (source) =>
   source?.matiereName ||
@@ -132,10 +129,10 @@ export default function QuizCorrections() {
 
       const [matieresData, historyRes] = await Promise.all([
         studentQuizApi.getMySubjects().catch(() => []),
-        axiosInstance.get("/resultats/my-history"),
+        studentQuizApi.getMyResultsHistory(),
       ]);
 
-      const historyData = unwrap(historyRes);
+      const historyData = historyRes;
       const completed = Array.isArray(historyData)
         ? historyData.filter((item) => item.isCompleted !== false)
         : [];

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
@@ -10,6 +10,10 @@ import {
   TrendingUp,
   Clock,
   XCircle,
+  GraduationCap,
+  IdCard,
+  Mail,
+  UserRound,
 } from "lucide-react";
 import {
   BarChart,
@@ -25,7 +29,7 @@ import {
 } from "recharts";
 
 import studentQuizApi from "../../api/studentQuizApi";
-import axiosInstance from "../../api/axiosInstance";
+import useAuth from "../../hooks/useAuth";
 import styles from "./StudentDashboard.module.css";
 
 const COLORS = ["#4F46E5", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"];
@@ -60,6 +64,7 @@ const isFailedResult = (item) => {
 };
 
 const getQuizEndDate = (quiz) =>
+  quiz?.availableUntil ||
   quiz?.endDate ||
   quiz?.dateFin ||
   quiz?.expirationDate ||
@@ -68,6 +73,47 @@ const getQuizEndDate = (quiz) =>
   quiz?.expiresAt ||
   quiz?.endAt ||
   null;
+
+const getQuizStartDate = (quiz) =>
+  quiz?.availableFrom ||
+  quiz?.startDate ||
+  quiz?.dateDebut ||
+  quiz?.debut ||
+  quiz?.startsAt ||
+  null;
+
+const normalizeStatus = (status) =>
+  `${status || ""}`
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+const isQuizCurrentlyAvailable = (quiz) => {
+  const now = new Date();
+  const startDate = getQuizStartDate(quiz);
+  const endDate = getQuizEndDate(quiz);
+  const parsedStart = startDate ? new Date(startDate) : null;
+  const parsedEnd = endDate ? new Date(endDate) : null;
+  const status = normalizeStatus(quiz?.status);
+
+  if (quiz?.sessionExists || quiz?.started || quiz?.hasStarted || quiz?.inProgress) {
+    return false;
+  }
+  if (status.includes("expir") || status.includes("termin") || status.includes("complete")) {
+    return false;
+  }
+  if (parsedStart && !Number.isNaN(parsedStart.getTime()) && now < parsedStart) {
+    return false;
+  }
+  if (parsedEnd && !Number.isNaN(parsedEnd.getTime()) && now > parsedEnd) {
+    return false;
+  }
+  if (Number(quiz?.timeRemainingSeconds) === 0 && parsedEnd) {
+    return false;
+  }
+
+  return true;
+};
 
 const isQuizExpired = (quiz) => {
   const status = String(quiz?.status || "").toUpperCase();
@@ -78,6 +124,45 @@ const isQuizExpired = (quiz) => {
 
   const parsedEndDate = new Date(endDate);
   return !Number.isNaN(parsedEndDate.getTime()) && parsedEndDate <= new Date();
+};
+
+const readStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("user") || "{}");
+  } catch {
+    return {};
+  }
+};
+
+const normalizeStudentInfo = (source = {}) => {
+  const nameFromParts = [source.firstName, source.lastName].filter(Boolean).join(" ");
+  const fullName =
+    source.fullName ||
+    nameFromParts ||
+    source.username ||
+    "";
+  const [derivedFirstName, ...derivedLastNameParts] = `${fullName || ""}`
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const firstName = source.firstName || derivedFirstName || "";
+  const lastName = source.lastName || derivedLastNameParts.join(" ");
+  const classLabel = [
+    source.classeName || source.className || source.classe?.name,
+    source.classFiliere || source.classe?.filiere,
+    source.classNiveau || source.classe?.niveau,
+  ]
+    .filter(Boolean)
+    .join(" - ");
+
+  return {
+    id: source.id || source.userId || "",
+    fullName: [firstName, lastName].filter(Boolean).join(" ") || fullName || "Étudiant",
+    email: source.email || "-",
+    cne: source.cne || "",
+    codeApoge: source.codeApoge || source.codeApogee || "",
+    classLabel,
+  };
 };
 
 const formatDate = (value) => {
@@ -96,9 +181,12 @@ const formatDateTime = (value) => {
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
+  const auth = useAuth() || {};
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const studentName = user?.firstName || user?.username || "Étudiant";
+  const studentInfo = normalizeStudentInfo({
+    ...readStoredUser(),
+    ...(auth.user || {}),
+  });
 
   const [stats, setStats] = useState({
     totalQuizzes: 0,
@@ -116,22 +204,21 @@ export default function StudentDashboard() {
   const [weeklyActivity, setWeeklyActivity] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
-
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     try {
       setLoading(true);
 
       const [availableQuizzes, historyRes, perfRes] = await Promise.all([
         studentQuizApi.getAvailableQuizzes().catch(() => []),
-        axiosInstance.get("/resultats/my-history"),
-        axiosInstance.get("/statistiques/student/my-performance").catch(() => ({ data: {} })),
+        studentQuizApi.getMyResultsHistory(),
+        studentQuizApi.getMyPerformance().catch(() => ({})),
       ]);
 
       const history = unwrap(historyRes);
       const perf = unwrap(perfRes);
+      const safeAvailableQuizzes = Array.isArray(availableQuizzes)
+        ? availableQuizzes.filter(isQuizCurrentlyAvailable)
+        : [];
 
       const completedHistory = Array.isArray(history)
         ? history.filter((item) => item.isCompleted !== false)
@@ -223,9 +310,8 @@ export default function StudentDashboard() {
           rankingEligibleHistory
             .filter(Boolean)
             .map((h) =>
-              axiosInstance
-                .get(`/statistiques/student/ranking/${h.quizId}`)
-                .then((r) => unwrap(r))
+              studentQuizApi
+                .getRanking(h.quizId)
                 .catch(() => null)
             )
         );
@@ -285,7 +371,7 @@ export default function StudentDashboard() {
       }));
 
       setStats({
-        totalQuizzes: Array.isArray(availableQuizzes) ? availableQuizzes.length : 0,
+        totalQuizzes: safeAvailableQuizzes.length,
         completedQuizzes: completedHistory.length,
         failedQuizzes,
         averageScore: Math.round(perf?.moyenneScore || 0),
@@ -303,7 +389,12 @@ export default function StudentDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadDashboard();
+  }, [loadDashboard]);
 
   const cards = useMemo(
     () => [
@@ -367,11 +458,33 @@ export default function StudentDashboard() {
   return (
     <div className={styles.page}>
       <section className={styles.topSection}>
-        <div>
-          <p className={styles.hello}>Bonjour {studentName} 👋</p>
+        <div className={styles.studentIntro}>
+          <p className={styles.hello}>Bonjour {studentInfo.fullName} 👋</p>
           <p className={styles.subtitle}>
             Résumé de vos quiz, résultats et activités.
           </p>
+          <div className={styles.studentDetails}>
+            <span>
+              <UserRound size={16} />
+              ID: {studentInfo.id || "-"}
+            </span>
+            <span>
+              <Mail size={16} />
+              {studentInfo.email}
+            </span>
+            <span>
+              <IdCard size={16} />
+              CNE: {studentInfo.cne || "-"}
+            </span>
+            <span>
+              <IdCard size={16} />
+              Apogée: {studentInfo.codeApoge || "-"}
+            </span>
+            <span>
+              <GraduationCap size={16} />
+              {studentInfo.classLabel || "Classe non renseignée"}
+            </span>
+          </div>
         </div>
 
         <div className={styles.todayBox}>

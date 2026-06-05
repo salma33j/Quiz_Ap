@@ -13,6 +13,11 @@ const studentQuizApi = {
     return unwrap(res);
   },
 
+  getQuizHistory: async () => {
+    const res = await axiosInstance.get("/student/quizzes/history");
+    return unwrap(res);
+  },
+
   getQuizDetails: async (quizId) => {
     const res = await axiosInstance.get(`/student/quizzes/${quizId}`);
     return unwrap(res);
@@ -72,6 +77,26 @@ const studentQuizApi = {
 
   getResult: async (quizId) => {
     const res = await axiosInstance.get(`/resultats/quiz/${quizId}/my-resultat`);
+    return unwrap(res);
+  },
+
+  getMyResultsHistory: async () => {
+    const res = await axiosInstance.get("/resultats/my-history");
+    return unwrap(res);
+  },
+
+  hasCompletedQuiz: async (quizId) => {
+    const res = await axiosInstance.get(`/resultats/quiz/${quizId}/has-completed`);
+    return unwrap(res);
+  },
+
+  getMyPerformance: async () => {
+    const res = await axiosInstance.get("/statistiques/student/my-performance");
+    return unwrap(res);
+  },
+
+  getRanking: async (quizId) => {
+    const res = await axiosInstance.get(`/statistiques/student/ranking/${quizId}`);
     return unwrap(res);
   },
 };

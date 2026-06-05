@@ -5,14 +5,35 @@ import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import studentQuizApi from "../../api/studentQuizApi";
 import styles from "./TakeQuiz.module.css";
 
+const OPTION_CODES = ["A", "B", "C", "D"];
+
 const getOptions = (question) => {
   if (!question) return [];
 
   if (question.type === "TRUE_FALSE" || question.type === "VRAI_FAUX") {
-    return ["Vrai", "Faux"];
+    return [
+      { label: "A", text: "Vrai", value: "A" },
+      { label: "B", text: "Faux", value: "B" },
+    ];
   }
 
-  return question.options || question.choix || question.choices || [];
+  const rawOptions = question.options || question.choix || question.choices || [];
+
+  return rawOptions
+    .map((option, index) => {
+      const label = option?.label || OPTION_CODES[index] || String(index + 1);
+      const text =
+        typeof option === "string"
+          ? option
+          : option?.text || option?.value || option?.label || "";
+
+      return {
+        label,
+        text,
+        value: option?.answer || option?.code || label,
+      };
+    })
+    .filter((option) => `${option.text}`.trim() !== "");
 };
 
 const getQuestionText = (question) => {
@@ -392,7 +413,7 @@ export default function TakeQuiz() {
               ) : (
                 <div className={styles.optionsList}>
                   {getOptions(currentQuestion).map((option, index) => {
-                    const isSelected = answers[currentQuestion?.id] === option;
+                    const isSelected = answers[currentQuestion?.id] === option.value;
 
                     return (
                       <button
@@ -402,7 +423,7 @@ export default function TakeQuiz() {
                           isSelected ? styles.optionSelected : ""
                         }`}
                         onClick={() =>
-                          handleAnswer(currentQuestion.id, option)
+                          handleAnswer(currentQuestion.id, option.value)
                         }
                         disabled={timeOver}
                       >
@@ -411,10 +432,10 @@ export default function TakeQuiz() {
                             isSelected ? styles.optionLetterSelected : ""
                           }`}
                         >
-                          {String.fromCharCode(65 + index)}
+                          {option.label}
                         </span>
 
-                        <span className={styles.optionText}>{option}</span>
+                        <span className={styles.optionText}>{option.text}</span>
 
                         {isSelected && (
                           <span className={styles.optionCheck}>✓</span>
