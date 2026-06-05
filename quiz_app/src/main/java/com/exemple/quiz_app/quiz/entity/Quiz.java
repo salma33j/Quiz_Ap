@@ -96,8 +96,8 @@ public class Quiz {
     public boolean isAvailable() {
         LocalDateTime now = LocalDateTime.now();
         return this.status == QuizStatus.PUBLISHED
-                && (availableFrom == null || now.isAfter(availableFrom))
-                && (availableUntil == null || now.isBefore(availableUntil));
+                && (availableFrom == null || !now.isBefore(availableFrom))
+                && (availableUntil == null || !now.isAfter(availableUntil));
     }
 
     public boolean isDeleted() {
