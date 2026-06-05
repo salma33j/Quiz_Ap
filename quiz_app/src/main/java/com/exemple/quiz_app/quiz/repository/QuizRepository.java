@@ -26,26 +26,40 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
 
     long countByStatus(Quiz.QuizStatus status);
 
-    // ========== ÉTUDIANT - QUIZ DISPONIBLES ==========
-    @Query("SELECT q FROM Quiz q JOIN q.allowedStudents qs WHERE qs.student = :student " +
+    // ========== ETUDIANT - QUIZ DISPONIBLES ==========
+    @Query("SELECT DISTINCT q FROM Quiz q LEFT JOIN q.allowedStudents qs LEFT JOIN q.matiere m " +
+            "WHERE (qs.student = :student " +
+            "OR (:classId IS NOT NULL AND q.classe.id = :classId) " +
+            "OR (:classId IS NOT NULL AND m.classe.id = :classId)) " +
             "AND q.status = 'PUBLISHED' " +
             "AND (q.availableFrom IS NULL OR q.availableFrom <= :now) " +
             "AND (q.availableUntil IS NULL OR q.availableUntil >= :now)")
-    List<Quiz> findAvailableQuizzesForStudent(@Param("student") User student, @Param("now") LocalDateTime now);
+    List<Quiz> findAvailableQuizzesForStudent(
+            @Param("student") User student,
+            @Param("classId") Long classId,
+            @Param("now") LocalDateTime now
+    );
 
-    // ========== ÉTUDIANT - TOUS LES QUIZ AUTORISÉS ==========
-    @Query("SELECT q FROM Quiz q JOIN q.allowedStudents qs WHERE qs.student = :student")
-    List<Quiz> findAllQuizzesForStudent(@Param("student") User student);
+    // ========== ETUDIANT - TOUS LES QUIZ AUTORISES ==========
+    @Query("SELECT DISTINCT q FROM Quiz q LEFT JOIN q.allowedStudents qs LEFT JOIN q.matiere m " +
+            "WHERE qs.student = :student " +
+            "OR (:classId IS NOT NULL AND q.classe.id = :classId) " +
+            "OR (:classId IS NOT NULL AND m.classe.id = :classId)")
+    List<Quiz> findAllQuizzesForStudent(@Param("student") User student, @Param("classId") Long classId);
 
-    // ========== VÉRIFICATION AUTORISATION ==========
-    @Query("SELECT COUNT(qs) > 0 FROM QuizStudent qs WHERE qs.quiz.id = :quizId AND qs.student.id = :studentId")
+    // ========== VERIFICATION AUTORISATION ==========
+    @Query("SELECT COUNT(q) > 0 FROM Quiz q LEFT JOIN q.allowedStudents qs LEFT JOIN q.matiere m " +
+            "WHERE q.id = :quizId AND (" +
+            "qs.student.id = :studentId " +
+            "OR q.classe.id = (SELECT u.classe.id FROM User u WHERE u.id = :studentId) " +
+            "OR m.classe.id = (SELECT u.classe.id FROM User u WHERE u.id = :studentId))")
     boolean isStudentAllowed(@Param("quizId") Long quizId, @Param("studentId") Long studentId);
 
-    // ========== COMPTER LES ÉTUDIANTS AUTORISÉS ==========
+    // ========== COMPTER LES ETUDIANTS AUTORISES ==========
     @Query("SELECT COUNT(qs) FROM QuizStudent qs WHERE qs.quiz.id = :quizId")
     int countAllowedStudents(@Param("quizId") Long quizId);
 
-    // ========== VÉRIFIER SI UN QUIZ EXISTE ==========
+    // ========== VERIFIER SI UN QUIZ EXISTE ==========
     boolean existsById(Long id);
 
     boolean existsByTitreAndEnseignantId(String titre, Long enseignantId);

@@ -51,8 +51,9 @@ public class StudentQuizService {
     public List<QuizForStudentDto> getAvailableQuizzes() {
         User student = authService.getCurrentUser();
         LocalDateTime now = LocalDateTime.now();
+        Long classId = getStudentClassId(student);
 
-        return quizRepository.findAvailableQuizzesForStudent(student, now).stream()
+        return quizRepository.findAvailableQuizzesForStudent(student, classId, now).stream()
                 .filter(quiz -> {
                     // ðŸ”¥ Exclure les quiz dÃ©jÃ  complÃ©tÃ©s (soumis)
                     boolean completed = resultatRepository.hasStudentCompletedQuiz(student.getId().longValue(), quiz.getId());
@@ -96,8 +97,9 @@ public class StudentQuizService {
     public List<QuizForStudentDto> getQuizHistory() {
         User student = authService.getCurrentUser();
         LocalDateTime now = LocalDateTime.now();
+        Long classId = getStudentClassId(student);
 
-        return quizRepository.findAllQuizzesForStudent(student).stream().map(quiz -> {
+        return quizRepository.findAllQuizzesForStudent(student, classId).stream().map(quiz -> {
             QuizForStudentDto dto = new QuizForStudentDto();
             dto.setId(quiz.getId());
             dto.setTitre(quiz.getTitre());
@@ -404,6 +406,10 @@ public class StudentQuizService {
         dto.setType(question.getType().name());
         dto.setPoints(question.getPoints());
         return dto;
+    }
+
+    private Long getStudentClassId(User student) {
+        return student.getClasse() != null ? student.getClasse().getId() : null;
     }
 
     private void applyQuizContext(QuizForStudentDto dto, Quiz quiz) {
