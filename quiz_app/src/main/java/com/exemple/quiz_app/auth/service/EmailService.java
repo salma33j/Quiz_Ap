@@ -4,24 +4,30 @@ import com.exemple.quiz_app.auth.model.User;
 import com.exemple.quiz_app.classe.entity.Classe;
 import com.exemple.quiz_app.matiere.entity.Matiere;
 import com.exemple.quiz_app.quiz.entity.Quiz;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import jakarta.mail.internet.MimeMessage;
 
+import java.io.ByteArrayOutputStream;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
+import java.util.Properties;
 
 @Service
 public class EmailService {
@@ -54,10 +60,34 @@ public class EmailService {
     @Value("${resend.api.url:https://api.resend.com/emails}")
     private String resendApiUrl;
 
+    @Value("${gmail.api.client-id:}")
+    private String gmailClientId;
+
+    @Value("${gmail.api.client-secret:}")
+    private String gmailClientSecret;
+
+    @Value("${gmail.api.refresh-token:}")
+    private String gmailRefreshToken;
+
+    @Value("${gmail.api.user-id:me}")
+    private String gmailUserId;
+
+    @Value("${gmail.api.token-url:https://oauth2.googleapis.com/token}")
+    private String gmailTokenUrl;
+
+    @Value("${gmail.api.send-url:https://gmail.googleapis.com/gmail/v1/users/%s/messages/send}")
+    private String gmailSendUrl;
+
+    @Value("${gmail.from:}")
+    private String gmailFromEmail;
+
     @PostConstruct
     public void logEmailConfiguration() {
         System.out.println("[EmailService] Configuration email: provider=" + resolveProvider()
                 + ", resendApiKeyConfigured=" + isConfigured(resendApiKey)
+                + ", gmailClientConfigured=" + isConfigured(gmailClientId)
+                + ", gmailRefreshTokenConfigured=" + isConfigured(gmailRefreshToken)
+                + ", gmailFromConfigured=" + isConfigured(gmailFromEmail)
                 + ", emailFromConfigured=" + isConfigured(resolveFromEmail())
                 + ", smtpUsernameConfigured=" + isConfigured(fromEmail));
     }
@@ -325,6 +355,10 @@ public class EmailService {
      * ✅ Méthode générique pour envoyer un email HTML
      */
     private boolean sendHtmlEmail(String toEmail, String subject, String htmlContent) {
+        if (shouldUseGmailApi()) {
+            return sendHtmlEmailWithGmailApi(toEmail, subject, htmlContent);
+        }
+
         if (shouldUseResend()) {
             return sendHtmlEmailWithResend(toEmail, subject, htmlContent);
         }
@@ -344,6 +378,98 @@ public class EmailService {
             System.err.println("❌ [EmailService] Erreur envoi email à " + toEmail + " : " + e.getMessage());
             return false;
         }
+    }
+
+    private boolean sendHtmlEmailWithGmailApi(String toEmail, String subject, String htmlContent) {
+        String sender = resolveFromEmail();
+
+        if (!isConfigured(gmailClientId) || !isConfigured(gmailClientSecret) || !isConfigured(gmailRefreshToken)) {
+            System.err.println("[EmailService] Variables Gmail API manquantes. Email non envoye a : " + toEmail);
+            return false;
+        }
+        if (!isConfigured(sender)) {
+            System.err.println("[EmailService] GMAIL_FROM ou EMAIL_FROM manquant. Email non envoye a : " + toEmail);
+            return false;
+        }
+
+        try {
+            String accessToken = fetchGmailAccessToken();
+            ObjectNode payload = objectMapper.createObjectNode();
+            payload.put("raw", buildGmailRawMessage(sender, toEmail, subject, htmlContent));
+
+            String userId = isConfigured(gmailUserId) ? gmailUserId.trim() : "me";
+            String sendUrl = String.format(gmailSendUrl, userId);
+            HttpRequest request = HttpRequest.newBuilder(URI.create(sendUrl))
+                    .timeout(Duration.ofSeconds(15))
+                    .header("Authorization", "Bearer " + accessToken)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(
+                            objectMapper.writeValueAsString(payload),
+                            StandardCharsets.UTF_8
+                    ))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(
+                    request,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
+            );
+
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                System.out.println("[EmailService] Email envoye via Gmail API a : " + toEmail);
+                return true;
+            }
+
+            System.err.println("[EmailService] Gmail API a refuse l'email a " + toEmail
+                    + " (HTTP " + response.statusCode() + ") : " + abbreviate(response.body()));
+            return false;
+        } catch (Exception e) {
+            System.err.println("[EmailService] Erreur envoi Gmail API a " + toEmail + " : " + e.getMessage());
+            return false;
+        }
+    }
+
+    private String fetchGmailAccessToken() throws Exception {
+        String form = "client_id=" + formEncode(gmailClientId.trim())
+                + "&client_secret=" + formEncode(gmailClientSecret.trim())
+                + "&refresh_token=" + formEncode(gmailRefreshToken.trim())
+                + "&grant_type=refresh_token";
+
+        HttpRequest request = HttpRequest.newBuilder(URI.create(gmailTokenUrl))
+                .timeout(Duration.ofSeconds(15))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(form, StandardCharsets.UTF_8))
+                .build();
+
+        HttpResponse<String> response = httpClient.send(
+                request,
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
+        );
+
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new IllegalStateException("Gmail token refuse HTTP " + response.statusCode()
+                    + " : " + abbreviate(response.body()));
+        }
+
+        JsonNode json = objectMapper.readTree(response.body());
+        String accessToken = json.path("access_token").asText("");
+        if (accessToken.isBlank()) {
+            throw new IllegalStateException("Gmail token absent dans la reponse");
+        }
+        return accessToken;
+    }
+
+    private String buildGmailRawMessage(String sender, String toEmail, String subject, String htmlContent)
+            throws Exception {
+        MimeMessage message = new MimeMessage(Session.getInstance(new Properties()));
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        helper.setFrom(sender);
+        helper.setTo(toEmail);
+        helper.setSubject(subject);
+        helper.setText(htmlContent, true);
+
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        message.writeTo(buffer);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(buffer.toByteArray());
     }
 
     private boolean sendHtmlEmailWithResend(String toEmail, String subject, String htmlContent) {
@@ -396,11 +522,19 @@ public class EmailService {
     }
 
     private String resolveFromEmail() {
+        if (shouldUseGmailApi() && isConfigured(gmailFromEmail)) {
+            return gmailFromEmail.trim();
+        }
         String configured = configuredFromEmail == null ? "" : configuredFromEmail.trim();
         if (!configured.isBlank()) {
             return configured;
         }
         return fromEmail == null ? "" : fromEmail.trim();
+    }
+
+    private boolean shouldUseGmailApi() {
+        String provider = resolveProvider();
+        return "gmail-api".equalsIgnoreCase(provider) || "gmail".equalsIgnoreCase(provider);
     }
 
     private boolean shouldUseResend() {
@@ -426,6 +560,10 @@ public class EmailService {
             return "";
         }
         return value.length() <= 500 ? value : value.substring(0, 500) + "...";
+    }
+
+    private String formEncode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
     private String resolveMatiereName(Quiz quiz) {
