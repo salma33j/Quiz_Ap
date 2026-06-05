@@ -30,10 +30,12 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional
-    @Query("UPDATE Quiz q SET q.status = 'EXPIRED' " +
-            "WHERE q.status = 'PUBLISHED' " +
-            "AND q.availableUntil IS NOT NULL " +
-            "AND q.availableUntil <= :now")
+    @Query("""
+            UPDATE Quiz q SET q.status = 'EXPIRED'
+            WHERE q.status = 'PUBLISHED'
+            AND q.availableUntil IS NOT NULL
+            AND q.availableUntil <= :now
+            """)
     int expirePublishedQuizzesPastDeadline(@Param("now") LocalDateTime now);
 
     // ========== ETUDIANT - QUIZ DISPONIBLES ==========
@@ -82,11 +84,14 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
             )
             AND q.status IN ('PUBLISHED', 'EXPIRED', 'ARCHIVED')
             """, nativeQuery = true)
-    List<Quiz> findAllQuizzesForStudent(@Param("studentId") Long studentId, @Param("classId") Long classId);
+    List<Quiz> findAllQuizzesForStudent(
+            @Param("studentId") Long studentId,
+            @Param("classId") Long classId
+    );
 
     // ========== VERIFICATION AUTORISATION ==========
     @Query(value = """
-            SELECT COUNT(q.id) > 0
+            SELECT COUNT(q.id)
             FROM quiz q
             LEFT JOIN quiz_students qs ON qs.quiz_id = q.id
             LEFT JOIN matieres m ON m.id = q.matiere_id
@@ -104,7 +109,14 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
                 ))
             )
             """, nativeQuery = true)
-    boolean isStudentAllowed(@Param("quizId") Long quizId, @Param("studentId") Long studentId);
+    long countStudentAllowed(
+            @Param("quizId") Long quizId,
+            @Param("studentId") Long studentId
+    );
+
+    default boolean isStudentAllowed(Long quizId, Long studentId) {
+        return countStudentAllowed(quizId, studentId) > 0;
+    }
 
     // ========== COMPTER LES ETUDIANTS AUTORISES ==========
     @Query("SELECT COUNT(qs) FROM QuizStudent qs WHERE qs.quiz.id = :quizId")
