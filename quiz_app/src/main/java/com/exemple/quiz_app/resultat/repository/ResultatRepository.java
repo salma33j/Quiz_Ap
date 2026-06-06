@@ -62,11 +62,19 @@ public interface ResultatRepository extends JpaRepository<Resultat, Long> {
 
     // ========== VÉRIFICATIONS ==========
 
-    @Query("SELECT COUNT(r) > 0 FROM Resultat r WHERE r.student.id = :studentId AND r.quiz.id = :quizId AND r.status = 'SUBMITTED'")
-    boolean hasStudentCompletedQuiz(@Param("studentId") Long studentId, @Param("quizId") Long quizId);
+    @Query("SELECT COUNT(r) FROM Resultat r WHERE r.student.id = :studentId AND r.quiz.id = :quizId AND r.status = 'SUBMITTED'")
+    long countStudentCompletedQuiz(@Param("studentId") Long studentId, @Param("quizId") Long quizId);
 
-    @Query("SELECT COUNT(r) > 0 FROM Resultat r WHERE r.student.id = :studentId AND r.quiz.id = :quizId AND r.status = 'IN_PROGRESS'")
-    boolean hasStudentStartedQuiz(@Param("studentId") Long studentId, @Param("quizId") Long quizId);
+    default boolean hasStudentCompletedQuiz(Long studentId, Long quizId) {
+        return countStudentCompletedQuiz(studentId, quizId) > 0;
+    }
+
+    @Query("SELECT COUNT(r) FROM Resultat r WHERE r.student.id = :studentId AND r.quiz.id = :quizId AND r.status = 'IN_PROGRESS'")
+    long countStudentStartedQuiz(@Param("studentId") Long studentId, @Param("quizId") Long quizId);
+
+    default boolean hasStudentStartedQuiz(Long studentId, Long quizId) {
+        return countStudentStartedQuiz(studentId, quizId) > 0;
+    }
 
     // ========== RÉSULTATS EN COURS ==========
 

@@ -72,6 +72,13 @@ public class ResultatMapper {
         return resultat.getStudent().getClasse().getName();
     }
 
+
+
+    private java.time.LocalDateTime getAvailableUntil(Resultat resultat) {
+        return resultat.getQuiz() != null ? resultat.getQuiz().getAvailableUntil() : null;
+    }
+
+
     private String getSubjectName(Resultat resultat) {
         if (resultat.getQuiz() == null) {
             return "Matiere non definie";
@@ -166,8 +173,7 @@ public class ResultatMapper {
 
                 .startedAt(resultat.getStartedAt())
                 .completedDate(resultat.getCompletedDate())
-                .availableFrom(resultat.getQuiz() != null ? resultat.getQuiz().getAvailableFrom() : null)
-                .availableUntil(resultat.getQuiz() != null ? resultat.getQuiz().getAvailableUntil() : null)
+                .availableUntil(getAvailableUntil(resultat))
 
                 .build();
     }

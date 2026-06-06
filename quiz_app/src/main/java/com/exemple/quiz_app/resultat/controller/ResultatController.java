@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/resultats")
@@ -50,6 +51,15 @@ public class ResultatController {
 
         return ResponseEntity.ok(resultatService.getResultatsByStudent());
     }
+
+
+
+    @GetMapping("/my-performance")
+    @PreAuthorize("hasAnyRole('ETUDIANT', 'ADMIN')")
+    public ResponseEntity<Map<String, Object>> getMyPerformance() {
+        return ResponseEntity.ok(resultatService.getMyPerformance());
+    }
+
 
     @GetMapping("/quiz/{quizId}")
     @PreAuthorize("hasAnyRole('ENSEIGNANT', 'ADMIN')")

@@ -34,7 +34,6 @@ public class ResultatDto {
     private String subjectName;
     private LocalDateTime startedAt;
     private LocalDateTime completedDate;
-    private LocalDateTime availableFrom;
     private LocalDateTime availableUntil;
     private Double noteSur20;
     private String mention;

@@ -23,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -328,6 +330,57 @@ public class ResultatService {
         User currentUser = authService.getCurrentUser();
         resultatRepository.deleteByStudentIdAndQuizId(currentUser.getId(), quizId);
     }
+
+
+
+    /**
+     * Statistiques globales de l'étudiant connecté pour la page Performances.
+     */
+    public Map<String, Object> getMyPerformance() {
+        User currentUser = authService.getCurrentUser();
+
+        List<Resultat> submittedResults = resultatRepository
+                .findByStudentOrderByCompletedDateDesc(currentUser)
+                .stream()
+                .filter(r -> r.getStatus() == Resultat.SubmissionStatus.SUBMITTED)
+                .collect(Collectors.toList());
+
+        int totalParticipants = submittedResults.size();
+
+        double moyenneScore = submittedResults.stream()
+                .map(Resultat::getScorePercentage)
+                .filter(java.util.Objects::nonNull)
+                .mapToDouble(Double::doubleValue)
+                .average()
+                .orElse(0.0);
+
+        double meilleurScore = submittedResults.stream()
+                .map(Resultat::getScorePercentage)
+                .filter(java.util.Objects::nonNull)
+                .mapToDouble(Double::doubleValue)
+                .max()
+                .orElse(0.0);
+
+        double pireScore = submittedResults.stream()
+                .map(Resultat::getScorePercentage)
+                .filter(java.util.Objects::nonNull)
+                .mapToDouble(Double::doubleValue)
+                .min()
+                .orElse(0.0);
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("moyenneScore", moyenneScore);
+        stats.put("meilleurScore", meilleurScore);
+        stats.put("pireScore", pireScore);
+        stats.put("totalParticipants", totalParticipants);
+        stats.put("totalQuizzes", totalParticipants);
+        stats.put("completedQuizzes", totalParticipants);
+        stats.put("averageScore", moyenneScore);
+        stats.put("bestScore", meilleurScore);
+
+        return stats;
+    }
+
 
     // ================= STATISTICS =================
 
