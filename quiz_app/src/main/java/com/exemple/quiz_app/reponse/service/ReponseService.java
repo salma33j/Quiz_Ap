@@ -128,6 +128,10 @@ public class ReponseService {
             pointsEarned = isCorrect ? question.getPoints() : 0;
         }
 
+        if (isCorrect && (pointsEarned == null || pointsEarned <= 0)) {
+            pointsEarned = question.getPoints() != null ? question.getPoints() : 1;
+        }
+
         // Créer et sauvegarder la réponse
         Reponse reponse = new Reponse();
         reponse.setQuiz(quiz);
@@ -348,7 +352,7 @@ public class ReponseService {
                     .studentAnswer(reponse != null ? reponse.getStudentAnswer() : "Non répondue")
                     .correctAnswer(question.getCorrectAnswerText())
                     .isCorrect(reponse != null && reponse.getIsCorrect())
-                    .pointsEarned(reponse != null && reponse.getPointsEarned() != null ? reponse.getPointsEarned() : 0)
+                    .pointsEarned(resolveDisplayedPoints(question, reponse))
                     .pointsMax(question.getPoints())
                     .options(question.getAllOptions())
                     .explanation(generateExplanation(question, reponse))
@@ -403,6 +407,10 @@ public class ReponseService {
             pointsEarned = isCorrect ? question.getPoints() : 0;
         }
 
+        if (isCorrect && (pointsEarned == null || pointsEarned <= 0)) {
+            pointsEarned = question.getPoints() != null ? question.getPoints() : 1;
+        }
+
         Reponse reponse = reponseRepository.findByStudentAndQuestion(currentUser, question)
                 .orElseGet(Reponse::new);
         reponse.setQuiz(quiz);
@@ -413,6 +421,23 @@ public class ReponseService {
         reponse.setPointsEarned(pointsEarned);
 
         reponseRepository.save(reponse);
+    }
+
+
+    private int resolveDisplayedPoints(Question question, Reponse reponse) {
+        if (reponse == null) {
+            return 0;
+        }
+
+        if (Boolean.TRUE.equals(reponse.getIsCorrect())) {
+            Integer earned = reponse.getPointsEarned();
+            if (earned == null || earned <= 0) {
+                return question.getPoints() != null ? question.getPoints() : 1;
+            }
+            return earned;
+        }
+
+        return reponse.getPointsEarned() != null ? reponse.getPointsEarned() : 0;
     }
 
     private String buildStructuredFeedback(Quiz quiz, double percentage, int correctCount, int answeredCount, int totalQuestions, String feedbackIA, String strengths, String weaknesses) {

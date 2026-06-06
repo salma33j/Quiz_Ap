@@ -117,21 +117,17 @@ public class StatistiqueService {
             throw new RuntimeException("Acces reserve aux etudiants");
         }
 
-        List<Resultat> myResults = resultatRepository.findByStudentOrderByCompletedDateDesc(student);
-
-        if (myResults.isEmpty()) {
-            return StatistiqueDto.builder()
-                    .totalParticipants(0)
-                    .moyenneScore(0.0)
-                    .build();
-        }
+        List<Resultat> myResults = resultatRepository.findByStudentOrderByCompletedDateDesc(student)
+                .stream()
+                .filter(r -> Boolean.TRUE.equals(r.getIsCompleted()))
+                .collect(Collectors.toList());
 
         return StatistiqueDto.builder()
                 .totalParticipants(myResults.size())
                 .moyenneScore(calculerMoyenneScore(myResults))
                 .meilleurScore(calculerMeilleurScore(myResults))
                 .pireScore(calculerPireScore(myResults))
-                .classement(calculerClassementEtudiant(student, myResults))
+                .classement(Collections.emptyList())
                 .build();
     }
 

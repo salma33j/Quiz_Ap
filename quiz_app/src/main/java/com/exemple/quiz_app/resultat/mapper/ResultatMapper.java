@@ -166,6 +166,8 @@ public class ResultatMapper {
 
                 .startedAt(resultat.getStartedAt())
                 .completedDate(resultat.getCompletedDate())
+                .availableFrom(resultat.getQuiz() != null ? resultat.getQuiz().getAvailableFrom() : null)
+                .availableUntil(resultat.getQuiz() != null ? resultat.getQuiz().getAvailableUntil() : null)
 
                 .build();
     }
