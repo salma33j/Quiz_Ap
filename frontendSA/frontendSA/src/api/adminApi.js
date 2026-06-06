@@ -62,7 +62,7 @@ const adminApi = {
   getQuizStatistics: (quizId) =>
     axiosInstance.get(`/statistiques/quiz/${quizId}`).then(unwrap),
   getQuizRanking: (quizId) =>
-    axiosInstance.get(`/statistiques/student/ranking/${quizId}`).then(unwrap),
+    axiosInstance.get(`/resultats/quiz/${quizId}/ranking`).then(unwrap),
   getQuizResults: (quizId) =>
     axiosInstance.get(`/resultats/quiz/${quizId}`).then(unwrap),
 

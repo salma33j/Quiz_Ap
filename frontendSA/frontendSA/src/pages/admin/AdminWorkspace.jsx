@@ -360,15 +360,16 @@ export default function AdminWorkspace({ section = "dashboard" }) {
       setQuizzes(nextQuizzes);
       setGlobalStats(globalData);
 
-      const published = nextQuizzes.filter(isPublished).slice(0, 8);
+      const analyzableQuizzes = nextQuizzes
+        .filter((quiz) => !isDraftQuiz(quiz) && (isExpiredQuiz(quiz) || isPublished(quiz)));
       const statsEntries = await Promise.all(
-        published.map(async (quiz) => [
+        analyzableQuizzes.map(async (quiz) => [
           String(getId(quiz)),
           await adminApi.getQuizStatistics(getId(quiz)).catch(() => null),
         ])
       );
       const rankingEntries = await Promise.all(
-        published.map(async (quiz) => [
+        analyzableQuizzes.map(async (quiz) => [
           String(getId(quiz)),
           await adminApi.getQuizRanking(getId(quiz)).catch(() => []),
         ])
@@ -1301,7 +1302,7 @@ export default function AdminWorkspace({ section = "dashboard" }) {
   }, [users, classes, quizzes, quizStats, globalStats]);
 
   const topStudents = useMemo(() => {
-    return Object.entries(rankings)
+    const rankingRows = Object.entries(rankings)
       .flatMap(([quizId, rows]) => {
         const quiz = quizzes.find((item) => String(getId(item)) === quizId);
         return (Array.isArray(rows) ? rows : []).map((row) => ({
@@ -1309,10 +1310,29 @@ export default function AdminWorkspace({ section = "dashboard" }) {
           quiz: quizTitle(quiz),
           score: Number(row.scorePercentage || row.score || row.percentage || 0),
         }));
-      })
+      });
+
+    const resultRows = Object.entries(quizResults)
+      .flatMap(([quizId, rows]) => {
+        const quiz = quizzes.find((item) => String(getId(item)) === quizId);
+        return (Array.isArray(rows) ? rows : []).map((row) => ({
+          name:
+            row.studentName ||
+            [row.studentFirstName || row.firstName, row.studentLastName || row.lastName]
+              .filter(Boolean)
+              .join(" ") ||
+            row.studentEmail ||
+            row.email ||
+            "Etudiant",
+          quiz: quizTitle(quiz),
+          score: getScorePercent(row),
+        }));
+      });
+
+    return (rankingRows.length > 0 ? rankingRows : resultRows)
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
-  }, [rankings, quizzes]);
+  }, [rankings, quizResults, quizzes]);
 
   const difficultQuizzes = useMemo(() => {
     return quizzes
