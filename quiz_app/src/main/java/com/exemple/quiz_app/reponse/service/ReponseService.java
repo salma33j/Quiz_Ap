@@ -129,6 +129,8 @@ public class ReponseService {
         }
 
         // Créer et sauvegarder la réponse
+        pointsEarned = normalizePointsEarned(question, isCorrect, pointsEarned);
+
         Reponse reponse = new Reponse();
         reponse.setQuiz(quiz);
         reponse.setQuestion(question);
@@ -403,6 +405,8 @@ public class ReponseService {
             pointsEarned = isCorrect ? question.getPoints() : 0;
         }
 
+        pointsEarned = normalizePointsEarned(question, isCorrect, pointsEarned);
+
         Reponse reponse = reponseRepository.findByStudentAndQuestion(currentUser, question)
                 .orElseGet(Reponse::new);
         reponse.setQuiz(quiz);
@@ -427,6 +431,20 @@ public class ReponseService {
         }
 
         return reponse.getPointsEarned() != null ? reponse.getPointsEarned() : 0;
+    }
+
+    private int normalizePointsEarned(Question question, boolean isCorrect, Integer pointsEarned) {
+        int maxPoints = question != null && question.getPoints() != null ? question.getPoints() : 1;
+
+        if (isCorrect) {
+            return maxPoints;
+        }
+
+        if (pointsEarned == null) {
+            return 0;
+        }
+
+        return Math.max(0, Math.min(pointsEarned, maxPoints));
     }
 
 

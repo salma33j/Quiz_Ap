@@ -35,6 +35,9 @@ public class ResultatDto {
     private LocalDateTime startedAt;
     private LocalDateTime completedDate;
     private LocalDateTime availableUntil;
+    private Integer rank;
+    private Integer rang;
+    private String classement;
     private Double noteSur20;
     private String mention;
     // Méthodes utilitaires

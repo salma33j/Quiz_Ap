@@ -275,6 +275,7 @@ public class ResultatService {
     public ResultatDto getResultatByStudentAndQuiz(Long quizId) {
 
         User currentUser = authService.getCurrentUser();
+        expirePublishedQuizzesPastDeadline();
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
 
@@ -282,7 +283,7 @@ public class ResultatService {
                 .findByStudentAndQuizId(currentUser, quiz.getId())
                 .orElse(null);
 
-        return resultat != null ? resultatMapper.toDto(resultat) : null;
+        return resultat != null ? withRankIfAvailable(resultatMapper.toDto(resultat), resultat) : null;
     }
 
     /**
@@ -291,11 +292,12 @@ public class ResultatService {
     public List<ResultatDto> getResultatsByStudent() {
 
         User currentUser = authService.getCurrentUser();
+        expirePublishedQuizzesPastDeadline();
         List<Resultat> resultats = resultatRepository
                 .findByStudentOrderByCompletedDateDesc(currentUser);
 
         return resultats.stream()
-                .map(resultatMapper::toDto)
+                .map(resultat -> withRankIfAvailable(resultatMapper.toDto(resultat), resultat))
                 .collect(Collectors.toList());
     }
 
@@ -304,6 +306,7 @@ public class ResultatService {
      */
     public List<ResultatDto> getResultatsByQuiz(Long quizId) {
 
+        expirePublishedQuizzesPastDeadline();
         List<Resultat> resultats = resultatRepository
                 .findByQuizIdOrderByScorePercentageDesc(quizId);
 
@@ -338,6 +341,7 @@ public class ResultatService {
      */
     public Map<String, Object> getMyPerformance() {
         User currentUser = authService.getCurrentUser();
+        expirePublishedQuizzesPastDeadline();
 
         List<Resultat> submittedResults = resultatRepository
                 .findByStudentOrderByCompletedDateDesc(currentUser)
@@ -386,6 +390,7 @@ public class ResultatService {
 
     public QuizStatisticsDto getQuizStatistics(Long quizId) {
 
+        expirePublishedQuizzesPastDeadline();
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
 
@@ -401,6 +406,20 @@ public class ResultatService {
                 .totalStudents((int) totalStudents)
                 .ranking(getRanking(quiz))
                 .build();
+    }
+
+    public List<RankingDto> getRankingForCurrentUser(Long quizId) {
+        expirePublishedQuizzesPastDeadline();
+
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Quiz non trouvé"));
+        User currentUser = authService.getCurrentUser();
+
+        if (currentUser.getRole() == Role.ETUDIANT && !isQuizExpired(quiz)) {
+            return List.of();
+        }
+
+        return getRanking(quiz);
     }
 
     /**
@@ -426,6 +445,54 @@ public class ResultatService {
         }
 
         return ranking;
+    }
+
+    private void expirePublishedQuizzesPastDeadline() {
+        quizRepository.expirePublishedQuizzesPastDeadline(LocalDateTime.now());
+    }
+
+    private boolean isQuizExpired(Quiz quiz) {
+        if (quiz == null) {
+            return false;
+        }
+        if (quiz.getStatus() == Quiz.QuizStatus.EXPIRED) {
+            return true;
+        }
+        return quiz.getAvailableUntil() != null && !quiz.getAvailableUntil().isAfter(LocalDateTime.now());
+    }
+
+    private ResultatDto withRankIfAvailable(ResultatDto dto, Resultat resultat) {
+        if (dto == null || resultat == null || !isQuizExpired(resultat.getQuiz())) {
+            return dto;
+        }
+
+        Integer rank = getStudentRank(resultat.getQuiz().getId(), resultat.getStudent().getId().longValue());
+        if (rank != null) {
+            dto.setRank(rank);
+            dto.setRang(rank);
+            dto.setClassement("#" + rank);
+        }
+
+        return dto;
+    }
+
+    private Integer getStudentRank(Long quizId, Long studentId) {
+        List<Object[]> results = resultatRepository.getRankingByQuizId(quizId);
+        int rank = 1;
+
+        for (Object[] row : results) {
+            Object rawStudentId = row[0];
+            Long rowStudentId = rawStudentId instanceof Number number
+                    ? number.longValue()
+                    : Long.valueOf(String.valueOf(rawStudentId));
+
+            if (rowStudentId.equals(studentId)) {
+                return rank;
+            }
+            rank++;
+        }
+
+        return null;
     }
 
     // ================= DTO CLASSES =================

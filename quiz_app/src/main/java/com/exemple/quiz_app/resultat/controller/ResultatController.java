@@ -77,14 +77,11 @@ public class ResultatController {
     }
 
     @GetMapping("/quiz/{quizId}/ranking")
-    @PreAuthorize("hasAnyRole('ENSEIGNANT', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ETUDIANT', 'ENSEIGNANT', 'ADMIN')")
     public ResponseEntity<List<ResultatService.RankingDto>> getRanking(
             @PathVariable Long quizId) {
 
-        ResultatService.QuizStatisticsDto statistics =
-                resultatService.getQuizStatistics(quizId);
-
-        return ResponseEntity.ok(statistics.getRanking());
+        return ResponseEntity.ok(resultatService.getRankingForCurrentUser(quizId));
     }
 
     // 🔥 FEEDBACK AI OPTIMISÉ
