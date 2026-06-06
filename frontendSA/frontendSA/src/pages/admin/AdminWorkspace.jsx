@@ -1301,7 +1301,7 @@ export default function AdminWorkspace({ section = "dashboard" }) {
     };
   }, [users, classes, quizzes, quizStats, globalStats]);
 
-  const topStudents = useMemo(() => {
+  const globalTopStudents = useMemo(() => {
     const rankingRows = Object.entries(rankings)
       .flatMap(([quizId, rows]) => {
         const quiz = quizzes.find((item) => String(getId(item)) === quizId);
@@ -1483,6 +1483,7 @@ export default function AdminWorkspace({ section = "dashboard" }) {
           codeApogee: getStudentCodeApogee(row, student),
           noteSur20: getNoteSur20(row),
           scorePercent: getScorePercent(row),
+          isCompleted: row?.isCompleted !== false,
           submittedAt: getSubmissionDate(row),
         };
       });
@@ -1505,6 +1506,60 @@ export default function AdminWorkspace({ section = "dashboard" }) {
 
     return rows;
   }, [quizResults, quizById, userById, findUserByEmail, resolveSubjectInfo, resolveClassInfo, resolveTeacherInfo]);
+
+  const topStudents = useMemo(() => {
+    const classMap = new Map();
+
+    adminResultRows
+      .filter((row) => row.isCompleted)
+      .forEach((row) => {
+        const classKey = String(row.classInfo?.id || row.classInfo?.name || "unknown");
+        const studentKey = String(row.email || row.cne || row.studentName || row.id);
+
+        if (!classMap.has(classKey)) {
+          classMap.set(classKey, {
+            className: row.classInfo?.name || "Classe non definie",
+            students: new Map(),
+          });
+        }
+
+        const classEntry = classMap.get(classKey);
+        if (!classEntry.students.has(studentKey)) {
+          classEntry.students.set(studentKey, {
+            name: row.studentName || "Etudiant",
+            totalScore: 0,
+            attempts: 0,
+            bestScore: 0,
+          });
+        }
+
+        const studentEntry = classEntry.students.get(studentKey);
+        studentEntry.totalScore += Number(row.scorePercent || 0);
+        studentEntry.attempts += 1;
+        studentEntry.bestScore = Math.max(studentEntry.bestScore, Number(row.scorePercent || 0));
+      });
+
+    return Array.from(classMap.values())
+      .map((classEntry) => {
+        const bestStudent = Array.from(classEntry.students.values())
+          .map((student) => ({
+            ...student,
+            score: student.attempts > 0 ? student.totalScore / student.attempts : 0,
+          }))
+          .sort((a, b) => b.score - a.score || b.bestScore - a.bestScore)[0];
+
+        if (!bestStudent) return null;
+
+        return {
+          className: classEntry.className,
+          name: bestStudent.name,
+          score: bestStudent.score,
+          attempts: bestStudent.attempts,
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.className.localeCompare(b.className, "fr", { sensitivity: "base" }));
+  }, [adminResultRows]);
 
   const resultHierarchy = useMemo(() => {
     const terms = normalizeSearch(resultsQuery).split(/\s+/).filter(Boolean);
@@ -2698,11 +2753,14 @@ function TopStudents({ rows }) {
   return (
     <div className={styles.topList}>
       {rows.map((row, index) => (
-        <div key={`${row.name}-${row.quiz}-${index}`}>
+        <div key={`${row.name}-${row.className || row.quiz}-${index}`}>
           <b>{index + 1}</b>
           <span>
             <strong>{row.name}</strong>
-            <small>{row.quiz}</small>
+            <small>
+              {row.className || row.quiz}
+              {row.attempts ? ` - ${row.attempts} quiz repondu(s)` : ""}
+            </small>
           </span>
           <em>{percent(row.score)}</em>
         </div>
