@@ -213,11 +213,7 @@ export default function MyHistory() {
           item.dateSoumission ||
           item.date ||
           item.createdAt,
-        _date:
-          item.completedDate ||
-          item.date ||
-          item.createdAt ||
-          item.submittedAt,
+        _date: getQuizEndDate(item),
       });
     });
 
@@ -301,7 +297,7 @@ export default function MyHistory() {
                         <th>Date de soumission</th>
                         <th>Score</th>
                         <th>Classement</th>
-                        <th>Date</th>
+                        <th>Date fin</th>
                       </tr>
                     </thead>
 

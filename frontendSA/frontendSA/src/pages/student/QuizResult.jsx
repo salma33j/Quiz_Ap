@@ -108,20 +108,27 @@ const getCorrectAnswer = (item) =>
   "";
 
 const getQuestionPoints = (item) => {
-  const earned =
-    item.earnedPoints ??
-    item.pointsObtenus ??
-    item.noteObtenue ??
-    item.scoreQuestion ??
-    item.pointsGagnes ??
-    0;
+  const isCorrect =
+    item?.isCorrect === true ||
+    item?.correct === true ||
+    item?.correcte === true;
 
   const total =
-    item.points ??
-    item.totalPoints ??
-    item.noteMax ??
-    item.questionPoints ??
+    item?.pointsMax ??
+    item?.points ??
+    item?.totalPoints ??
+    item?.noteMax ??
+    item?.questionPoints ??
     1;
+
+  const earned =
+    item?.pointsEarned ??
+    item?.earnedPoints ??
+    item?.pointsObtenus ??
+    item?.noteObtenue ??
+    item?.scoreQuestion ??
+    item?.pointsGagnes ??
+    (isCorrect ? total : 0);
 
   return `${earned} / ${total}`;
 };

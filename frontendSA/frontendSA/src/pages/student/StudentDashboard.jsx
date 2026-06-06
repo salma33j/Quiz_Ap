@@ -13,7 +13,6 @@ import {
   GraduationCap,
   IdCard,
   Mail,
-  UserRound,
 } from "lucide-react";
 import {
   BarChart,
@@ -54,13 +53,6 @@ const getScore = (item) => {
 
   const value = Number(raw);
   return Number.isFinite(value) ? Math.round(value) : 0;
-};
-
-const PASSING_SCORE = 50;
-
-const isFailedResult = (item) => {
-  const grade = `${item?.grade ?? ""}`.trim().toUpperCase();
-  return grade === "F" || getScore(item) < PASSING_SCORE;
 };
 
 const getQuizEndDate = (quiz) =>
@@ -176,6 +168,12 @@ const formatDateTime = (value) => {
   return date.toLocaleString("fr-FR");
 };
 
+const getRankValue = (item) => {
+  const raw = item?.rang ?? item?.rank ?? item?.classement ?? item?.position;
+  const value = Number(String(raw || "").replace("#", ""));
+  return Number.isFinite(value) && value > 0 ? value : null;
+};
+
 export default function StudentDashboard() {
   const navigate = useNavigate();
   const auth = useAuth() || {};
@@ -253,19 +251,6 @@ export default function StudentDashboard() {
 
       const nowDate = new Date();
 
-      const failedByResultData = completedHistory
-        .filter(isFailedResult)
-        .map((item) => ({
-          id: item.id || item.quizId,
-          subject: getSubjectName(item),
-          title: item.quizTitle || item.titre || item.title || "Quiz",
-          date: item.completedDate || item.submittedAt || item.createdAt || null,
-          startDate: item.startedAt || null,
-          endDate: item.completedDate || item.submittedAt || item.createdAt || null,
-          score: getScore(item),
-          statusLabel: "Score insuffisant",
-        }));
-
       const missedQuizListData = Array.isArray(quizHistory)
         ? quizHistory
             .filter((quiz) => {
@@ -316,12 +301,18 @@ export default function StudentDashboard() {
             }))
         : [];
 
-      const failedQuizListData = [...failedByResultData, ...missedQuizListData];
+      const failedQuizListData = missedQuizListData;
       const failedQuizzes = failedQuizListData.length;
 
-      let bestRanking = 0;
+      const rankValuesFromHistory = completedHistory
+        .filter(isQuizExpired)
+        .map(getRankValue)
+        .filter(Boolean);
 
-      if (completedHistory.length > 0) {
+      let bestRanking =
+        rankValuesFromHistory.length > 0 ? Math.min(...rankValuesFromHistory) : 0;
+
+      if (bestRanking === 0 && completedHistory.length > 0) {
         const rankingEligibleHistory = await Promise.all(
           completedHistory
             .filter((h) => h.quizId)
@@ -346,11 +337,20 @@ export default function StudentDashboard() {
             )
         );
 
-        const validRankings = rankings.filter((r) => r?.rang || r?.rank);
+        const storedStudent = readStoredUser();
+        const currentStudentId = String(storedStudent.id || storedStudent.userId || "");
+        const validRankings = rankings
+          .flatMap((rankingData) => (Array.isArray(rankingData) ? rankingData : [rankingData]))
+          .filter(Boolean)
+          .filter((row) => {
+            if (!currentStudentId) return true;
+            return !row.studentId || String(row.studentId) === currentStudentId;
+          })
+          .map(getRankValue)
+          .filter(Boolean);
+
         if (validRankings.length > 0) {
-          bestRanking = Math.min(
-            ...validRankings.map((r) => Number(r.rang || r.rank))
-          );
+          bestRanking = Math.min(...validRankings);
         }
       }
 
@@ -446,7 +446,7 @@ export default function StudentDashboard() {
         label: "Quiz ratés",
         value: stats.failedQuizzes,
         icon: XCircle,
-        hint: "score ou date depassee",
+        hint: "date depassee",
         color: "red",
       },
       {
@@ -494,10 +494,6 @@ export default function StudentDashboard() {
             Résumé de vos quiz, résultats et activités.
           </p>
           <div className={styles.studentDetails}>
-            <span>
-              <UserRound size={16} />
-              ID: {studentInfo.id || "-"}
-            </span>
             <span>
               <Mail size={16} />
               {studentInfo.email}
@@ -607,7 +603,7 @@ export default function StudentDashboard() {
         <div className={styles.cardHeader}>
           <div>
             <h2>Quiz ratés</h2>
-            <p>Quiz echoues par score ou non repondus apres la date de fin.</p>
+            <p>Quiz non repondus apres la date de fin.</p>
           </div>
         </div>
 
