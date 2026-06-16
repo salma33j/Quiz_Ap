@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class AiQuizGenerationService {
 
+    private static final int MAX_GENERATION_ATTEMPTS = 2;
+
     @Autowired
     private GeminiApiClient geminiApiClient;
 
@@ -29,8 +31,27 @@ public class AiQuizGenerationService {
         }
 
         String prompt = buildGenerationPrompt(request);
-        String response = geminiApiClient.callGemini(prompt);
-        return parseQuizResponse(response, getMatiere(request));
+        RuntimeException lastError = null;
+
+        for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
+            String response = geminiApiClient.callGemini(prompt);
+            try {
+                return parseQuizResponse(response, getMatiere(request));
+            } catch (RuntimeException e) {
+                lastError = e;
+                prompt = buildGenerationPrompt(request) + """
+
+                    IMPORTANT:
+                    La reponse precedente etait incomplete ou invalide.
+                    Renvoie un JSON COMPLET et VALIDE, sans markdown, sans commentaire.
+                    Utilise des questions et options courtes pour eviter une reponse coupee.
+                    """;
+            }
+        }
+
+        throw lastError != null
+                ? new RuntimeException(lastError.getMessage())
+                : new RuntimeException("Gemini a renvoye une reponse invalide. Veuillez reessayer.");
     }
 
     private String firstText(String... values) {
@@ -92,6 +113,9 @@ public class AiQuizGenerationService {
             - Adapte le vocabulaire, les exemples et la profondeur au niveau de la classe.
             - Ne cree pas de questions hors sujet, trop generales ou d'un niveau different.
             - Le resultat doit contenir exactement %d questions, pas plus, pas moins.
+            - Utilise des textes courts: questionText max 160 caracteres, chaque option max 90 caracteres.
+            - Ne donne aucune explication hors JSON.
+            - Le JSON doit etre complet et valide.
 
             Pour chaque question, fournis:
             1. Le texte de la question
@@ -133,13 +157,32 @@ public class AiQuizGenerationService {
 
     private QuizGenerationResponseDto parseQuizResponse(String response, String theme) {
         try {
-            String cleanedResponse = response.replace("```json", "").replace("```", "").trim();
+            String cleanedResponse = extractJsonObject(response);
             QuizGenerationResponseDto dto = objectMapper.readValue(cleanedResponse, QuizGenerationResponseDto.class);
+            if (dto.getQuestions() == null || dto.getQuestions().isEmpty()) {
+                throw new RuntimeException("aucune question generee");
+            }
             dto.setTheme(theme);
             dto.setNumberOfQuestions(dto.getQuestions().size());
             return dto;
         } catch (Exception e) {
-            throw new RuntimeException("Erreur lors du parsing de la reponse Gemini: " + e.getMessage());
+            throw new RuntimeException("Gemini a renvoye une reponse incomplete. Relancez la generation ou diminuez le nombre de questions.");
         }
+    }
+
+    private String extractJsonObject(String response) {
+        if (response == null || response.trim().isEmpty()) {
+            throw new RuntimeException("reponse vide");
+        }
+
+        String cleaned = response.replace("```json", "").replace("```", "").trim();
+        int firstBrace = cleaned.indexOf('{');
+        int lastBrace = cleaned.lastIndexOf('}');
+
+        if (firstBrace < 0 || lastBrace <= firstBrace) {
+            throw new RuntimeException("json absent ou incomplet");
+        }
+
+        return cleaned.substring(firstBrace, lastBrace + 1);
     }
 }
