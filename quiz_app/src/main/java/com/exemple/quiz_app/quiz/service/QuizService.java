@@ -9,13 +9,17 @@ import com.exemple.quiz_app.classe.entity.Classe;
 import com.exemple.quiz_app.classe.repository.ClasseRepository;
 import com.exemple.quiz_app.matiere.entity.Matiere;
 import com.exemple.quiz_app.matiere.repository.MatiereRepository;
+import com.exemple.quiz_app.question.repository.QuestionRepository;
 import com.exemple.quiz_app.quiz.dto.QuizReponse;
 import com.exemple.quiz_app.quiz.dto.QuizRequest;
 import com.exemple.quiz_app.quiz.dto.StudentListDto;
 import com.exemple.quiz_app.quiz.entity.Quiz;
 import com.exemple.quiz_app.quiz.entity.QuizStudent;
 import com.exemple.quiz_app.quiz.repository.QuizRepository;
+import com.exemple.quiz_app.quiz.repository.QuizSessionRepository;
 import com.exemple.quiz_app.quiz.repository.QuizStudentRepository;
+import com.exemple.quiz_app.reponse.repository.ReponseRepository;
+import com.exemple.quiz_app.resultat.repository.ResultatRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +38,18 @@ public class QuizService {
 
     @Autowired
     private QuizStudentRepository quizStudentRepository;
+
+    @Autowired
+    private QuizSessionRepository quizSessionRepository;
+
+    @Autowired
+    private QuestionRepository questionRepository;
+
+    @Autowired
+    private ReponseRepository reponseRepository;
+
+    @Autowired
+    private ResultatRepository resultatRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -196,7 +212,11 @@ public class QuizService {
             throw new RuntimeException("Quiz non supprimable (statut: " + quiz.getStatus() + ")");
         }
 
+        reponseRepository.deleteByQuizId(id);
+        resultatRepository.deleteByQuizId(id);
+        quizSessionRepository.deleteByQuizId(id);
         quizStudentRepository.deleteByQuiz(quiz);
+        questionRepository.deleteByQuizId(id);
         quizRepository.delete(quiz);
     }
 

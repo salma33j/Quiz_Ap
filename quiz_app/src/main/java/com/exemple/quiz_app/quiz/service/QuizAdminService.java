@@ -3,9 +3,12 @@ package com.exemple.quiz_app.quiz.service;
 import com.exemple.quiz_app.auth.model.Role;
 import com.exemple.quiz_app.auth.model.User;
 import com.exemple.quiz_app.auth.service.AuthService;
+import com.exemple.quiz_app.question.repository.QuestionRepository;
 import com.exemple.quiz_app.quiz.dto.QuizReponse;
 import com.exemple.quiz_app.quiz.entity.Quiz;
 import com.exemple.quiz_app.quiz.repository.QuizRepository;
+import com.exemple.quiz_app.quiz.repository.QuizSessionRepository;
+import com.exemple.quiz_app.quiz.repository.QuizStudentRepository;
 import com.exemple.quiz_app.resultat.repository.ResultatRepository;
 import com.exemple.quiz_app.reponse.repository.ReponseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +33,15 @@ public class QuizAdminService {
 
     @Autowired
     private ReponseRepository reponseRepository;
+
+    @Autowired
+    private QuestionRepository questionRepository;
+
+    @Autowired
+    private QuizSessionRepository quizSessionRepository;
+
+    @Autowired
+    private QuizStudentRepository quizStudentRepository;
 
     @Autowired
     private AuthService authService;
@@ -73,6 +85,9 @@ public class QuizAdminService {
             System.out.println("Notice: deleteByQuizId not available in ResultatRepository");
         }
 
+        quizSessionRepository.deleteByQuizId(quizId);
+        quizStudentRepository.deleteByQuizId(quizId);
+        questionRepository.deleteByQuizId(quizId);
         quizRepository.deleteById(quizId);
     }
 
